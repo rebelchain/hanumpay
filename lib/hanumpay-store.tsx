@@ -1,6 +1,12 @@
-'use client';
+"use client";
 
-import React, { createContext, useContext, useMemo, useState, useCallback } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  useCallback,
+} from "react";
 import {
   AgentAuditLog,
   CreditPassportRecord,
@@ -11,28 +17,36 @@ import {
   SaleRecord,
   SupplierPayment,
   VerifiableReceipt,
-} from './hanumpay-types';
+} from "./hanumpay-types";
 import {
   checkShopEligibility,
   CONTRACT_LIMITS,
   EligibilityCheckResult,
   ShopStatsSnapshot,
-} from './hanumpay-engine';
+} from "./hanumpay-engine";
 import {
   addOrSwitchQDayNetwork,
+  DEPLOYED_CONTRACTS,
   fetchQDayBalances,
   getInjectedProvider,
   hashCustomerId,
   QDAY_CHAIN_ID,
-} from './qday';
+} from "./qday";
 
-const SHOP_ADDRESS = '0x8B3f92A1c04E5d18B0a24f4e71cD919F2a01Bu5R'
-  .replace('Bu5R', '9C42') as `0x${string}`;
-const AGENT_ADDRESS = '0x4E88004a91C2B10eF73291bC8A5D12904410A119' as `0x${string}`;
-const SUPPLIER_1_ADDR = '0x71D029a8C1F4b3992eE40b6C1A82840F9002D51A' as `0x${string}`;
-const SUPPLIER_2_ADDR = '0x39A112c0F8D29301e6b992A7C55210E38B77C910' as `0x${string}`;
-const SUPPLIER_3_ADDR = '0x92F480b1E34C9102A7b881E04C6119D41200E821' as `0x${string}`;
-const LENDER_ADDR = '0x55C901a3B72E8401F9a11023D84410A29910F4B2' as `0x${string}`;
+const SHOP_ADDRESS = "0x8B3f92A1c04E5d18B0a24f4e71cD919F2a01Bu5R".replace(
+  "Bu5R",
+  "9C42",
+) as `0x${string}`;
+const AGENT_ADDRESS =
+  "0x4E88004a91C2B10eF73291bC8A5D12904410A119" as `0x${string}`;
+const SUPPLIER_1_ADDR =
+  "0x71D029a8C1F4b3992eE40b6C1A82840F9002D51A" as `0x${string}`;
+const SUPPLIER_2_ADDR =
+  "0x39A112c0F8D29301e6b992A7C55210E38B77C910" as `0x${string}`;
+const SUPPLIER_3_ADDR =
+  "0x92F480b1E34C9102A7b881E04C6119D41200E821" as `0x${string}`;
+const LENDER_ADDR =
+  "0x55C901a3B72E8401F9a11023D84410A29910F4B2" as `0x${string}`;
 
 function pseudoTxHash(seed: string): string {
   let h = 0x811c9dc5;
@@ -40,7 +54,7 @@ function pseudoTxHash(seed: string): string {
     h ^= seed.charCodeAt(i);
     h = Math.imul(h, 0x01000193);
   }
-  const hex = (h >>> 0).toString(16).padStart(8, '0');
+  const hex = (h >>> 0).toString(16).padStart(8, "0");
   return `0x${hex}${hex}${hex}${hex}${hex}${hex}${hex}${hex}`.slice(0, 66);
 }
 
@@ -48,84 +62,84 @@ const NOW = 1794600000000; // Deterministic baseline timestamp (Nov 2026)
 
 const INITIAL_IDENTITIES: ERC8004Identity[] = [
   {
-    name: 'Warung Bu Sri - Surabaya',
+    name: "Warung Bu Sri - Surabaya",
     wallet: SHOP_ADDRESS,
-    category: 'shop',
+    category: "shop",
     metadata: {
-      city: 'Surabaya, East Java',
-      businessType: 'Neighborhood Grocery & Daily Essentials',
+      city: "Surabaya, East Java",
+      businessType: "Neighborhood Grocery & Daily Essentials",
       reputationScore: 96,
       completedTxCount: 148,
-      validationMethod: 'EIP-712 Merchant Sig + 30d QR Ledger',
+      validationMethod: "EIP-712 Merchant Sig + 30d QR Ledger",
     },
     registeredAt: NOW - 45 * 86400 * 1000,
     active: true,
   },
   {
-    name: 'HanumPay-AI-Guarantor-v1',
+    name: "HanumPay-AI-Guarantor-v1",
     wallet: AGENT_ADDRESS,
-    category: 'agent',
+    category: "agent",
     metadata: {
-      agentModel: 'Automated AIGuarantor + Gemini Audit',
+      agentModel: "Automated AIGuarantor + Gemini Audit",
       reputationScore: 99,
       completedTxCount: 412,
-      validationMethod: 'ERC-8004 AgentCard + Contract Guardrails',
+      validationMethod: "ERC-8004 AgentCard + Contract Guardrails",
     },
     registeredAt: NOW - 60 * 86400 * 1000,
     active: true,
   },
   {
-    name: 'Pak Joko Distributor',
+    name: "Pak Joko Distributor",
     wallet: SUPPLIER_1_ADDR,
-    category: 'supplier',
+    category: "supplier",
     metadata: {
-      city: 'Surabaya Wholesale Market',
-      businessType: 'Wholesale Cooking Oil, Rice & Sugar',
+      city: "Surabaya Wholesale Market",
+      businessType: "Wholesale Cooking Oil, Rice & Sugar",
       reputationScore: 98,
       completedTxCount: 289,
-      validationMethod: 'ERC-8004 Confirmation of Payee Verified',
+      validationMethod: "ERC-8004 Confirmation of Payee Verified",
     },
     registeredAt: NOW - 52 * 86400 * 1000,
     active: true,
   },
   {
-    name: 'Surya Rice Mill',
+    name: "Surya Rice Mill",
     wallet: SUPPLIER_2_ADDR,
-    category: 'supplier',
+    category: "supplier",
     metadata: {
-      city: 'Sidoarjo, East Java',
-      businessType: 'Direct Mill Rice & Grain Supplier',
+      city: "Sidoarjo, East Java",
+      businessType: "Direct Mill Rice & Grain Supplier",
       reputationScore: 95,
       completedTxCount: 164,
-      validationMethod: 'ERC-8004 Confirmation of Payee Verified',
+      validationMethod: "ERC-8004 Confirmation of Payee Verified",
     },
     registeredAt: NOW - 40 * 86400 * 1000,
     active: true,
   },
   {
-    name: 'Nusantara Beverage Supply',
+    name: "Nusantara Beverage Supply",
     wallet: SUPPLIER_3_ADDR,
-    category: 'supplier',
+    category: "supplier",
     metadata: {
-      city: 'Gresik, East Java',
-      businessType: 'Packaged Beverages & Dairy Distributor',
+      city: "Gresik, East Java",
+      businessType: "Packaged Beverages & Dairy Distributor",
       reputationScore: 93,
       completedTxCount: 97,
-      validationMethod: 'ERC-8004 Confirmation of Payee Verified',
+      validationMethod: "ERC-8004 Confirmation of Payee Verified",
     },
     registeredAt: NOW - 28 * 86400 * 1000,
     active: true,
   },
   {
-    name: 'Aevum UMKM Liquidity Guild',
+    name: "Aevum UMKM Liquidity Guild",
     wallet: LENDER_ADDR,
-    category: 'lender',
+    category: "lender",
     metadata: {
-      city: 'QDay Testnet Liquidity Pool',
-      businessType: 'Community Working-Capital LP Guild',
+      city: "QDay Testnet Liquidity Pool",
+      businessType: "Community Working-Capital LP Guild",
       reputationScore: 97,
       completedTxCount: 61,
-      validationMethod: 'Verified LoanPool LP Share',
+      validationMethod: "Verified LoanPool LP Share",
     },
     registeredAt: NOW - 58 * 86400 * 1000,
     active: true,
@@ -134,100 +148,100 @@ const INITIAL_IDENTITIES: ERC8004Identity[] = [
 
 const INITIAL_SALES: SaleRecord[] = [
   {
-    id: 'sale-108',
+    id: "sale-108",
     shop: SHOP_ADDRESS,
     amountUSD8: 24.5,
-    customerIdHash: hashCustomerId('0812-8841'),
-    customerLabel: 'Customer #8841',
+    customerIdHash: hashCustomerId("0812-8841"),
+    customerLabel: "Customer #8841",
     timestamp: NOW - 2 * 3600 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 24.5,
-    eip712Signature: '0x4b12e9...eip712',
-    txHash: pseudoTxHash('sale-108'),
+    eip712Signature: "0x4b12e9...eip712",
+    txHash: pseudoTxHash("sale-108"),
   },
   {
-    id: 'sale-107',
+    id: "sale-107",
     shop: SHOP_ADDRESS,
     amountUSD8: 18.0,
-    customerIdHash: hashCustomerId('0856-3319'),
-    customerLabel: 'Customer #3319',
+    customerIdHash: hashCustomerId("0856-3319"),
+    customerLabel: "Customer #3319",
     timestamp: NOW - 5 * 3600 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 18.0,
-    eip712Signature: '0x99a4c1...eip712',
-    txHash: pseudoTxHash('sale-107'),
+    eip712Signature: "0x99a4c1...eip712",
+    txHash: pseudoTxHash("sale-107"),
   },
   {
-    id: 'sale-106',
+    id: "sale-106",
     shop: SHOP_ADDRESS,
     amountUSD8: 42.0,
-    customerIdHash: hashCustomerId('0813-7720'),
-    customerLabel: 'Customer #7720',
+    customerIdHash: hashCustomerId("0813-7720"),
+    customerLabel: "Customer #7720",
     timestamp: NOW - 1 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 42.0,
-    eip712Signature: '0x11d0f8...eip712',
-    txHash: pseudoTxHash('sale-106'),
+    eip712Signature: "0x11d0f8...eip712",
+    txHash: pseudoTxHash("sale-106"),
   },
   {
-    id: 'sale-105',
+    id: "sale-105",
     shop: SHOP_ADDRESS,
     amountUSD8: 68.5,
-    customerIdHash: hashCustomerId('0878-4490'),
-    customerLabel: 'Customer #4490',
+    customerIdHash: hashCustomerId("0878-4490"),
+    customerLabel: "Customer #4490",
     timestamp: NOW - 2 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 68.5,
-    eip712Signature: '0x6a22b1...eip712',
-    txHash: pseudoTxHash('sale-105'),
+    eip712Signature: "0x6a22b1...eip712",
+    txHash: pseudoTxHash("sale-105"),
   },
   {
-    id: 'sale-104',
+    id: "sale-104",
     shop: SHOP_ADDRESS,
     amountUSD8: 112.0,
-    customerIdHash: hashCustomerId('0819-5502'),
-    customerLabel: 'Customer #5502',
+    customerIdHash: hashCustomerId("0819-5502"),
+    customerLabel: "Customer #5502",
     timestamp: NOW - 4 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 112.0,
-    eip712Signature: '0x88c1e3...eip712',
-    txHash: pseudoTxHash('sale-104'),
+    eip712Signature: "0x88c1e3...eip712",
+    txHash: pseudoTxHash("sale-104"),
   },
   {
-    id: 'sale-103',
+    id: "sale-103",
     shop: SHOP_ADDRESS,
     amountUSD8: 295.0,
-    customerIdHash: hashCustomerId('0821-6108'),
-    customerLabel: 'Customer #6108',
+    customerIdHash: hashCustomerId("0821-6108"),
+    customerLabel: "Customer #6108",
     timestamp: NOW - 9 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 295.0,
-    eip712Signature: '0x3f71a2...eip712',
-    txHash: pseudoTxHash('sale-103'),
+    eip712Signature: "0x3f71a2...eip712",
+    txHash: pseudoTxHash("sale-103"),
   },
   {
-    id: 'sale-102',
+    id: "sale-102",
     shop: SHOP_ADDRESS,
     amountUSD8: 340.0,
-    customerIdHash: hashCustomerId('0852-9014'),
-    customerLabel: 'Customer #9014',
+    customerIdHash: hashCustomerId("0852-9014"),
+    customerLabel: "Customer #9014",
     timestamp: NOW - 16 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 340.0,
-    eip712Signature: '0x2d09c4...eip712',
-    txHash: pseudoTxHash('sale-102'),
+    eip712Signature: "0x2d09c4...eip712",
+    txHash: pseudoTxHash("sale-102"),
   },
   {
-    id: 'sale-101',
+    id: "sale-101",
     shop: SHOP_ADDRESS,
     amountUSD8: 350.0,
-    customerIdHash: hashCustomerId('0811-1204'),
-    customerLabel: 'Customer #1204',
+    customerIdHash: hashCustomerId("0811-1204"),
+    customerLabel: "Customer #1204",
     timestamp: NOW - 23 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 350.0,
-    eip712Signature: '0x7e40b9...eip712',
-    txHash: pseudoTxHash('sale-101'),
+    eip712Signature: "0x7e40b9...eip712",
+    txHash: pseudoTxHash("sale-101"),
   },
 ];
 
@@ -242,10 +256,10 @@ const INITIAL_LOANS: LoanRecord[] = [
     totalRepaidUSD8: 0,
     proposedAt: NOW - 3 * 3600 * 1000,
     expiresAt: NOW + 45 * 3600 * 1000,
-    status: 'Proposed',
-    agentName: 'HanumPay-AI-Guarantor-v1',
+    status: "Proposed",
+    agentName: "HanumPay-AI-Guarantor-v1",
     aiExplanation:
-      'Verified 8 unique buyers over 30 days totaling 1,250.00 tUSD8 in QR sales. 10% contract working-capital limit = 125.00 tUSD8 at an immutable 5% flat fee (6.25 tUSD8).',
+      "Verified 8 unique buyers over 30 days totaling 1,250.00 tUSD8 in QR sales. 10% contract working-capital limit = 125.00 tUSD8 at an immutable 5% flat fee (6.25 tUSD8).",
   },
   {
     id: 19,
@@ -258,83 +272,83 @@ const INITIAL_LOANS: LoanRecord[] = [
     acceptedAt: NOW - 61 * 86400 * 1000,
     repaidAt: NOW - 39 * 86400 * 1000,
     expiresAt: NOW - 60 * 86400 * 1000,
-    status: 'Repaid',
-    agentName: 'HanumPay-AI-Guarantor-v1',
+    status: "Repaid",
+    agentName: "HanumPay-AI-Guarantor-v1",
   },
 ];
 
 const INITIAL_PASSPORTS: CreditPassportRecord[] = [
   {
     loanId: 19,
-    shopName: 'Warung Bu Sri - Surabaya',
+    shopName: "Warung Bu Sri - Surabaya",
     shopAddress: SHOP_ADDRESS,
     principalUSD8: 80.0,
     flatFeeUSD8: 4.0,
     daysToRepay: 22,
     newCreditLimitUSD8: 125.0,
-    txHash: pseudoTxHash('passport-loan-19'),
+    txHash: pseudoTxHash("passport-loan-19"),
     timestamp: NOW - 39 * 86400 * 1000,
   },
 ];
 
 const INITIAL_POOL_EVENTS: PoolEvent[] = [
   {
-    id: 'pe-1',
-    type: 'Deposit',
-    actor: 'Aevum UMKM Liquidity Guild',
+    id: "pe-1",
+    type: "Deposit",
+    actor: "Aevum UMKM Liquidity Guild",
     amountUSD8: 12400.0,
     timestamp: NOW - 40 * 86400 * 1000,
-    txHash: pseudoTxHash('pe-1'),
+    txHash: pseudoTxHash("pe-1"),
   },
   {
-    id: 'pe-2',
-    type: 'LoanDisbursed',
-    actor: 'Warung Bu Sri - Surabaya',
+    id: "pe-2",
+    type: "LoanDisbursed",
+    actor: "Warung Bu Sri - Surabaya",
     amountUSD8: 80.0,
     timestamp: NOW - 61 * 86400 * 1000,
-    txHash: pseudoTxHash('pe-2'),
+    txHash: pseudoTxHash("pe-2"),
   },
   {
-    id: 'pe-3',
-    type: 'RepaymentReceived',
-    actor: 'Warung Bu Sri - Surabaya',
+    id: "pe-3",
+    type: "RepaymentReceived",
+    actor: "Warung Bu Sri - Surabaya",
     amountUSD8: 84.0,
     timestamp: NOW - 39 * 86400 * 1000,
-    txHash: pseudoTxHash('pe-3'),
+    txHash: pseudoTxHash("pe-3"),
   },
 ];
 
 const INITIAL_AUDIT_LOGS: AgentAuditLog[] = [
   {
-    id: 'log-1',
-    event: 'cycle_start',
+    id: "log-1",
+    event: "cycle_start",
     timestamp: NOW - 3 * 3600 * 1000 - 4000,
   },
   {
-    id: 'log-2',
-    event: 'shops_fetched',
-    reason: 'Fetched 3 registered shops from SalesLedger',
+    id: "log-2",
+    event: "shops_fetched",
+    reason: "Fetched 3 registered shops from SalesLedger",
     timestamp: NOW - 3 * 3600 * 1000 - 3000,
   },
   {
-    id: 'log-3',
-    event: 'shop_skipped',
-    shop: '0x2190...7A12 (Kios Kopi Mas Andi)',
-    reason: 'Only 3 unique buyers. Minimum 5 required.',
+    id: "log-3",
+    event: "shop_skipped",
+    shop: "0x2190...7A12 (Kios Kopi Mas Andi)",
+    reason: "Only 3 unique buyers. Minimum 5 required.",
     timestamp: NOW - 3 * 3600 * 1000 - 2000,
   },
   {
-    id: 'log-4',
-    event: 'proposal_submitted',
+    id: "log-4",
+    event: "proposal_submitted",
     shop: SHOP_ADDRESS,
-    principal: '125000000',
-    flatFee: '6250000',
-    txHash: pseudoTxHash('proposal-42'),
+    principal: "125000000",
+    flatFee: "6250000",
+    txHash: pseudoTxHash("proposal-42"),
     timestamp: NOW - 3 * 3600 * 1000,
   },
   {
-    id: 'log-5',
-    event: 'cycle_end',
+    id: "log-5",
+    event: "cycle_end",
     timestamp: NOW - 3 * 3600 * 1000 + 1200,
   },
 ];
@@ -356,7 +370,12 @@ interface HanumPayContextValue {
   identities: ERC8004Identity[];
   resolveERC8004: (name: string) => `0x${string}` | null;
   isERC8004Verified: (name: string) => boolean;
-  registerIdentity: (name: string, category: EntityCategory, city: string, businessType: string) => { ok: boolean; error?: string };
+  registerIdentity: (
+    name: string,
+    category: EntityCategory,
+    city: string,
+    businessType: string,
+  ) => { ok: boolean; error?: string };
 
   // Sales & Credit
   sales: SaleRecord[];
@@ -365,8 +384,13 @@ interface HanumPayContextValue {
   recordSale: (
     amountUSD8: number,
     customerIdRaw: string,
-    useWalletSign: boolean
-  ) => Promise<{ ok: boolean; repaidAmount: number; receipt?: VerifiableReceipt; error?: string }>;
+    useWalletSign: boolean,
+  ) => Promise<{
+    ok: boolean;
+    repaidAmount: number;
+    receipt?: VerifiableReceipt;
+    error?: string;
+  }>;
 
   // Loans & AI Agent
   loans: LoanRecord[];
@@ -379,10 +403,12 @@ interface HanumPayContextValue {
   toggleAgentPaused: () => void;
   auditLogs: AgentAuditLog[];
   lastRelayMode: string | null;
-  runAgentCycle: (aiExplanation?: string) => Promise<{ ok: boolean; message: string }>;
+  runAgentCycle: (
+    aiExplanation?: string,
+  ) => Promise<{ ok: boolean; message: string }>;
   acceptLoanProposal: (
     loanId: number,
-    useWalletSign: boolean
+    useWalletSign: boolean,
   ) => Promise<{ ok: boolean; receipt?: VerifiableReceipt; error?: string }>;
   rejectLoanProposal: (loanId: number) => void;
 
@@ -402,7 +428,7 @@ interface HanumPayContextValue {
   payVerifiedSupplier: (
     supplierName: string,
     amountUSD8: number,
-    itemNote: string
+    itemNote: string,
   ) => { ok: boolean; receipt?: VerifiableReceipt; error?: string };
   creditPassports: CreditPassportRecord[];
   shopAvailableTusd8: number;
@@ -424,7 +450,8 @@ interface HanumPayContextValue {
 const HanumPayContext = createContext<HanumPayContextValue | null>(null);
 
 export function HanumPayProvider({ children }: { children: React.ReactNode }) {
-  const [identities, setIdentities] = useState<ERC8004Identity[]>(INITIAL_IDENTITIES);
+  const [identities, setIdentities] =
+    useState<ERC8004Identity[]>(INITIAL_IDENTITIES);
   const [sales, setSales] = useState<SaleRecord[]>(INITIAL_SALES);
   const [loans, setLoans] = useState<LoanRecord[]>(INITIAL_LOANS);
   const [proposalsToday, setProposalsToday] = useState<number>(1);
@@ -432,85 +459,102 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
   const [poolLoanedUSD8, setPoolLoanedUSD8] = useState<number>(3640); // includes other SMEs in communal pool
   const [poolFeesEarnedUSD8, setPoolFeesEarnedUSD8] = useState<number>(482.5);
   const [userLenderShares, setUserLenderShares] = useState<number>(1500);
-  const [poolEvents, setPoolEvents] = useState<PoolEvent[]>(INITIAL_POOL_EVENTS);
-  const [creditPassports, setCreditPassports] = useState<CreditPassportRecord[]>(INITIAL_PASSPORTS);
-  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([]);
-  const [auditLogs, setAuditLogs] = useState<AgentAuditLog[]>(INITIAL_AUDIT_LOGS);
+  const [poolEvents, setPoolEvents] =
+    useState<PoolEvent[]>(INITIAL_POOL_EVENTS);
+  const [creditPassports, setCreditPassports] =
+    useState<CreditPassportRecord[]>(INITIAL_PASSPORTS);
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>(
+    [],
+  );
+  const [auditLogs, setAuditLogs] =
+    useState<AgentAuditLog[]>(INITIAL_AUDIT_LOGS);
   const [shopAvailableTusd8, setShopAvailableTusd8] = useState<number>(145.0);
   const [lastRelayMode, setLastRelayMode] = useState<string | null>(null);
   const [agentPaused, setAgentPaused] = useState<boolean>(false);
   const [receipts, setReceipts] = useState<VerifiableReceipt[]>(() =>
     INITIAL_SALES.slice(0, 3).map((s) => ({
       id: `rcpt-${s.id}`,
-      kind: 'sale',
+      kind: "sale",
       title: `QR Sale · ${s.customerLabel}`,
       amountUSD8: s.amountUSD8,
       repaidDeductedUSD8: s.repaidDeductedUSD8,
       netAmountUSD8: s.netToShopUSD8,
-      counterpartyName: 'Warung Bu Sri - Surabaya',
+      counterpartyName: "Warung Bu Sri - Surabaya",
       counterpartyWallet: s.shop,
       erc8004Verified: true,
       proofHash: s.customerIdHash,
       txHash: s.txHash,
-      relayMode: 'verified-demo-relay',
+      relayMode: "verified-demo-relay",
       timestamp: s.timestamp,
-      note: 'Gasless QR Sale Receipt (EIP-712)',
-    }))
+      note: "Gasless QR Sale Receipt (EIP-712)",
+    })),
   );
-  const [activeReceipt, setActiveReceipt] = useState<VerifiableReceipt | null>(null);
+  const [activeReceipt, setActiveReceipt] = useState<VerifiableReceipt | null>(
+    null,
+  );
 
   const [wallet, setWallet] = useState<WalletState>({
     connected: false,
     address: null,
     chainId: null,
-    tqdayBalance: '0.0000',
-    tusd8Balance: '0.00',
+    tqdayBalance: "0.0000",
+    tusd8Balance: "0.00",
     isConnecting: false,
     error: null,
   });
 
-  const activeShopName = 'Warung Bu Sri - Surabaya';
+  const activeShopName = "Warung Bu Sri - Surabaya";
 
   const resolveERC8004 = useCallback(
     (name: string): `0x${string}` | null => {
       const match = identities.find(
-        (i) => i.name.toLowerCase() === name.trim().toLowerCase() && i.active
+        (i) => i.name.toLowerCase() === name.trim().toLowerCase() && i.active,
       );
       return match ? match.wallet : null;
     },
-    [identities]
+    [identities],
   );
 
   const isERC8004Verified = useCallback(
     (name: string): boolean => {
       return identities.some(
-        (i) => i.name.toLowerCase() === name.trim().toLowerCase() && i.active
+        (i) => i.name.toLowerCase() === name.trim().toLowerCase() && i.active,
       );
     },
-    [identities]
+    [identities],
   );
 
   const registerIdentity = useCallback(
-    (name: string, category: EntityCategory, city: string, businessType: string) => {
+    (
+      name: string,
+      category: EntityCategory,
+      city: string,
+      businessType: string,
+    ) => {
       const trimmed = name.trim();
       if (!trimmed || trimmed.length > 64) {
-        return { ok: false, error: 'Identity name must be 1–64 characters.' };
+        return { ok: false, error: "Identity name must be 1–64 characters." };
       }
-      if (identities.some((i) => i.name.toLowerCase() === trimmed.toLowerCase())) {
-        return { ok: false, error: `"${trimmed}" is already registered in ERC8004Registry.` };
+      if (
+        identities.some((i) => i.name.toLowerCase() === trimmed.toLowerCase())
+      ) {
+        return {
+          ok: false,
+          error: `"${trimmed}" is already registered in ERC8004Registry.`,
+        };
       }
       const newWallet = (wallet.address ??
-        (`0x${pseudoTxHash(trimmed).slice(2, 42)}`)) as `0x${string}`;
+        `0x${pseudoTxHash(trimmed).slice(2, 42)}`) as `0x${string}`;
       const newIdentity: ERC8004Identity = {
         name: trimmed,
         wallet: newWallet,
         category,
         metadata: {
-          city: city || 'QDay Aevum Network',
-          businessType: businessType || 'Registered Entity',
+          city: city || "QDay Aevum Network",
+          businessType: businessType || "Registered Entity",
           reputationScore: 90,
           completedTxCount: 1,
-          validationMethod: 'ERC-8004 On-Chain Registered',
+          validationMethod: "ERC-8004 On-Chain Registered",
         },
         registeredAt: Date.now(),
         active: true,
@@ -518,25 +562,27 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       setIdentities((prev) => [newIdentity, ...prev]);
       return { ok: true };
     },
-    [identities, wallet.address]
+    [identities, wallet.address],
   );
 
   const proposedLoan = useMemo(
-    () => loans.find((l) => l.status === 'Proposed') ?? null,
-    [loans]
+    () => loans.find((l) => l.status === "Proposed") ?? null,
+    [loans],
   );
   const activeLoan = useMemo(
-    () => loans.find((l) => l.status === 'Active') ?? null,
-    [loans]
+    () => loans.find((l) => l.status === "Active") ?? null,
+    [loans],
   );
   const repaidLoans = useMemo(
-    () => loans.filter((l) => l.status === 'Repaid'),
-    [loans]
+    () => loans.filter((l) => l.status === "Repaid"),
+    [loans],
   );
 
   const poolAvailableUSD8 = Math.max(0, poolDepositedUSD8 - poolLoanedUSD8);
   const poolUtilizationBps =
-    poolDepositedUSD8 > 0 ? Math.round((poolLoanedUSD8 / poolDepositedUSD8) * 10000) : 0;
+    poolDepositedUSD8 > 0
+      ? Math.round((poolLoanedUSD8 / poolDepositedUSD8) * 10000)
+      : 0;
 
   const shopStats = useMemo<ShopStatsSnapshot>(() => {
     const totalSales30dUSD8 = sales.reduce((acc, s) => acc + s.amountUSD8, 0);
@@ -553,28 +599,36 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       poolAvailableUSD8,
       agentPaused,
     };
-  }, [sales, proposedLoan, activeLoan, proposalsToday, poolUtilizationBps, poolAvailableUSD8, agentPaused]);
+  }, [
+    sales,
+    proposedLoan,
+    activeLoan,
+    proposalsToday,
+    poolUtilizationBps,
+    poolAvailableUSD8,
+    agentPaused,
+  ]);
 
-  const eligibility = useMemo(() => checkShopEligibility(shopStats), [shopStats]);
-
-  const setAgentPausedState = useCallback(
-    (paused: boolean) => {
-      setAgentPaused(paused);
-      setAuditLogs((prev) => [
-        {
-          id: `log-pause-${Date.now()}`,
-          event: paused ? 'shop_skipped' : 'cycle_start',
-          shop: SHOP_ADDRESS,
-          reason: paused
-            ? 'Merchant paused AI Guarantor access (AIGuarantor.setAgentPaused(true))'
-            : 'Merchant resumed AI Guarantor access (AIGuarantor.setAgentPaused(false))',
-          timestamp: Date.now(),
-        },
-        ...prev,
-      ]);
-    },
-    []
+  const eligibility = useMemo(
+    () => checkShopEligibility(shopStats),
+    [shopStats],
   );
+
+  const setAgentPausedState = useCallback((paused: boolean) => {
+    setAgentPaused(paused);
+    setAuditLogs((prev) => [
+      {
+        id: `log-pause-${Date.now()}`,
+        event: paused ? "shop_skipped" : "cycle_start",
+        shop: SHOP_ADDRESS,
+        reason: paused
+          ? "Merchant paused AI Guarantor access (AIGuarantor.setAgentPaused(true))"
+          : "Merchant resumed AI Guarantor access (AIGuarantor.setAgentPaused(false))",
+        timestamp: Date.now(),
+      },
+      ...prev,
+    ]);
+  }, []);
 
   const toggleAgentPaused = useCallback(() => {
     setAgentPausedState(!agentPaused);
@@ -589,25 +643,32 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const recordSale = useCallback(
-    async (amountUSD8: number, customerIdRaw: string, useWalletSign: boolean) => {
+    async (
+      amountUSD8: number,
+      customerIdRaw: string,
+      useWalletSign: boolean,
+    ) => {
       if (Number.isNaN(amountUSD8) || amountUSD8 < 0.1 || amountUSD8 > 500) {
         return {
           ok: false,
           repaidAmount: 0,
-          error: 'Sale amount must be between 0.10 tUSD8 and 500.00 tUSD8.',
+          error: "Sale amount must be between 0.10 tUSD8 and 500.00 tUSD8.",
         };
       }
       if (!customerIdRaw || customerIdRaw.trim().length < 4) {
         return {
           ok: false,
           repaidAmount: 0,
-          error: 'Customer phone / ID must be at least 4 characters (hashed locally on-device).',
+          error:
+            "Customer phone / ID must be at least 4 characters (hashed locally on-device).",
         };
       }
 
       const deadline = Math.floor(Date.now() / 1000) + 3600;
       const shopSigner =
-        useWalletSign && wallet.connected && wallet.address ? wallet.address : SHOP_ADDRESS;
+        useWalletSign && wallet.connected && wallet.address
+          ? wallet.address
+          : SHOP_ADDRESS;
       let sig = `0x${pseudoTxHash(`eip712-${Date.now()}-${amountUSD8}`).slice(2, 20)}...eip712`;
       if (useWalletSign && wallet.connected && wallet.address) {
         const provider = getInjectedProvider();
@@ -616,24 +677,24 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
             const typedData = {
               types: {
                 EIP712Domain: [
-                  { name: 'name', type: 'string' },
-                  { name: 'version', type: 'string' },
-                  { name: 'chainId', type: 'uint256' },
-                  { name: 'verifyingContract', type: 'address' },
+                  { name: "name", type: "string" },
+                  { name: "version", type: "string" },
+                  { name: "chainId", type: "uint256" },
+                  { name: "verifyingContract", type: "address" },
                 ],
                 RecordSale: [
-                  { name: 'shop', type: 'address' },
-                  { name: 'amountUSD8', type: 'uint256' },
-                  { name: 'customerId', type: 'bytes32' },
-                  { name: 'deadline', type: 'uint256' },
+                  { name: "shop", type: "address" },
+                  { name: "amountUSD8", type: "uint256" },
+                  { name: "customerId", type: "bytes32" },
+                  { name: "deadline", type: "uint256" },
                 ],
               },
-              primaryType: 'RecordSale',
+              primaryType: "RecordSale",
               domain: {
-                name: 'HanumPaySalesLedger',
-                version: '1',
+                name: "HanumPaySalesLedger",
+                version: "1",
                 chainId: QDAY_CHAIN_ID,
-                verifyingContract: '0x7A90000000000000000000000000000000008004',
+                verifyingContract: DEPLOYED_CONTRACTS.salesLedger,
               },
               message: {
                 shop: wallet.address,
@@ -643,12 +704,16 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
               },
             };
             const result = await provider.request({
-              method: 'eth_signTypedData_v4',
+              method: "eth_signTypedData_v4",
               params: [wallet.address, JSON.stringify(typedData)],
             });
             sig = String(result);
           } catch {
-            return { ok: false, repaidAmount: 0, error: 'EIP-712 signature was cancelled in wallet.' };
+            return {
+              ok: false,
+              repaidAmount: 0,
+              error: "EIP-712 signature was cancelled in wallet.",
+            };
           }
         }
       }
@@ -658,9 +723,9 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       // Call Next.js Relayer API (/api/relay/record-sale)
       let relayedTxHash: string | null = null;
       try {
-        const relayRes = await fetch('/api/relay/record-sale', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const relayRes = await fetch("/api/relay/record-sale", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             shop: shopSigner,
             amountUSD8,
@@ -669,14 +734,22 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
             signature: sig,
           }),
         });
-        const relayData = (await relayRes.json()) as { mode?: string; txHash?: string; error?: string };
+        const relayData = (await relayRes.json()) as {
+          mode?: string;
+          txHash?: string;
+          error?: string;
+        };
         if (!relayRes.ok) {
-          return { ok: false, repaidAmount: 0, error: relayData.error ?? 'Relayer verification failed.' };
+          return {
+            ok: false,
+            repaidAmount: 0,
+            error: relayData.error ?? "Relayer verification failed.",
+          };
         }
         if (relayData.mode) setLastRelayMode(relayData.mode);
         if (relayData.txHash) relayedTxHash = relayData.txHash;
       } catch {
-        setLastRelayMode('verified-demo-relay');
+        setLastRelayMode("verified-demo-relay");
       }
 
       let repaidDeducted = 0;
@@ -684,10 +757,12 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       if (activeLoan) {
         const totalDue = activeLoan.principalUSD8 + activeLoan.flatFeeUSD8;
         const remaining = Math.max(0, totalDue - activeLoan.totalRepaidUSD8);
-        const rawCut = Math.round(amountUSD8 * (activeLoan.repayPctBps / 10000) * 100) / 100;
+        const rawCut =
+          Math.round(amountUSD8 * (activeLoan.repayPctBps / 10000) * 100) / 100;
         repaidDeducted = Math.min(remaining, rawCut);
 
-        const nextTotalRepaid = Math.round((activeLoan.totalRepaidUSD8 + repaidDeducted) * 100) / 100;
+        const nextTotalRepaid =
+          Math.round((activeLoan.totalRepaidUSD8 + repaidDeducted) * 100) / 100;
         const isNowRepaid = nextTotalRepaid >= totalDue - 0.001;
 
         setLoans((prev) =>
@@ -696,10 +771,10 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
             return {
               ...l,
               totalRepaidUSD8: isNowRepaid ? totalDue : nextTotalRepaid,
-              status: isNowRepaid ? 'Repaid' : 'Active',
+              status: isNowRepaid ? "Repaid" : "Active",
               repaidAt: isNowRepaid ? Date.now() : undefined,
             };
-          })
+          }),
         );
 
         if (repaidDeducted > 0) {
@@ -708,7 +783,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
           setPoolEvents((prev) => [
             {
               id: `pe-${Date.now()}`,
-              type: 'RepaymentReceived',
+              type: "RepaymentReceived",
               actor: activeShopName,
               amountUSD8: repaidDeducted,
               timestamp: Date.now(),
@@ -721,7 +796,8 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         if (isNowRepaid) {
           const nextLimit = Math.min(
             CONTRACT_LIMITS.MAX_LOAN_USD8,
-            Math.round(((shopStats.totalSales30dUSD8 + amountUSD8) * 0.1) * 100) / 100
+            Math.round((shopStats.totalSales30dUSD8 + amountUSD8) * 0.1 * 100) /
+              100,
           );
           setCreditPassports((prev) => [
             {
@@ -733,8 +809,10 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
               daysToRepay: Math.max(
                 1,
                 Math.round(
-                  (Date.now() - (activeLoan.acceptedAt ?? Date.now() - 86400000)) / 86400000
-                )
+                  (Date.now() -
+                    (activeLoan.acceptedAt ?? Date.now() - 86400000)) /
+                    86400000,
+                ),
               ),
               newCreditLimitUSD8: nextLimit,
               txHash: pseudoTxHash(`passport-${activeLoan.id}`),
@@ -746,7 +824,8 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       }
 
       const netToShop = Math.round((amountUSD8 - repaidDeducted) * 100) / 100;
-      const resolvedTx = relayedTxHash ?? pseudoTxHash(`sale-${Date.now()}-${amountUSD8}`);
+      const resolvedTx =
+        relayedTxHash ?? pseudoTxHash(`sale-${Date.now()}-${amountUSD8}`);
       const newSale: SaleRecord = {
         id: `sale-${Date.now()}`,
         shop: SHOP_ADDRESS,
@@ -762,7 +841,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
 
       const newReceipt: VerifiableReceipt = {
         id: `rcpt-${newSale.id}`,
-        kind: 'sale',
+        kind: "sale",
         title: `QR Sale · ${newSale.customerLabel}`,
         amountUSD8,
         repaidDeductedUSD8: repaidDeducted,
@@ -772,37 +851,48 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         erc8004Verified: true,
         proofHash: customerIdHash,
         txHash: resolvedTx,
-        relayMode: relayedTxHash ? 'qday-onchain-relay' : 'verified-demo-relay',
+        relayMode: relayedTxHash ? "qday-onchain-relay" : "verified-demo-relay",
         timestamp: newSale.timestamp,
         note:
           repaidDeducted > 0
             ? `10% auto-repayment deducted (${repaidDeducted.toFixed(2)} tUSD8) to LoanPool`
-            : 'Gasless customer QR receipt verified',
+            : "Gasless customer QR receipt verified",
       };
 
       setSales((prev) => [newSale, ...prev]);
       setReceipts((prev) => [newReceipt, ...prev]);
-      setShopAvailableTusd8((prev) => Math.round((prev + netToShop) * 100) / 100);
+      setShopAvailableTusd8(
+        (prev) => Math.round((prev + netToShop) * 100) / 100,
+      );
       return { ok: true, repaidAmount: repaidDeducted, receipt: newReceipt };
     },
-    [activeLoan, activeShopName, shopStats.totalSales30dUSD8, wallet.address, wallet.connected]
+    [
+      activeLoan,
+      activeShopName,
+      shopStats.totalSales30dUSD8,
+      wallet.address,
+      wallet.connected,
+    ],
   );
 
   const runAgentCycle = useCallback(
     async (aiExplanation?: string) => {
       const now = Date.now();
-      await fetch('/api/agent/cron', { method: 'POST' }).catch(() => null);
+      await fetch("/api/agent/cron", { method: "POST" }).catch(() => null);
 
       if (!eligibility.eligible) {
         const skipLog: AgentAuditLog = {
           id: `log-${now}`,
-          event: 'shop_skipped',
+          event: "shop_skipped",
           shop: SHOP_ADDRESS,
           reason: eligibility.reason,
           timestamp: now,
         };
         setAuditLogs((prev) => [skipLog, ...prev]);
-        return { ok: false, message: `AI Agent skipped Warung Bu Sri: ${eligibility.reason}` };
+        return {
+          ok: false,
+          message: `AI Agent skipped Warung Bu Sri: ${eligibility.reason}`,
+        };
       }
 
       const nextId = Math.max(42, ...loans.map((l) => l.id)) + 1;
@@ -815,8 +905,8 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         totalRepaidUSD8: 0,
         proposedAt: now,
         expiresAt: now + 48 * 3600 * 1000,
-        status: 'Proposed',
-        agentName: 'HanumPay-AI-Guarantor-v1',
+        status: "Proposed",
+        agentName: "HanumPay-AI-Guarantor-v1",
         aiExplanation:
           aiExplanation ||
           `On-chain check passed (${shopStats.uniqueCustomers30d} unique buyers, 30d sales $${shopStats.totalSales30dUSD8.toFixed(2)}). Smart contract sized working-capital limit at $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
@@ -828,15 +918,19 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       setAuditLogs((prev) => [
         {
           id: `log-end-${now}`,
-          event: 'cycle_end',
+          event: "cycle_end",
           timestamp: now + 500,
         },
         {
           id: `log-sub-${now}`,
-          event: 'proposal_submitted',
+          event: "proposal_submitted",
           shop: SHOP_ADDRESS,
-          principal: String(Math.round(eligibility.proposedPrincipalUSD8 * 1_000_000)),
-          flatFee: String(Math.round(eligibility.proposedFlatFeeUSD8 * 1_000_000)),
+          principal: String(
+            Math.round(eligibility.proposedPrincipalUSD8 * 1_000_000),
+          ),
+          flatFee: String(
+            Math.round(eligibility.proposedFlatFeeUSD8 * 1_000_000),
+          ),
           txHash,
           timestamp: now,
         },
@@ -848,28 +942,44 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         message: `Proposal #${nextId} submitted on-chain for $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
       };
     },
-    [eligibility, loans, shopStats.totalSales30dUSD8, shopStats.uniqueCustomers30d]
+    [
+      eligibility,
+      loans,
+      shopStats.totalSales30dUSD8,
+      shopStats.uniqueCustomers30d,
+    ],
   );
 
   const acceptLoanProposal = useCallback(
     async (loanId: number, useWalletSign: boolean) => {
-      const target = loans.find((l) => l.id === loanId && l.status === 'Proposed');
+      const target = loans.find(
+        (l) => l.id === loanId && l.status === "Proposed",
+      );
       if (!target) {
-        return { ok: false, error: 'Loan proposal not found or already claimed.' };
+        return {
+          ok: false,
+          error: "Loan proposal not found or already claimed.",
+        };
       }
       if (!isERC8004Verified(target.agentName)) {
         return {
           ok: false,
-          error: 'ERC-8004 verification failed: AI Guarantor identity is inactive.',
+          error:
+            "ERC-8004 verification failed: AI Guarantor identity is inactive.",
         };
       }
       if (target.principalUSD8 > poolAvailableUSD8) {
-        return { ok: false, error: 'Insufficient available liquidity in LoanPool.' };
+        return {
+          ok: false,
+          error: "Insufficient available liquidity in LoanPool.",
+        };
       }
 
       const deadline = Math.floor(Date.now() / 1000) + 3600;
       const shopSigner =
-        useWalletSign && wallet.connected && wallet.address ? wallet.address : SHOP_ADDRESS;
+        useWalletSign && wallet.connected && wallet.address
+          ? wallet.address
+          : SHOP_ADDRESS;
       let sig = `0x${pseudoTxHash(`accept-${loanId}`).slice(2, 20)}...eip712`;
 
       if (useWalletSign && wallet.connected && wallet.address) {
@@ -879,51 +989,60 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
             const typedData = {
               types: {
                 EIP712Domain: [
-                  { name: 'name', type: 'string' },
-                  { name: 'version', type: 'string' },
-                  { name: 'chainId', type: 'uint256' },
-                  { name: 'verifyingContract', type: 'address' },
+                  { name: "name", type: "string" },
+                  { name: "version", type: "string" },
+                  { name: "chainId", type: "uint256" },
+                  { name: "verifyingContract", type: "address" },
                 ],
                 AcceptLoan: [
-                  { name: 'loanId', type: 'uint256' },
-                  { name: 'shop', type: 'address' },
-                  { name: 'principalUSD8', type: 'uint256' },
-                  { name: 'flatFeeUSD8', type: 'uint256' },
-                  { name: 'repayPctBps', type: 'uint256' },
-                  { name: 'deadline', type: 'uint256' },
+                  { name: "loanId", type: "uint256" },
+                  { name: "shop", type: "address" },
+                  { name: "principalUSD8", type: "uint256" },
+                  { name: "flatFeeUSD8", type: "uint256" },
+                  { name: "repayPctBps", type: "uint256" },
+                  { name: "deadline", type: "uint256" },
                 ],
               },
-              primaryType: 'AcceptLoan',
+              primaryType: "AcceptLoan",
               domain: {
-                name: 'HanumPayLoanPool',
-                version: '1',
+                name: "HanumPayLoanPool",
+                version: "1",
                 chainId: QDAY_CHAIN_ID,
-                verifyingContract: '0x7A90000000000000000000000000000000009001',
+                verifyingContract: DEPLOYED_CONTRACTS.loanPool,
               },
               message: {
                 loanId: String(target.id),
                 shop: wallet.address,
-                principalUSD8: String(Math.round(target.principalUSD8 * 1_000_000)),
+                principalUSD8: String(
+                  Math.round(target.principalUSD8 * 1_000_000),
+                ),
                 flatFeeUSD8: String(Math.round(target.flatFeeUSD8 * 1_000_000)),
                 repayPctBps: String(target.repayPctBps),
                 deadline: String(deadline),
               },
             };
             const result = await provider.request({
-              method: 'eth_signTypedData_v4',
+              method: "eth_signTypedData_v4",
               params: [wallet.address, JSON.stringify(typedData)],
             });
             sig = String(result);
           } catch {
-            return { ok: false, error: 'EIP-712 loan acceptance signature was cancelled in wallet.' };
+            return {
+              ok: false,
+              error:
+                "EIP-712 loan acceptance signature was cancelled in wallet.",
+            };
           }
         }
       }
 
+      let relayedTxHash: string | null = null;
+      let relayedMode: "qday-onchain-relay" | "verified-demo-relay" =
+        "verified-demo-relay";
       try {
-        const relayRes = await fetch('/api/relay/accept-loan', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const relayRes = await fetch("/api/relay/accept-loan", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             loanId: target.id,
             shop: shopSigner,
@@ -934,27 +1053,44 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
             signature: sig,
           }),
         });
-        const relayData = (await relayRes.json()) as { mode?: string; error?: string };
+        const relayData = (await relayRes.json()) as {
+          mode?: string;
+          txHash?: string | null;
+          error?: string;
+        };
         if (!relayRes.ok) {
-          return { ok: false, error: relayData.error ?? 'Loan relayer verification failed.' };
+          return {
+            ok: false,
+            error: relayData.error ?? "Loan relayer verification failed.",
+          };
         }
-        if (relayData.mode) setLastRelayMode(relayData.mode);
+        if (relayData.mode) {
+          setLastRelayMode(relayData.mode);
+          if (relayData.mode === "qday-onchain-relay") {
+            relayedMode = "qday-onchain-relay";
+          }
+        }
+        if (relayData.txHash) relayedTxHash = relayData.txHash;
       } catch {
-        setLastRelayMode('verified-demo-relay');
+        setLastRelayMode("verified-demo-relay");
       }
 
-      const disbursedTx = pseudoTxHash(`accept-${loanId}`);
+      const disbursedTx = relayedTxHash ?? pseudoTxHash(`accept-${loanId}`);
       setLoans((prev) =>
         prev.map((l) =>
-          l.id === loanId ? { ...l, status: 'Active', acceptedAt: Date.now() } : l
-        )
+          l.id === loanId
+            ? { ...l, status: "Active", acceptedAt: Date.now() }
+            : l,
+        ),
       );
       setPoolLoanedUSD8((prev) => prev + target.principalUSD8);
-      setShopAvailableTusd8((prev) => Math.round((prev + target.principalUSD8) * 100) / 100);
+      setShopAvailableTusd8(
+        (prev) => Math.round((prev + target.principalUSD8) * 100) / 100,
+      );
       setPoolEvents((prev) => [
         {
           id: `pe-${Date.now()}`,
-          type: 'LoanDisbursed',
+          type: "LoanDisbursed",
           actor: activeShopName,
           amountUSD8: target.principalUSD8,
           timestamp: Date.now(),
@@ -965,7 +1101,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
 
       const loanReceipt: VerifiableReceipt = {
         id: `rcpt-loan-${loanId}-${Date.now()}`,
-        kind: 'loan',
+        kind: "loan",
         title: `Working Capital #${loanId} Disbursed`,
         amountUSD8: target.principalUSD8,
         repaidDeductedUSD8: 0,
@@ -975,7 +1111,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         erc8004Verified: true,
         proofHash: sig,
         txHash: disbursedTx,
-        relayMode: 'verified-demo-relay',
+        relayMode: relayedMode,
         timestamp: Date.now(),
         note: `5% flat fee (${target.flatFeeUSD8.toFixed(2)} tUSD8) · 10% auto-deducted per QR sale`,
       };
@@ -983,17 +1119,28 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
 
       return { ok: true, receipt: loanReceipt };
     },
-    [activeShopName, isERC8004Verified, loans, poolAvailableUSD8, wallet.address, wallet.connected]
+    [
+      activeShopName,
+      isERC8004Verified,
+      loans,
+      poolAvailableUSD8,
+      wallet.address,
+      wallet.connected,
+    ],
   );
 
   const rejectLoanProposal = useCallback((loanId: number) => {
     setLoans((prev) =>
-      prev.map((l) => (l.id === loanId && l.status === 'Proposed' ? { ...l, status: 'Expired' } : l))
+      prev.map((l) =>
+        l.id === loanId && l.status === "Proposed"
+          ? { ...l, status: "Expired" }
+          : l,
+      ),
     );
     setAuditLogs((prev) => [
       {
         id: `log-rej-${Date.now()}`,
-        event: 'proposal_rejected',
+        event: "proposal_rejected",
         shop: SHOP_ADDRESS,
         reason: `Merchant rejected Loan Proposal #${loanId} during Confirmation of Payee`,
         timestamp: Date.now(),
@@ -1005,15 +1152,17 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
   const depositToPool = useCallback(
     (amountUSD8: number) => {
       if (Number.isNaN(amountUSD8) || amountUSD8 < 1) {
-        return { ok: false, error: 'Minimum deposit is 1.00 tUSD8.' };
+        return { ok: false, error: "Minimum deposit is 1.00 tUSD8." };
       }
       setPoolDepositedUSD8((prev) => prev + amountUSD8);
       setUserLenderShares((prev) => prev + amountUSD8);
       setPoolEvents((prev) => [
         {
           id: `pe-dep-${Date.now()}`,
-          type: 'Deposit',
-          actor: wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : 'Connected LP',
+          type: "Deposit",
+          actor: wallet.address
+            ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
+            : "Connected LP",
           amountUSD8,
           timestamp: Date.now(),
           txHash: pseudoTxHash(`dep-${Date.now()}`),
@@ -1022,16 +1171,19 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       ]);
       return { ok: true };
     },
-    [wallet.address]
+    [wallet.address],
   );
 
   const withdrawFromPool = useCallback(
     (amountUSD8: number) => {
       if (Number.isNaN(amountUSD8) || amountUSD8 <= 0) {
-        return { ok: false, error: 'Enter a valid withdrawal amount.' };
+        return { ok: false, error: "Enter a valid withdrawal amount." };
       }
       if (amountUSD8 > userLenderShares) {
-        return { ok: false, error: 'Withdrawal exceeds your pool share balance.' };
+        return {
+          ok: false,
+          error: "Withdrawal exceeds your pool share balance.",
+        };
       }
       if (amountUSD8 > poolAvailableUSD8) {
         return {
@@ -1044,8 +1196,10 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       setPoolEvents((prev) => [
         {
           id: `pe-wd-${Date.now()}`,
-          type: 'Withdraw',
-          actor: wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : 'Connected LP',
+          type: "Withdraw",
+          actor: wallet.address
+            ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
+            : "Connected LP",
           amountUSD8,
           timestamp: Date.now(),
           txHash: pseudoTxHash(`wd-${Date.now()}`),
@@ -1054,7 +1208,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       ]);
       return { ok: true };
     },
-    [poolAvailableUSD8, userLenderShares, wallet.address]
+    [poolAvailableUSD8, userLenderShares, wallet.address],
   );
 
   const payVerifiedSupplier = useCallback(
@@ -1063,11 +1217,12 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       if (!resolvedWallet) {
         return {
           ok: false,
-          error: 'Confirmation of Payee blocked: supplier is not registered in ERC8004Registry.',
+          error:
+            "Confirmation of Payee blocked: supplier is not registered in ERC8004Registry.",
         };
       }
       if (Number.isNaN(amountUSD8) || amountUSD8 <= 0) {
-        return { ok: false, error: 'Enter a valid payment amount in tUSD8.' };
+        return { ok: false, error: "Enter a valid payment amount in tUSD8." };
       }
       if (amountUSD8 > shopAvailableTusd8) {
         return {
@@ -1081,18 +1236,20 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         supplierName,
         supplierWallet: resolvedWallet,
         amountUSD8,
-        itemNote: itemNote.trim() || 'Wholesale inventory restock',
+        itemNote: itemNote.trim() || "Wholesale inventory restock",
         copVerified: true,
         timestamp: Date.now(),
         txHash: pseudoTxHash(`sup-${supplierName}-${Date.now()}`),
       };
 
-      setShopAvailableTusd8((prev) => Math.round((prev - amountUSD8) * 100) / 100);
+      setShopAvailableTusd8(
+        (prev) => Math.round((prev - amountUSD8) * 100) / 100,
+      );
       setSupplierPayments((prev) => [payment, ...prev]);
       setPoolEvents((prev) => [
         {
           id: `pe-sup-${Date.now()}`,
-          type: 'SupplierPaid',
+          type: "SupplierPaid",
           actor: `${activeShopName} -> ${supplierName}`,
           amountUSD8,
           timestamp: Date.now(),
@@ -1103,7 +1260,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
 
       const supReceipt: VerifiableReceipt = {
         id: `rcpt-${payment.id}`,
-        kind: 'supplier',
+        kind: "supplier",
         title: `Supplier Paid · ${supplierName}`,
         amountUSD8,
         repaidDeductedUSD8: 0,
@@ -1113,14 +1270,14 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         erc8004Verified: true,
         proofHash: pseudoTxHash(`cop-${supplierName}-${amountUSD8}`),
         txHash: payment.txHash,
-        relayMode: 'erc8004-cop-settlement',
+        relayMode: "erc8004-cop-settlement",
         timestamp: payment.timestamp,
         note: payment.itemNote,
       };
       setReceipts((prev) => [supReceipt, ...prev]);
       return { ok: true, receipt: supReceipt };
     },
-    [activeShopName, resolveERC8004, shopAvailableTusd8]
+    [activeShopName, resolveERC8004, shopAvailableTusd8],
   );
 
   const resetStageDemo = useCallback(() => {
@@ -1154,7 +1311,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     } catch {
       setWallet((prev) => ({
         ...prev,
-        error: 'QDay RPC is busy. Please refresh balances again shortly.',
+        error: "QDay RPC is busy. Please refresh balances again shortly.",
       }));
     }
   }, [wallet.address]);
@@ -1164,7 +1321,8 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     if (!provider) {
       setWallet((prev) => ({
         ...prev,
-        error: 'No Web3 wallet detected (install MetaMask or Rabby). Demo mode remains fully active.',
+        error:
+          "No Web3 wallet detected (install MetaMask or Rabby). Demo mode remains fully active.",
       }));
       return;
     }
@@ -1172,18 +1330,20 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     setWallet((prev) => ({ ...prev, isConnecting: true, error: null }));
     try {
       const accounts = (await provider.request({
-        method: 'eth_requestAccounts',
+        method: "eth_requestAccounts",
       })) as string[];
       if (!accounts || accounts.length === 0) {
-        throw new Error('No account selected');
+        throw new Error("No account selected");
       }
       await addOrSwitchQDayNetwork(provider);
-      const chainHex = (await provider.request({ method: 'eth_chainId' })) as string;
+      const chainHex = (await provider.request({
+        method: "eth_chainId",
+      })) as string;
       const chainId = parseInt(chainHex, 16);
       const addr = accounts[0] as `0x${string}`;
       const bal = await fetchQDayBalances(addr).catch(() => ({
-        tqday: '0.0000',
-        tusd8: '0.00',
+        tqday: "0.0000",
+        tusd8: "0.00",
       }));
 
       setWallet({
@@ -1202,7 +1362,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         error:
           err instanceof Error
             ? err.message
-            : 'Failed to connect MetaMask to QDay Aevum Testnet.',
+            : "Failed to connect MetaMask to QDay Aevum Testnet.",
       }));
     }
   }, []);
@@ -1212,8 +1372,8 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       connected: false,
       address: null,
       chainId: null,
-      tqdayBalance: '0.0000',
-      tusd8Balance: '0.00',
+      tqdayBalance: "0.0000",
+      tusd8Balance: "0.00",
       isConnecting: false,
       error: null,
     });
@@ -1267,13 +1427,17 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     disconnectWallet,
   };
 
-  return <HanumPayContext.Provider value={value}>{children}</HanumPayContext.Provider>;
+  return (
+    <HanumPayContext.Provider value={value}>
+      {children}
+    </HanumPayContext.Provider>
+  );
 }
 
 export function useHanumPay() {
   const ctx = useContext(HanumPayContext);
   if (!ctx) {
-    throw new Error('useHanumPay must be used within HanumPayProvider');
+    throw new Error("useHanumPay must be used within HanumPayProvider");
   }
   return ctx;
 }
