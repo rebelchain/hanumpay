@@ -2,7 +2,7 @@
 
 **Revenue-backed working capital and ERC-8004 Confirmation of Payee for micro-merchants on QDay Aevum Testnet.**
 
-HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow with zero gas cost (*gasless EIP-712*), unlocks contract-bounded `tUSD8` working capital (**max 10% of 30-day revenue, $500 tUSD8 cap, 5% flat fee, 0% late penalties**), and protects wholesale supplier payouts using **ERC-8004 Confirmation of Payee**.
+HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow with zero gas cost (_gasless EIP-712_), unlocks contract-bounded `tUSD8` working capital (**max 10% of 30-day revenue, $500 tUSD8 cap, 5% flat fee, 0% late penalties**), and protects wholesale supplier payouts using **ERC-8004 Confirmation of Payee**.
 
 ---
 
@@ -26,15 +26,15 @@ HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow
 
 ## QDay Aevum Testnet Configuration
 
-| Parameter | Value |
-| --- | --- |
-| **Network Name** | QDay Aevum |
-| **Chain ID** | `44005` (`0xABE5`) |
-| **RPC URL** | `https://rpc-test.qday.info` *(HTTPS polling only — no WebSocket RPC)* |
-| **EVM Target** | `shanghai` *(required in `contracts/foundry.toml`, avoids Cancun `MCOPY`)* |
-| **Block Explorer** | `https://explorer-test.qday.info` |
-| **Faucet** | `https://faucet.qday.info/en` |
-| **tUSD8 Token (6 decimals)** | `0x456569838f1d43009A91ebA4263147Afd7233483` |
+| Parameter                    | Value                                                                      |
+| ---------------------------- | -------------------------------------------------------------------------- |
+| **Network Name**             | QDay Aevum                                                                 |
+| **Chain ID**                 | `44005` (`0xABE5`)                                                         |
+| **RPC URL**                  | `https://rpc-test.qday.info` _(HTTPS polling only — no WebSocket RPC)_     |
+| **EVM Target**               | `shanghai` _(required in `contracts/foundry.toml`, avoids Cancun `MCOPY`)_ |
+| **Block Explorer**           | `https://explorer-test.qday.info`                                          |
+| **Faucet**                   | `https://faucet.qday.info/en`                                              |
+| **tUSD8 Token (6 decimals)** | `0x456569838f1d43009A91ebA4263147Afd7233483`                               |
 
 ### QDay Aevum Technical Requirements & Wallet Integration
 
@@ -43,14 +43,27 @@ HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow
 - **Wallet Integration (Active EOA vs `@qday-io/sdk` Q1 2027)**: `@qday-io/sdk` and `@qday-io/cli` launch in Q1 2027 and are not yet published on npm. HanumPay uses the active path documented by QDay Wiki: standard EOA wallets (`MetaMask`/`Rabby` via `window.ethereum` + EIP-3085 `0xABE5`) paired with gasless EIP-712 relayer signatures.
 - **Explorer Verification & Judging**: Explorer source verification is not available yet; include this GitHub repository link and deployed contract addresses in the hackathon submission. Judging counts real on-chain transaction activity on **QDay Aevum**.
 
-### Deployed Smart Contract Addresses (Populated After Foundry Deploy)
+### Deployed Smart Contract Addresses (QDay Aevum Testnet — Block `3310882`)
 
-| Contract | QDay Testnet (44005) Address | Status |
-| --- | --- | --- |
-| `ERC8004Registry.sol` | *Pending (Stage 2)* | Ready to deploy |
-| `SalesLedger.sol` | *Pending (Stage 2)* | Ready to deploy |
-| `LoanPool.sol` | *Pending (Stage 2)* | Ready to deploy |
-| `AIGuarantor.sol` | *Pending (Stage 2)* | Ready to deploy |
+| Contract              | QDay Testnet (44005) Address                 | Status                        |
+| --------------------- | -------------------------------------------- | ----------------------------- |
+| `ERC8004Registry.sol` | `0x5533628fE8bFa8A6227C69cca8F7E96e578709c9` | Deployed (`0x61225c...09419`) |
+| `SalesLedger.sol`     | `0xbFCe0404F4abbe73Bf4eDB2e0E7F7a0e69d33BE5` | Deployed (`0x1370ba...ae921`) |
+| `LoanPool.sol`        | `0x5FcF8175bc41B584322Af65979013AbB6FecA6DB` | Deployed (`0xaa677d...2dd1b`) |
+| `AIGuarantor.sol`     | `0x35E37e86b7676FEA5fb4704b5ce6C015492c1d64` | Deployed (`0xe7f779...484fe`) |
+
+### Sample On-Chain Activity Proofs (QDay Explorer)
+
+| Flow                                  | Transaction Hash / Explorer Link                                     | Notes                                             |
+| ------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------- |
+| **4-Contract Deployment Batch**       | `0x61225c341f230224c2b8423e0138aaa142962f52e38f67579fd32be311709419` | Block `3310882` (`0.003943121 tQDAY` gas)         |
+| **Gasless QR Sale (EIP-712 Relayer)** | `0x98731de9e728d4cd43b9eb7eed153d8a90ce526b1fc961f5fae80688784c55c6` | `SalesLedger.recordSale` on Chain `44005`         |
+| **Community LP Deposit (`tUSD8`)**    | `0x1fc8460f1eeeede30c03db8793b7119b92039fe1ad2e8644bfbc324ef5413f4e` | `LoanPool.deposit` within `5 tUSD8` faucet budget |
+
+> **Testnet Faucet & On-Chain Guardrail Notes**
+>
+> - QDay Aevum's public faucet distributes **`1 tQDAY` and `5 tUSD8`** per claim, keeping live testnet `LoanPool` liquidity intentionally small while proving real on-chain settlement flows.
+> - `AIGuarantor.sol` enforces a **`30-day` minimum shop history** (`shopRegisteredAt`) and **`>= 5` unique buyers** before submitting live on-chain loan proposals. On day one after deployment, `/api/agent/cron` connects cleanly to QDay RPC (`200 OK`) and deterministically skips shops under 30 days, while Gemini AI underwriting (`/api/agent/audit`), adversarial testing (`/api/agent/red-team` with `ThinkingLevel.LOW` + automatic retry/fallback), and the `/stage` simulator demonstrate full credit lifecycle mechanics.
 
 ---
 
@@ -73,7 +86,7 @@ HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow
 │       ├── agent/cron/           # AI Guarantor check cycle
 │       └── relay/                # Gasless EIP-712 relayers (record-sale & accept-loan)
 ├── components/                   # App & landing UI components
-├── lib/                          # Deterministic contract rules engine, state store, viem QDay client
+├── lib/                          # Deterministic contract rules engine, Gemini helper, state store, viem QDay client
 └── contracts/                    # Solidity smart contracts & Foundry test suite
     ├── src/                      # ERC8004Registry, SalesLedger, LoanPool, AIGuarantor
     ├── script/Deploy.s.sol       # QDay Testnet deployment script
@@ -116,6 +129,7 @@ forge script script/Deploy.s.sol --rpc-url https://rpc-test.qday.info --broadcas
 ```
 
 Once deployed, add the four contract addresses to `.env.local` (and Vercel Environment Variables for production):
+
 - `NEXT_PUBLIC_ERC8004_ADDRESS`
 - `NEXT_PUBLIC_SALES_LEDGER_ADDRESS`
 - `NEXT_PUBLIC_LOAN_POOL_ADDRESS`
@@ -123,6 +137,19 @@ Once deployed, add the four contract addresses to `.env.local` (and Vercel Envir
 
 ---
 
+## Stage 4 Production Checklist (Vercel)
+
+Ensure all Environment Variables in Vercel match `.env.local` (`GEMINI_API_KEY`, `QDAY_RPC_URL`, all 4 `NEXT_PUBLIC_*` contract addresses, `RELAYER_PRIVATE_KEY`, and `AGENT_PRIVATE_KEY`), then verify on `https://hanumpay.vercel.app`:
+
+1. **`/app/docs`** — Connect MetaMask/Rabby on Chain `44005` and confirm **`5 / 5`** Aevum readiness.
+2. **`/app/penjualan`** — Submit a **Gasless QR Sale** (MetaMask EIP-712 sign) and verify a live QDay Explorer TX hash returns.
+3. **`/app/pinjaman`** — Run **AI Guarantor Cycle** and **Red-Team Attack** (`200 OK` from Gemini audit/red-team endpoints).
+4. **`/app/identitas` & `/stage`** — Verify **ERC-8004 Confirmation of Payee** and the **Spoofed Supplier Address Attack** block.
+
+---
+
 ## Hackathon Submission Links
-- **Live App (Vercel)**: *To be populated in Stage 4*
-- **Product Demo Video**: *To be populated in Stage 5*
+
+- **Live App (Vercel)**: https://hanumpay.vercel.app
+- **GitHub Repository**: https://github.com/rebelchain/hanumpay
+- **Product Demo Video**: `<PASTE_DEMO_VIDEO_URL>` _(Stage 5)_
