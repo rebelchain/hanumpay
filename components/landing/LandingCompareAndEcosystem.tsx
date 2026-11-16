@@ -15,31 +15,31 @@ export function CompareCardInteractive() {
 
   const hanumFee = loanAmount * (CONTRACT_LIMITS.FLAT_FEE_BPS / 10000);
   const hanumTotal = loanAmount + hanumFee;
-  const pinjolTotal = loanAmount * 1.35;
-  const kurTotal = loanAmount * 1.0075;
+  const predatoryTotal = loanAmount * 1.35;
+  const bankTotal = loanAmount * 1.0075;
 
   const rows = [
     {
       name: 'HanumPay (LoanPool)',
-      feeRate: '5.0% tetap',
+      feeRate: '5.0% flat',
       repay: `$${hanumTotal.toFixed(2)}`,
-      collateral: 'Riwayat 10% omzet QR',
+      collateral: '10% of 30d QR sales',
       dot: 'bg-[#15803D]',
       highlight: true,
     },
     {
-      name: 'Aplikasi Pinjol Umum',
-      feeRate: '35%+ / bln',
-      repay: `$${pinjolTotal.toFixed(2)}+`,
-      collateral: 'Denda harian berbunga',
+      name: 'Predatory Loan Apps',
+      feeRate: '35%+ / mo',
+      repay: `$${predatoryTotal.toFixed(2)}+`,
+      collateral: 'Compounding daily fines',
       dot: 'bg-[#D97706]',
       highlight: false,
     },
     {
-      name: 'KUR Bank Konvensional',
-      feeRate: '~0.75% / bln',
-      repay: `$${kurTotal.toFixed(2)}`,
-      collateral: 'Butuh jaminan / sering ditolak',
+      name: 'Traditional Micro-Bank',
+      feeRate: '~0.75% / mo',
+      repay: `$${bankTotal.toFixed(2)}`,
+      collateral: 'Physical collateral required',
       dot: 'bg-[#9CA3AF]',
       highlight: false,
     },
@@ -50,10 +50,10 @@ export function CompareCardInteractive() {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E7E4] pb-4">
         <div className="min-w-0">
           <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-[#636966]">
-            Perbandingan Modal Kerja 30 Hari
+            30-Day Working Capital Comparison
           </p>
           <p className="mt-1 text-[14px] text-[#5C6260] tabular-nums">
-            Total pengembalian untuk pinjaman <span className="font-semibold text-[#151619]">${loanAmount} tUSD8</span>
+            Total repayment on a <span className="font-semibold text-[#151619]">${loanAmount} tUSD8</span> facility
           </p>
         </div>
 
@@ -115,10 +115,10 @@ export function CompareCardInteractive() {
         <table className="w-full text-left">
           <thead>
             <tr className="border-b border-[#E2E7E4] font-mono text-[11px] uppercase tracking-[0.1em] text-[#636966]">
-              <th className="py-2.5 pr-3 font-medium">Skema Pinjaman</th>
-              <th className="py-2.5 px-3 font-medium">Biaya/Bunga</th>
-              <th className="py-2.5 px-3 font-medium">Total Bayar</th>
-              <th className="py-2.5 pl-3 font-medium">Syarat</th>
+              <th className="py-2.5 pr-3 font-medium">Lending Model</th>
+              <th className="py-2.5 px-3 font-medium">Fee / APR</th>
+              <th className="py-2.5 px-3 font-medium">Total Repay</th>
+              <th className="py-2.5 pl-3 font-medium">Requirement</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-[#E2E7E4] text-[14px]">
@@ -164,39 +164,39 @@ export function LiveEcosystemSplit() {
       <div className={`${CONTAINER} ${SECTION_Y}`}>
         <Reveal>
           <SectionHead
-            eyebrow="UNTUK SIAPA"
-            title="Modal adil bagi warung. Imbal hasil jelas bagi penyedia dana."
-            note="Komunitas penyedia dana mengisi cadangan tUSD8. Pemilik usaha meminjam sesuai bukti penjualan QR nyata."
+            eyebrow="WHO IT IS FOR"
+            title="Fair credit for micro-merchants. Transparent yield for LPs."
+            note="Community liquidity providers fund the tUSD8 reserve. Shop owners borrow strictly against proven on-chain QR revenue."
           />
         </Reveal>
 
         <div className="mt-14 grid grid-cols-1 gap-12 lg:grid-cols-2 lg:gap-0 lg:divide-x lg:divide-[#E2E7E4]">
-          {/* Kiri: Pemilik UMKM */}
+          {/* Left: MSME Merchants */}
           <Reveal delay={0.06} className="min-w-0 lg:pr-14">
-            <Eyebrow>PEMILIK UMKM</Eyebrow>
+            <Eyebrow>MSME MERCHANTS</Eyebrow>
             <h3 className="mt-4 text-[24px] sm:text-[28px] leading-[1.2] font-medium tracking-[-0.02em] text-[#151619] max-w-[26ch]">
-              Anda tetap fokus melayani pelanggan. Modal kerja terbuka saat stok menipis.
+              Stay focused on serving customers. Working capital unlocks when inventory runs low.
             </h3>
 
             <div className="mt-7 text-[40px] sm:text-[56px] leading-none font-medium tracking-[-0.05em] text-[#15803D] tabular-nums">
-              5.0% tetap
+              5.0% flat
             </div>
             <p className="mt-2 text-[14px] text-[#5C6260]">
-              Batas biaya terkunci di LoanPool.sol — tidak pernah berbunga atau kena denda telat
+              Fee cap locked in LoanPool.sol — never compounds and carries zero late penalties
             </p>
 
             <div className={`mt-8 border-t ${RULE}`}>
               <div className={`flex flex-wrap justify-between gap-x-4 gap-y-1 border-b ${RULE} py-3.5 text-[14px] sm:text-[15px]`}>
-                <span className="text-[#5C6260]">Rumus batas modal</span>
-                <span className="font-medium text-[#151619] tabular-nums">10% omzet QR 30 hari (maks $500)</span>
+                <span className="text-[#5C6260]">Credit limit formula</span>
+                <span className="font-medium text-[#151619] tabular-nums">10% of 30d QR sales (max $500)</span>
               </div>
               <div className={`flex flex-wrap justify-between gap-x-4 gap-y-1 border-b ${RULE} py-3.5 text-[14px] sm:text-[15px]`}>
-                <span className="text-[#5C6260]">Cicilan otomatis</span>
-                <span className="font-medium text-[#151619] tabular-nums">10% tiap penjualan QR</span>
+                <span className="text-[#5C6260]">Auto-repayment</span>
+                <span className="font-medium text-[#151619] tabular-nums">10% per verified QR sale</span>
               </div>
               <div className={`flex flex-wrap justify-between gap-x-4 gap-y-1 border-b ${RULE} py-3.5 text-[14px] sm:text-[15px]`}>
-                <span className="text-[#5C6260]">Keamanan bayar pemasok</span>
-                <span className="font-medium text-[#151619]">Konfirmasi Penerima ERC-8004</span>
+                <span className="text-[#5C6260]">Supplier safety</span>
+                <span className="font-medium text-[#151619]">ERC-8004 Confirmation of Payee</span>
               </div>
             </div>
 
@@ -204,37 +204,37 @@ export function LiveEcosystemSplit() {
               href="/app/penjualan"
               className="mt-6 inline-flex items-center gap-1.5 text-[14px] font-medium text-[#15803D] underline decoration-[#15803D]/35 underline-offset-4 hover:decoration-[#15803D]"
             >
-              <span>Buka kasir QR warung</span>
+              <span>Open merchant QR POS</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Reveal>
 
-          {/* Kanan: Penyedia Dana & Penjaga AI */}
+          {/* Right: Liquidity Providers & AI Guarantor */}
           <Reveal delay={0.14} className="min-w-0 lg:pl-14">
-            <Eyebrow>PENYEDIA DANA &amp; PENJAGA AI</Eyebrow>
+            <Eyebrow>LENDERS &amp; AI GUARANTOR</Eyebrow>
             <h3 className="mt-4 text-[24px] sm:text-[28px] leading-[1.2] font-medium tracking-[-0.02em] text-[#151619] max-w-[26ch]">
-              Anda setor tUSD8 ke pool komunitas. Smart contract menjaga setiap batas aturan.
+              Deposit tUSD8 into the community pool. Smart contracts enforce every risk invariant.
             </h3>
 
             <div className="mt-7 text-[40px] sm:text-[56px] leading-none font-medium tracking-[-0.05em] text-[#151619] tabular-nums">
-              ${poolDepositedUSD8.toLocaleString('id-ID')}
+              ${poolDepositedUSD8.toLocaleString('en-US')}
             </div>
             <p className="mt-2 text-[14px] text-[#5C6260] tabular-nums">
-              Total dana pool aktif · ${poolAvailableUSD8.toLocaleString('id-ID')} tUSD8 siap disalurkan
+              Active pool TVL · ${poolAvailableUSD8.toLocaleString('en-US')} tUSD8 ready to disburse
             </p>
 
             <div className={`mt-8 border-t ${RULE}`}>
               <div className={`flex flex-wrap justify-between gap-x-4 gap-y-1 border-b ${RULE} py-3.5 text-[14px] sm:text-[15px]`}>
-                <span className="text-[#5C6260]">Pemakaian pool</span>
-                <span className="font-medium text-[#151619] tabular-nums">{utilPct}% / batas maks 80.0%</span>
+                <span className="text-[#5C6260]">Pool utilization</span>
+                <span className="font-medium text-[#151619] tabular-nums">{utilPct}% / 80.0% max cap</span>
               </div>
               <div className={`flex flex-wrap justify-between gap-x-4 gap-y-1 border-b ${RULE} py-3.5 text-[14px] sm:text-[15px]`}>
-                <span className="text-[#5C6260]">Batas kerja Penjaga AI</span>
-                <span className="font-medium text-[#151619] tabular-nums">Maks 10 pinjaman / hari</span>
+                <span className="text-[#5C6260]">AI Guarantor rate limit</span>
+                <span className="font-medium text-[#151619] tabular-nums">Max 10 proposals / day</span>
               </div>
               <div className={`flex flex-wrap justify-between gap-x-4 gap-y-1 border-b ${RULE} py-3.5 text-[14px] sm:text-[15px]`}>
-                <span className="text-[#5C6260]">Kendali penuh pemilik</span>
-                <span className="font-medium text-[#151619]">Tombol Jeda AI kapan saja</span>
+                <span className="text-[#5C6260]">Merchant sovereignty</span>
+                <span className="font-medium text-[#151619]">Instant AI Pause kill switch</span>
               </div>
             </div>
 
@@ -242,7 +242,7 @@ export function LiveEcosystemSplit() {
               href="/app/pool"
               className="mt-6 inline-flex items-center gap-1.5 text-[14px] font-medium text-[#151619] underline decoration-[#151619]/35 underline-offset-4 hover:decoration-[#151619]"
             >
-              <span>Lihat pool likuiditas</span>
+              <span>Inspect liquidity pool</span>
               <ArrowRight className="h-3.5 w-3.5" />
             </Link>
           </Reveal>

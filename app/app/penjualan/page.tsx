@@ -8,10 +8,10 @@ import { VerifiableReceipt } from '@/lib/hanumpay-types';
 import { hashCustomerId } from '@/lib/qday';
 
 const QUICK_IDR_PRESETS = [
-  { idr: 'Rp 25rb', tusd8: '1.58' },
-  { idr: 'Rp 50rb', tusd8: '3.16' },
-  { idr: 'Rp 100rb', tusd8: '6.33' },
-  { idr: 'Rp 250rb', tusd8: '15.82' },
+  { idr: 'Rp 25k', tusd8: '1.58' },
+  { idr: 'Rp 50k', tusd8: '3.16' },
+  { idr: 'Rp 100k', tusd8: '6.33' },
+  { idr: 'Rp 250k', tusd8: '15.82' },
 ];
 
 export default function RecordSalePage() {
@@ -28,7 +28,7 @@ export default function RecordSalePage() {
   } | null>(null);
 
   const previewHash = useMemo(() => {
-    if (customerInput.trim().length < 4) return 'Masukkan minimal 4 karakter';
+    if (customerInput.trim().length < 4) return 'Enter at least 4 characters';
     return hashCustomerId(customerInput);
   }, [customerInput]);
 
@@ -46,7 +46,7 @@ export default function RecordSalePage() {
     setSubmitting(false);
 
     if (!res.ok) {
-      setFeedback({ type: 'err', text: res.error ?? 'Gagal mencatat penjualan.' });
+      setFeedback({ type: 'err', text: res.error ?? 'Failed to record sale.' });
       return;
     }
 
@@ -54,8 +54,8 @@ export default function RecordSalePage() {
       type: 'ok',
       text:
         res.repaidAmount > 0
-          ? `Tercatat bebas gas! ${res.repaidAmount.toFixed(2)} tUSD8 otomatis dipotong untuk cicilan Pinjaman #${activeLoan?.id}.`
-          : `Penjualan ${parsedAmount.toFixed(2)} tUSD8 berhasil diverifikasi Relayer tanpa biaya gas.`,
+          ? `Recorded gaslessly! ${res.repaidAmount.toFixed(2)} tUSD8 auto-deducted for Loan #${activeLoan?.id}.`
+          : `${parsedAmount.toFixed(2)} tUSD8 sale verified by Relayer with zero gas cost.`,
       receipt: res.receipt,
     });
     setCustomerInput(
@@ -77,28 +77,28 @@ export default function RecordSalePage() {
 
   return (
     <AppShell
-      title="Catat Penjualan QR"
-      subtitle="Kasir QR praktis di HP. Tanda tangan EIP-712 bebas biaya gas lewat Relayer; pinjaman aktif otomatis potong 10%."
+      title="Record QR Sale"
+      subtitle="Mobile-ready QR cashier. Gasless EIP-712 signatures via Relayer; active credit lines auto-deduct 10%."
     >
       <div className="grid lg:grid-cols-12 gap-6">
         <div className="lg:col-span-6 bg-white border border-slate-200 rounded-2xl sm:rounded-xl p-5 sm:p-6 space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Kasir QR Cepat</h2>
+              <h2 className="text-base font-semibold text-slate-900">Quick QR Cashier</h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Batas transaksi: 0.10 tUSD8 sampai 500.00 tUSD8 per struk
+                Transaction bounds: 0.10 tUSD8 to 500.00 tUSD8 per receipt
               </p>
             </div>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-[#16A34A] whitespace-nowrap">
               <Zap className="w-3.5 h-3.5" />
-              <span>Tanpa biaya gas</span>
+              <span>Zero gas fee</span>
             </span>
           </div>
 
           {/* 1-Tap Mobile Cashier Presets */}
           <div>
             <p className="text-xs font-medium text-slate-500 mb-2">
-              Nominal Cepat (Rp → tUSD8)
+              Quick Presets (IDR → tUSD8)
             </p>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               {QUICK_IDR_PRESETS.map((preset) => (
@@ -127,7 +127,7 @@ export default function RecordSalePage() {
                 htmlFor="sale-amount"
                 className="block text-xs font-medium text-slate-700 mb-1.5"
               >
-                Nominal Penjualan (tUSD8 · 6 desimal)
+                Sale Amount (tUSD8 · 6 decimals)
               </label>
               <div className="relative">
                 <input
@@ -147,7 +147,7 @@ export default function RecordSalePage() {
               </div>
               {!Number.isNaN(parsedAmount) && parsedAmount > 0 && (
                 <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-                  ≈ Rp {(parsedAmount * 15800).toLocaleString('id-ID')}
+                  ≈ Rp {Math.round(parsedAmount * 15800).toLocaleString('en-US')} IDR
                 </p>
               )}
             </div>
@@ -157,14 +157,14 @@ export default function RecordSalePage() {
                 htmlFor="customer-id"
                 className="block text-xs font-medium text-slate-700 mb-1.5"
               >
-                4+ Digit Terakhir HP Pembeli (diacak lokal)
+                Customer Last 4+ Phone Digits (hashed locally)
               </label>
               <input
                 id="customer-id"
                 type="text"
                 value={customerInput}
                 onChange={(e) => setCustomerInput(e.target.value)}
-                placeholder="mis. 0812-7720"
+                placeholder="e.g. 0812-7720"
                 className="w-full px-3.5 py-3 border border-slate-300 rounded-xl sm:rounded-lg text-base sm:text-sm text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#16A34A] min-h-[48px]"
                 required
               />
@@ -176,10 +176,10 @@ export default function RecordSalePage() {
             {activeLoan && (
               <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-900 space-y-1">
                 <p className="font-semibold">
-                  Cicilan Otomatis Pinjaman #{activeLoan.id} Aktif (10%)
+                  Loan #{activeLoan.id} Auto-Repayment Active (10%)
                 </p>
                 <p className="font-mono tabular-nums">
-                  Potong ke pool: {autoRepayPreview.toFixed(2)} tUSD8 · Bersih ke warung:{' '}
+                  Routed to pool: {autoRepayPreview.toFixed(2)} tUSD8 · Net to shop:{' '}
                   {Math.max(0, (parsedAmount || 0) - autoRepayPreview).toFixed(2)} tUSD8
                 </p>
               </div>
@@ -193,7 +193,7 @@ export default function RecordSalePage() {
                   onChange={(e) => setUseWalletSign(e.target.checked)}
                   className="rounded border-slate-300 text-[#16A34A] focus:ring-[#16A34A]"
                 />
-                <span>Gunakan MetaMask untuk tanda tangan EIP-712 asli (tetap bebas gas)</span>
+                <span>Sign EIP-712 payload via connected MetaMask wallet (still gasless)</span>
               </label>
             )}
 
@@ -211,7 +211,7 @@ export default function RecordSalePage() {
                     <p>{feedback.text}</p>
                     {lastRelayMode && (
                       <p className="font-mono text-[11px] opacity-80 mt-1">
-                        Mode relayer: {lastRelayMode}
+                        Relayer mode: {lastRelayMode}
                       </p>
                     )}
                   </div>
@@ -223,7 +223,7 @@ export default function RecordSalePage() {
                     className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-white border border-emerald-300 text-emerald-900 font-semibold whitespace-nowrap shrink-0"
                   >
                     <Receipt className="w-3.5 h-3.5" />
-                    <span>Lihat Struk</span>
+                    <span>View Receipt</span>
                   </button>
                 )}
               </div>
@@ -235,7 +235,7 @@ export default function RecordSalePage() {
               className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-semibold text-white bg-[#16A34A] hover:bg-emerald-700 rounded-xl sm:rounded-lg transition-colors min-h-[48px] disabled:opacity-60"
             >
               <QrCode className="w-4 h-4" />
-              <span>{submitting ? 'Mengirim EIP-712...' : 'Catat Penjualan (Bebas Gas)'}</span>
+              <span>{submitting ? 'Submitting EIP-712...' : 'Record Sale (Gasless)'}</span>
             </button>
           </form>
         </div>
@@ -244,23 +244,23 @@ export default function RecordSalePage() {
         <div className="lg:col-span-6 space-y-6">
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-xl p-5">
-              <p className="text-xs text-slate-500">Total Omzet 30 Hari</p>
+              <p className="text-xs text-slate-500">30-Day Revenue</p>
               <p className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1">
                 {shopStats.totalSales30dUSD8.toFixed(2)} tUSD8
               </p>
               <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-                {sales.length} struk tercatat permanen
+                {sales.length} receipts anchored
               </p>
             </div>
             <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-xl p-5">
-              <p className="text-xs text-slate-500">Pembeli Unik (Anti-Fiktif)</p>
+              <p className="text-xs text-slate-500">Unique Buyers (Sybil Gate)</p>
               <p className="text-xl sm:text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1">
                 {shopStats.uniqueCustomers30d} / min 5
               </p>
               <p className="text-xs text-[#16A34A] mt-1 font-medium">
                 {shopStats.uniqueCustomers30d >= 5
-                  ? 'Syarat keragaman pembeli terpenuhi'
-                  : 'Butuh lebih banyak pembeli unik'}
+                  ? 'Buyer diversity requirement met'
+                  : 'Needs more unique buyers'}
               </p>
             </div>
           </div>
@@ -269,9 +269,9 @@ export default function RecordSalePage() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-slate-900">
-                  Volume Penjualan Terverifikasi Terbaru
+                  Recent Verified Sales Volume
                 </h3>
-                <p className="text-xs text-slate-500">Struk terbaru tercatat dalam tUSD8</p>
+                <p className="text-xs text-slate-500">Latest receipts settled in tUSD8</p>
               </div>
               <span className="text-xs font-mono text-slate-500">SalesLedger.sol</span>
             </div>
@@ -296,16 +296,16 @@ export default function RecordSalePage() {
               })}
             </div>
             <div className="flex justify-between text-[11px] font-mono text-slate-400">
-              <span>Transaksi lama</span>
-              <span>Terbaru</span>
+              <span>Earlier</span>
+              <span>Latest</span>
             </div>
           </div>
 
           {/* Verifiable QDay Receipts History */}
           <div className="bg-white border border-slate-200 rounded-2xl sm:rounded-xl p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-slate-900">Struk QDay Terverifikasi</h3>
-              <span className="text-xs text-slate-500">Ketuk untuk salin atau bagikan bukti</span>
+              <h3 className="text-sm font-semibold text-slate-900">Verifiable QDay Receipts</h3>
+              <span className="text-xs text-slate-500">Tap to copy or share proof</span>
             </div>
             <div className="divide-y divide-slate-100">
               {receipts

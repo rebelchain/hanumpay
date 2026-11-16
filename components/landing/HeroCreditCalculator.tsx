@@ -24,8 +24,8 @@ export function HeroCreditCalculator() {
   const isCapped = rawCredit >= CONTRACT_LIMITS.MAX_LOAN_USD8;
   const flatFee = principal * (CONTRACT_LIMITS.FLAT_FEE_BPS / 10000);
   const totalRepay = principal + flatFee;
-  const pinjolCost = principal * 0.35;
-  const savingsVsPinjol = Math.max(0, pinjolCost - flatFee);
+  const predatoryCost = principal * 0.35;
+  const savingsVsPredatory = Math.max(0, predatoryCost - flatFee);
 
   const cyclePreset = () => {
     const currentIdx = PRESET_SALES.findIndex((p) => p === Math.round(parsedSales));
@@ -35,16 +35,16 @@ export function HeroCreditCalculator() {
 
   return (
     <div className="relative rounded-[20px] bg-white p-2 shadow-[0_30px_80px_rgb(15_90_54/0.16)] ring-1 ring-[#151619]/6">
-      {/* Well 1: Omzet QR Toko 30 Hari */}
+      {/* Well 1: 30-Day Shop QR Sales */}
       <div className="rounded-[14px] bg-[#F5F7F5] px-5 pt-4 pb-5">
         <div className="flex items-center justify-between gap-2 text-[13px] text-[#5C6260]">
-          <span>Omzet QR toko (30 hari)</span>
+          <span>Shop QR revenue (30 days)</span>
           <button
             type="button"
             onClick={() => setSalesInput(String(liveSales))}
             className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#15803D] hover:underline cursor-pointer whitespace-nowrap"
           >
-            Aktif: ${liveSales.toLocaleString('id-ID')}
+            Live: ${liveSales.toLocaleString('en-US')}
           </button>
         </div>
 
@@ -54,7 +54,7 @@ export function HeroCreditCalculator() {
             min={0}
             max={50000}
             step={50}
-            aria-label="Omzet penjualan QR toko 30 hari dalam tUSD8"
+            aria-label="30-day shop QR revenue in tUSD8"
             value={salesInput}
             onChange={(e) => setSalesInput(e.target.value)}
             className="w-full min-w-0 bg-transparent text-[36px] sm:text-[42px] leading-none font-semibold tracking-[-0.04em] text-[#151619] tabular-nums focus:outline-none"
@@ -79,7 +79,7 @@ export function HeroCreditCalculator() {
                     : 'bg-white text-[#5C6260] ring-1 ring-[#E2E7E4] hover:text-[#151619]'
                 }`}
               >
-                ${tier.toLocaleString('id-ID')}
+                ${tier.toLocaleString('en-US')}
               </button>
             );
           })}
@@ -89,25 +89,25 @@ export function HeroCreditCalculator() {
         </div>
       </div>
 
-      {/* Tombol ganti contoh omzet */}
+      {/* Cycle sample revenue preset button */}
       <div className="relative z-10 -my-3.5 flex justify-center">
         <button
           type="button"
           onClick={cyclePreset}
-          title="Ganti contoh omzet toko"
+          title="Cycle sample shop revenue"
           className="flex h-8 w-8 items-center justify-center rounded-full border border-[#E2E7E4] bg-white text-[#151619] shadow-xs transition-transform duration-200 hover:scale-105 cursor-pointer"
-          aria-label="Ganti pilihan contoh omzet 30 hari"
+          aria-label="Cycle 30-day revenue presets"
         >
           <ArrowDown className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* Well 2: Limit Modal Kerja dari Smart Contract */}
+      {/* Well 2: Smart Contract Working Capital Limit */}
       <div className="rounded-[14px] bg-[#F5F7F5] px-5 pt-4 pb-5">
         <div className="flex items-center justify-between gap-2 text-[13px] text-[#5C6260]">
-          <span>Limit modal kerja cair</span>
+          <span>Working capital credit limit</span>
           <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#636966] whitespace-nowrap">
-            {isCapped ? 'Batas maks $500' : '10% dari omzet QR'}
+            {isCapped ? 'Hard cap $500' : '10% of QR revenue'}
           </span>
         </div>
 
@@ -122,29 +122,29 @@ export function HeroCreditCalculator() {
         </div>
 
         <div className="mt-2.5 flex flex-wrap items-center justify-between gap-2 text-[13px] text-[#636966] tabular-nums">
-          <span>Total pengembalian: ${totalRepay.toFixed(2)} tUSD8</span>
-          <span>Potong 10% tiap laku</span>
+          <span>Total repayment: ${totalRepay.toFixed(2)} tUSD8</span>
+          <span>10% cut per sale</span>
         </div>
       </div>
 
-      {/* Ringkasan Biaya */}
+      {/* Fee Summary */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3.5 text-[13px]">
-        <span className="text-[#5C6260]">Biaya tetap kontrak</span>
+        <span className="text-[#5C6260]">Contract flat fee</span>
         <div className="tabular-nums text-right">
           <span className="font-mono font-semibold text-[#151619]">5.00% (${flatFee.toFixed(2)})</span>
           <span className="mx-1.5 text-[#9AA19E]">·</span>
           <span className="font-semibold text-[#15803D]">
-            hemat ${savingsVsPinjol.toFixed(2)} vs pinjol
+            save ${savingsVsPredatory.toFixed(2)} vs payday apps
           </span>
         </div>
       </div>
 
-      {/* Tombol Utama */}
+      {/* Primary CTA */}
       <Link
         href="/stage"
         className="group flex h-14 w-full items-center justify-center gap-2.5 rounded-[14px] bg-[#151619] px-5 text-[15px] font-semibold text-white transition-colors duration-200 hover:bg-[#24282D] whitespace-nowrap"
       >
-        <span>Uji di Simulasi Langsung</span>
+        <span>Test in Live Simulator</span>
         <ArrowRight className="h-4 w-4 transition-transform duration-200 ease-out group-hover:translate-x-1" />
       </Link>
     </div>

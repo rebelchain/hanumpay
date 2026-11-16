@@ -52,11 +52,11 @@ const INITIAL_IDENTITIES: ERC8004Identity[] = [
     wallet: SHOP_ADDRESS,
     category: 'shop',
     metadata: {
-      city: 'Surabaya, Jawa Timur',
-      businessType: 'Toko Sembako & Kebutuhan Harian',
+      city: 'Surabaya, East Java',
+      businessType: 'Neighborhood Grocery & Daily Essentials',
       reputationScore: 96,
       completedTxCount: 148,
-      validationMethod: 'Tanda Tangan Pemilik EIP-712 + Catatan QR 30 Hari',
+      validationMethod: 'EIP-712 Merchant Sig + 30d QR Ledger',
     },
     registeredAt: NOW - 45 * 86400 * 1000,
     active: true,
@@ -66,10 +66,10 @@ const INITIAL_IDENTITIES: ERC8004Identity[] = [
     wallet: AGENT_ADDRESS,
     category: 'agent',
     metadata: {
-      agentModel: 'AIGuarantor Otomatis + Audit Gemini',
+      agentModel: 'Automated AIGuarantor + Gemini Audit',
       reputationScore: 99,
       completedTxCount: 412,
-      validationMethod: 'Kartu Agen ERC-8004 + Batas Aturan Smart Contract',
+      validationMethod: 'ERC-8004 AgentCard + Contract Guardrails',
     },
     registeredAt: NOW - 60 * 86400 * 1000,
     active: true,
@@ -79,11 +79,11 @@ const INITIAL_IDENTITIES: ERC8004Identity[] = [
     wallet: SUPPLIER_1_ADDR,
     category: 'supplier',
     metadata: {
-      city: 'Pasar Grosir Surabaya',
-      businessType: 'Grosir Minyak Goreng, Beras & Gula',
+      city: 'Surabaya Wholesale Market',
+      businessType: 'Wholesale Cooking Oil, Rice & Sugar',
       reputationScore: 98,
       completedTxCount: 289,
-      validationMethod: 'Terverifikasi ERC-8004 Confirmation of Payee',
+      validationMethod: 'ERC-8004 Confirmation of Payee Verified',
     },
     registeredAt: NOW - 52 * 86400 * 1000,
     active: true,
@@ -93,11 +93,11 @@ const INITIAL_IDENTITIES: ERC8004Identity[] = [
     wallet: SUPPLIER_2_ADDR,
     category: 'supplier',
     metadata: {
-      city: 'Sidoarjo, Jawa Timur',
-      businessType: 'Pemasok Beras & Biji-bijian Langsung',
+      city: 'Sidoarjo, East Java',
+      businessType: 'Direct Mill Rice & Grain Supplier',
       reputationScore: 95,
       completedTxCount: 164,
-      validationMethod: 'Terverifikasi ERC-8004 Confirmation of Payee',
+      validationMethod: 'ERC-8004 Confirmation of Payee Verified',
     },
     registeredAt: NOW - 40 * 86400 * 1000,
     active: true,
@@ -107,11 +107,11 @@ const INITIAL_IDENTITIES: ERC8004Identity[] = [
     wallet: SUPPLIER_3_ADDR,
     category: 'supplier',
     metadata: {
-      city: 'Gresik, Jawa Timur',
-      businessType: 'Distributor Minuman Kemasan & Susu',
+      city: 'Gresik, East Java',
+      businessType: 'Packaged Beverages & Dairy Distributor',
       reputationScore: 93,
       completedTxCount: 97,
-      validationMethod: 'Terverifikasi ERC-8004 Confirmation of Payee',
+      validationMethod: 'ERC-8004 Confirmation of Payee Verified',
     },
     registeredAt: NOW - 28 * 86400 * 1000,
     active: true,
@@ -121,11 +121,11 @@ const INITIAL_IDENTITIES: ERC8004Identity[] = [
     wallet: LENDER_ADDR,
     category: 'lender',
     metadata: {
-      city: 'Pool Dana QDay Testnet',
-      businessType: 'Penyedia Dana Modal Kerja Komunitas (LP)',
+      city: 'QDay Testnet Liquidity Pool',
+      businessType: 'Community Working-Capital LP Guild',
       reputationScore: 97,
       completedTxCount: 61,
-      validationMethod: 'Terverifikasi Bagian Pool LoanPool',
+      validationMethod: 'Verified LoanPool LP Share',
     },
     registeredAt: NOW - 58 * 86400 * 1000,
     active: true,
@@ -138,7 +138,7 @@ const INITIAL_SALES: SaleRecord[] = [
     shop: SHOP_ADDRESS,
     amountUSD8: 24.5,
     customerIdHash: hashCustomerId('0812-8841'),
-    customerLabel: 'Pembeli #8841',
+    customerLabel: 'Customer #8841',
     timestamp: NOW - 2 * 3600 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 24.5,
@@ -150,7 +150,7 @@ const INITIAL_SALES: SaleRecord[] = [
     shop: SHOP_ADDRESS,
     amountUSD8: 18.0,
     customerIdHash: hashCustomerId('0856-3319'),
-    customerLabel: 'Pembeli #3319',
+    customerLabel: 'Customer #3319',
     timestamp: NOW - 5 * 3600 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 18.0,
@@ -162,7 +162,7 @@ const INITIAL_SALES: SaleRecord[] = [
     shop: SHOP_ADDRESS,
     amountUSD8: 42.0,
     customerIdHash: hashCustomerId('0813-7720'),
-    customerLabel: 'Pembeli #7720',
+    customerLabel: 'Customer #7720',
     timestamp: NOW - 1 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 42.0,
@@ -174,7 +174,7 @@ const INITIAL_SALES: SaleRecord[] = [
     shop: SHOP_ADDRESS,
     amountUSD8: 68.5,
     customerIdHash: hashCustomerId('0878-4490'),
-    customerLabel: 'Pembeli #4490',
+    customerLabel: 'Customer #4490',
     timestamp: NOW - 2 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 68.5,
@@ -186,7 +186,7 @@ const INITIAL_SALES: SaleRecord[] = [
     shop: SHOP_ADDRESS,
     amountUSD8: 112.0,
     customerIdHash: hashCustomerId('0819-5502'),
-    customerLabel: 'Pembeli #5502',
+    customerLabel: 'Customer #5502',
     timestamp: NOW - 4 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 112.0,
@@ -198,7 +198,7 @@ const INITIAL_SALES: SaleRecord[] = [
     shop: SHOP_ADDRESS,
     amountUSD8: 295.0,
     customerIdHash: hashCustomerId('0821-6108'),
-    customerLabel: 'Pembeli #6108',
+    customerLabel: 'Customer #6108',
     timestamp: NOW - 9 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 295.0,
@@ -210,7 +210,7 @@ const INITIAL_SALES: SaleRecord[] = [
     shop: SHOP_ADDRESS,
     amountUSD8: 340.0,
     customerIdHash: hashCustomerId('0852-9014'),
-    customerLabel: 'Pembeli #9014',
+    customerLabel: 'Customer #9014',
     timestamp: NOW - 16 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 340.0,
@@ -222,7 +222,7 @@ const INITIAL_SALES: SaleRecord[] = [
     shop: SHOP_ADDRESS,
     amountUSD8: 350.0,
     customerIdHash: hashCustomerId('0811-1204'),
-    customerLabel: 'Pembeli #1204',
+    customerLabel: 'Customer #1204',
     timestamp: NOW - 23 * 86400 * 1000,
     repaidDeductedUSD8: 0,
     netToShopUSD8: 350.0,
@@ -245,7 +245,7 @@ const INITIAL_LOANS: LoanRecord[] = [
     status: 'Proposed',
     agentName: 'HanumPay-AI-Guarantor-v1',
     aiExplanation:
-      'Terverifikasi 8 pembeli berbeda dalam 30 hari dengan total omzet 1,250.00 tUSD8. Batas pinjaman 10% dari omzet = 125.00 tUSD8 dengan biaya tetap 5% (6.25 tUSD8).',
+      'Verified 8 unique buyers over 30 days totaling 1,250.00 tUSD8 in QR sales. 10% contract working-capital limit = 125.00 tUSD8 at an immutable 5% flat fee (6.25 tUSD8).',
   },
   {
     id: 19,
@@ -313,14 +313,14 @@ const INITIAL_AUDIT_LOGS: AgentAuditLog[] = [
   {
     id: 'log-2',
     event: 'shops_fetched',
-    reason: 'Mengambil data 3 toko terdaftar dari SalesLedger',
+    reason: 'Fetched 3 registered shops from SalesLedger',
     timestamp: NOW - 3 * 3600 * 1000 - 3000,
   },
   {
     id: 'log-3',
     event: 'shop_skipped',
     shop: '0x2190...7A12 (Kios Kopi Mas Andi)',
-    reason: 'Baru 3 pembeli berbeda. Syarat minimal 5 pembeli.',
+    reason: 'Only 3 unique buyers. Minimum 5 required.',
     timestamp: NOW - 3 * 3600 * 1000 - 2000,
   },
   {
@@ -443,7 +443,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     INITIAL_SALES.slice(0, 3).map((s) => ({
       id: `rcpt-${s.id}`,
       kind: 'sale',
-      title: `Penjualan QR · ${s.customerLabel}`,
+      title: `QR Sale · ${s.customerLabel}`,
       amountUSD8: s.amountUSD8,
       repaidDeductedUSD8: s.repaidDeductedUSD8,
       netAmountUSD8: s.netToShopUSD8,
@@ -454,7 +454,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       txHash: s.txHash,
       relayMode: 'verified-demo-relay',
       timestamp: s.timestamp,
-      note: 'Struk Penjualan QR Bebas Gas (EIP-712)',
+      note: 'Gasless QR Sale Receipt (EIP-712)',
     }))
   );
   const [activeReceipt, setActiveReceipt] = useState<VerifiableReceipt | null>(null);
@@ -494,10 +494,10 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     (name: string, category: EntityCategory, city: string, businessType: string) => {
       const trimmed = name.trim();
       if (!trimmed || trimmed.length > 64) {
-        return { ok: false, error: 'Nama identitas harus antara 1 sampai 64 karakter.' };
+        return { ok: false, error: 'Identity name must be 1–64 characters.' };
       }
       if (identities.some((i) => i.name.toLowerCase() === trimmed.toLowerCase())) {
-        return { ok: false, error: `Nama "${trimmed}" sudah terdaftar di ERC8004Registry.` };
+        return { ok: false, error: `"${trimmed}" is already registered in ERC8004Registry.` };
       }
       const newWallet = (wallet.address ??
         (`0x${pseudoTxHash(trimmed).slice(2, 42)}`)) as `0x${string}`;
@@ -506,11 +506,11 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         wallet: newWallet,
         category,
         metadata: {
-          city: city || 'Jaringan QDay Aevum',
-          businessType: businessType || 'Usaha Terdaftar',
+          city: city || 'QDay Aevum Network',
+          businessType: businessType || 'Registered Entity',
           reputationScore: 90,
           completedTxCount: 1,
-          validationMethod: 'Terdaftar On-Chain ERC-8004',
+          validationMethod: 'ERC-8004 On-Chain Registered',
         },
         registeredAt: Date.now(),
         active: true,
@@ -566,8 +566,8 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
           event: paused ? 'shop_skipped' : 'cycle_start',
           shop: SHOP_ADDRESS,
           reason: paused
-            ? 'Pemilik toko menjeda akses Penjaga AI (AIGuarantor.setAgentPaused(true))'
-            : 'Pemilik toko mengaktifkan lagi Penjaga AI (AIGuarantor.setAgentPaused(false))',
+            ? 'Merchant paused AI Guarantor access (AIGuarantor.setAgentPaused(true))'
+            : 'Merchant resumed AI Guarantor access (AIGuarantor.setAgentPaused(false))',
           timestamp: Date.now(),
         },
         ...prev,
@@ -594,14 +594,14 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         return {
           ok: false,
           repaidAmount: 0,
-          error: 'Nominal penjualan harus antara 0.10 tUSD8 sampai 500.00 tUSD8.',
+          error: 'Sale amount must be between 0.10 tUSD8 and 500.00 tUSD8.',
         };
       }
       if (!customerIdRaw || customerIdRaw.trim().length < 4) {
         return {
           ok: false,
           repaidAmount: 0,
-          error: 'Nomor HP / ID pembeli minimal 4 karakter (diacak langsung di perangkat).',
+          error: 'Customer phone / ID must be at least 4 characters (hashed locally on-device).',
         };
       }
 
@@ -648,7 +648,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
             });
             sig = String(result);
           } catch {
-            return { ok: false, repaidAmount: 0, error: 'Tanda tangan EIP-712 dibatalkan di dompet.' };
+            return { ok: false, repaidAmount: 0, error: 'EIP-712 signature was cancelled in wallet.' };
           }
         }
       }
@@ -671,7 +671,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         });
         const relayData = (await relayRes.json()) as { mode?: string; txHash?: string; error?: string };
         if (!relayRes.ok) {
-          return { ok: false, repaidAmount: 0, error: relayData.error ?? 'Verifikasi relayer gagal.' };
+          return { ok: false, repaidAmount: 0, error: relayData.error ?? 'Relayer verification failed.' };
         }
         if (relayData.mode) setLastRelayMode(relayData.mode);
         if (relayData.txHash) relayedTxHash = relayData.txHash;
@@ -752,7 +752,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         shop: SHOP_ADDRESS,
         amountUSD8,
         customerIdHash,
-        customerLabel: `Pembeli #${customerIdRaw.trim().slice(-4)}`,
+        customerLabel: `Customer #${customerIdRaw.trim().slice(-4)}`,
         timestamp: Date.now(),
         repaidDeductedUSD8: repaidDeducted,
         netToShopUSD8: netToShop,
@@ -763,7 +763,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       const newReceipt: VerifiableReceipt = {
         id: `rcpt-${newSale.id}`,
         kind: 'sale',
-        title: `Penjualan QR · ${newSale.customerLabel}`,
+        title: `QR Sale · ${newSale.customerLabel}`,
         amountUSD8,
         repaidDeductedUSD8: repaidDeducted,
         netAmountUSD8: netToShop,
@@ -776,8 +776,8 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         timestamp: newSale.timestamp,
         note:
           repaidDeducted > 0
-            ? `Potongan cicilan otomatis 10% (${repaidDeducted.toFixed(2)} tUSD8) masuk ke LoanPool`
-            : 'Struk QR pelanggan bebas gas tercatat',
+            ? `10% auto-repayment deducted (${repaidDeducted.toFixed(2)} tUSD8) to LoanPool`
+            : 'Gasless customer QR receipt verified',
       };
 
       setSales((prev) => [newSale, ...prev]);
@@ -802,7 +802,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
           timestamp: now,
         };
         setAuditLogs((prev) => [skipLog, ...prev]);
-        return { ok: false, message: `Agen AI melewati Warung Bu Sri: ${eligibility.reason}` };
+        return { ok: false, message: `AI Agent skipped Warung Bu Sri: ${eligibility.reason}` };
       }
 
       const nextId = Math.max(42, ...loans.map((l) => l.id)) + 1;
@@ -819,7 +819,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         agentName: 'HanumPay-AI-Guarantor-v1',
         aiExplanation:
           aiExplanation ||
-          `Pengecekan on-chain lolos (${shopStats.uniqueCustomers30d} pembeli unik, omzet 30 hari $${shopStats.totalSales30dUSD8.toFixed(2)}). Smart contract menghitung batas pokok $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
+          `On-chain check passed (${shopStats.uniqueCustomers30d} unique buyers, 30d sales $${shopStats.totalSales30dUSD8.toFixed(2)}). Smart contract sized working-capital limit at $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
       };
 
       const txHash = pseudoTxHash(`prop-${nextId}`);
@@ -845,7 +845,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
 
       return {
         ok: true,
-        message: `Penawaran #${nextId} berhasil dikirim on-chain senilai $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
+        message: `Proposal #${nextId} submitted on-chain for $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
       };
     },
     [eligibility, loans, shopStats.totalSales30dUSD8, shopStats.uniqueCustomers30d]
@@ -855,16 +855,16 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     async (loanId: number, useWalletSign: boolean) => {
       const target = loans.find((l) => l.id === loanId && l.status === 'Proposed');
       if (!target) {
-        return { ok: false, error: 'Penawaran modal tidak ditemukan atau sudah diambil.' };
+        return { ok: false, error: 'Loan proposal not found or already claimed.' };
       }
       if (!isERC8004Verified(target.agentName)) {
         return {
           ok: false,
-          error: 'Verifikasi ERC-8004 gagal: identitas Penjaga AI sedang tidak aktif.',
+          error: 'ERC-8004 verification failed: AI Guarantor identity is inactive.',
         };
       }
       if (target.principalUSD8 > poolAvailableUSD8) {
-        return { ok: false, error: 'Saldo dana di LoanPool saat ini tidak mencukupi.' };
+        return { ok: false, error: 'Insufficient available liquidity in LoanPool.' };
       }
 
       const deadline = Math.floor(Date.now() / 1000) + 3600;
@@ -915,7 +915,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
             });
             sig = String(result);
           } catch {
-            return { ok: false, error: 'Tanda tangan persetujuan modal EIP-712 dibatalkan di dompet.' };
+            return { ok: false, error: 'EIP-712 loan acceptance signature was cancelled in wallet.' };
           }
         }
       }
@@ -936,7 +936,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         });
         const relayData = (await relayRes.json()) as { mode?: string; error?: string };
         if (!relayRes.ok) {
-          return { ok: false, error: relayData.error ?? 'Verifikasi relayer pinjaman gagal.' };
+          return { ok: false, error: relayData.error ?? 'Loan relayer verification failed.' };
         }
         if (relayData.mode) setLastRelayMode(relayData.mode);
       } catch {
@@ -966,7 +966,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       const loanReceipt: VerifiableReceipt = {
         id: `rcpt-loan-${loanId}-${Date.now()}`,
         kind: 'loan',
-        title: `Modal Kerja #${loanId} Cair`,
+        title: `Working Capital #${loanId} Disbursed`,
         amountUSD8: target.principalUSD8,
         repaidDeductedUSD8: 0,
         netAmountUSD8: target.principalUSD8,
@@ -977,7 +977,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         txHash: disbursedTx,
         relayMode: 'verified-demo-relay',
         timestamp: Date.now(),
-        note: `Biaya tetap 5% (${target.flatFeeUSD8.toFixed(2)} tUSD8) · Cicilan otomatis 10% tiap laku`,
+        note: `5% flat fee (${target.flatFeeUSD8.toFixed(2)} tUSD8) · 10% auto-deducted per QR sale`,
       };
       setReceipts((prev) => [loanReceipt, ...prev]);
 
@@ -995,7 +995,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         id: `log-rej-${Date.now()}`,
         event: 'proposal_rejected',
         shop: SHOP_ADDRESS,
-        reason: `Pemilik toko menolak Penawaran #${loanId} saat konfirmasi penerima`,
+        reason: `Merchant rejected Loan Proposal #${loanId} during Confirmation of Payee`,
         timestamp: Date.now(),
       },
       ...prev,
@@ -1005,7 +1005,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
   const depositToPool = useCallback(
     (amountUSD8: number) => {
       if (Number.isNaN(amountUSD8) || amountUSD8 < 1) {
-        return { ok: false, error: 'Setoran minimal adalah 1.00 tUSD8.' };
+        return { ok: false, error: 'Minimum deposit is 1.00 tUSD8.' };
       }
       setPoolDepositedUSD8((prev) => prev + amountUSD8);
       setUserLenderShares((prev) => prev + amountUSD8);
@@ -1013,7 +1013,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         {
           id: `pe-dep-${Date.now()}`,
           type: 'Deposit',
-          actor: wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : 'LP Terhubung',
+          actor: wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : 'Connected LP',
           amountUSD8,
           timestamp: Date.now(),
           txHash: pseudoTxHash(`dep-${Date.now()}`),
@@ -1028,15 +1028,15 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
   const withdrawFromPool = useCallback(
     (amountUSD8: number) => {
       if (Number.isNaN(amountUSD8) || amountUSD8 <= 0) {
-        return { ok: false, error: 'Masukkan jumlah penarikan yang benar.' };
+        return { ok: false, error: 'Enter a valid withdrawal amount.' };
       }
       if (amountUSD8 > userLenderShares) {
-        return { ok: false, error: 'Jumlah penarikan melebihi saldo simpanan Anda di pool.' };
+        return { ok: false, error: 'Withdrawal exceeds your pool share balance.' };
       }
       if (amountUSD8 > poolAvailableUSD8) {
         return {
           ok: false,
-          error: `Dana menganggur di pool saat ini hanya $${poolAvailableUSD8.toFixed(2)} tUSD8.`,
+          error: `Only $${poolAvailableUSD8.toFixed(2)} tUSD8 idle liquidity is currently available.`,
         };
       }
       setPoolDepositedUSD8((prev) => prev - amountUSD8);
@@ -1045,7 +1045,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         {
           id: `pe-wd-${Date.now()}`,
           type: 'Withdraw',
-          actor: wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : 'LP Terhubung',
+          actor: wallet.address ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}` : 'Connected LP',
           amountUSD8,
           timestamp: Date.now(),
           txHash: pseudoTxHash(`wd-${Date.now()}`),
@@ -1063,16 +1063,16 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       if (!resolvedWallet) {
         return {
           ok: false,
-          error: 'Konfirmasi Penerima ditolak: pemasok belum terdaftar resmi di ERC8004Registry.',
+          error: 'Confirmation of Payee blocked: supplier is not registered in ERC8004Registry.',
         };
       }
       if (Number.isNaN(amountUSD8) || amountUSD8 <= 0) {
-        return { ok: false, error: 'Masukkan nominal pembayaran dalam tUSD8 yang benar.' };
+        return { ok: false, error: 'Enter a valid payment amount in tUSD8.' };
       }
       if (amountUSD8 > shopAvailableTusd8) {
         return {
           ok: false,
-          error: `Saldo tUSD8 toko belum cukup (tersedia $${shopAvailableTusd8.toFixed(2)} tUSD8). Cairkan modal kerja atau catat penjualan dulu.`,
+          error: `Insufficient shop tUSD8 balance (available $${shopAvailableTusd8.toFixed(2)} tUSD8). Accept a loan or record sales first.`,
         };
       }
 
@@ -1081,7 +1081,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         supplierName,
         supplierWallet: resolvedWallet,
         amountUSD8,
-        itemNote: itemNote.trim() || 'Belanja kulakan stok warung',
+        itemNote: itemNote.trim() || 'Wholesale inventory restock',
         copVerified: true,
         timestamp: Date.now(),
         txHash: pseudoTxHash(`sup-${supplierName}-${Date.now()}`),
@@ -1104,7 +1104,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       const supReceipt: VerifiableReceipt = {
         id: `rcpt-${payment.id}`,
         kind: 'supplier',
-        title: `Bayar Pemasok · ${supplierName}`,
+        title: `Supplier Paid · ${supplierName}`,
         amountUSD8,
         repaidDeductedUSD8: 0,
         netAmountUSD8: amountUSD8,
@@ -1154,7 +1154,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     } catch {
       setWallet((prev) => ({
         ...prev,
-        error: 'Jaringan QDay RPC sedang sibuk. Coba muat ulang sebentar lagi.',
+        error: 'QDay RPC is busy. Please refresh balances again shortly.',
       }));
     }
   }, [wallet.address]);
@@ -1164,7 +1164,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     if (!provider) {
       setWallet((prev) => ({
         ...prev,
-        error: 'Dompet Web3 tidak terdeteksi (pasang MetaMask). Mode demo tetap berjalan lancar.',
+        error: 'No Web3 wallet detected (install MetaMask or Rabby). Demo mode remains fully active.',
       }));
       return;
     }
@@ -1175,7 +1175,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         method: 'eth_requestAccounts',
       })) as string[];
       if (!accounts || accounts.length === 0) {
-        throw new Error('Tidak ada akun yang dipilih');
+        throw new Error('No account selected');
       }
       await addOrSwitchQDayNetwork(provider);
       const chainHex = (await provider.request({ method: 'eth_chainId' })) as string;
@@ -1202,7 +1202,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         error:
           err instanceof Error
             ? err.message
-            : 'Gagal menghubungkan MetaMask ke QDay Aevum Testnet.',
+            : 'Failed to connect MetaMask to QDay Aevum Testnet.',
       }));
     }
   }, []);

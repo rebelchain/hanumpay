@@ -6,7 +6,7 @@ export async function POST(req: NextRequest) {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: 'GEMINI_API_KEY belum diatur di server.' },
+        { error: 'GEMINI_API_KEY is not configured on the server.' },
         { status: 500 }
       );
     }
@@ -32,29 +32,29 @@ export async function POST(req: NextRequest) {
 
     const response = await ai.models.generateContent({
       model: 'gemini-4-hydrogen',
-      contents: `Analisa data modal kerja UMKM ini untuk HanumPay di jaringan QDay Aevum Testnet:
-Nama Toko: ${shopName}
-Total penjualan QR terverifikasi 30 hari: ${totalSales30dUSD8.toFixed(2)} tUSD8
-Jumlah pembeli berbeda (30 hari): ${uniqueCustomers30d} (syarat minimal kontrak: 5)
-Pokok modal kerja dihitung kontrak (10% omzet, maks $500): ${proposedPrincipalUSD8.toFixed(2)} tUSD8
-Biaya tetap 5% (tidak bisa berubah): ${flatFeeUSD8.toFixed(2)} tUSD8
-Cicilan otomatis: dipotong 10% setiap ada penjualan QR baru (tanpa jatuh tempo, tanpa bunga berbunga).
+      contents: `Analyze this MSME working-capital credit profile for HanumPay on QDay Aevum Testnet:
+Shop: ${shopName}
+Verified 30d QR sales volume: ${totalSales30dUSD8.toFixed(2)} tUSD8
+Unique customers (30d): ${uniqueCustomers30d} (minimum contract threshold: 5)
+Contract-calculated principal (10% of 30d sales, capped at $500): ${proposedPrincipalUSD8.toFixed(2)} tUSD8
+Immutable flat fee (5%): ${flatFeeUSD8.toFixed(2)} tUSD8
+Auto-repayment: 10% deducted automatically from each incoming QR sale (no fixed due date, no compounding interest).
 
-Berikan ringkasan analisa yang simpel, jelas, ramah UMKM, serta satu catatan pengaman risiko dalam bahasa Indonesia.`,
+Provide a concise, plain-English underwriting summary and one risk-control note.`,
       config: {
         systemInstruction:
-          'Kamu adalah HanumPay-AI-Guarantor-v1, asisten penilai modal kerja yang jujur dan mudah dipahami pemilik warung/UMKM Indonesia. Jelaskan ketentuan pinjaman dari smart contract secara jelas dalam 2-3 kalimat bahasa Indonesia tanpa mengarang angka baru.',
+          'You are HanumPay-AI-Guarantor-v1, a transparent working-capital underwriting agent for small merchants. Explain contract-enforced loan terms clearly in 2–3 plain English sentences without inventing new numbers.',
         responseMimeType: 'application/json',
         responseSchema: {
           type: Type.OBJECT,
           properties: {
             summary: {
               type: Type.STRING,
-              description: 'Ringkasan 2 kalimat bahasa Indonesia yang menjelaskan alasan toko layak berdasarkan omzet dan jumlah pembeli.',
+              description: 'A 2-sentence English underwriting summary explaining eligibility based on sales and unique buyers.',
             },
             riskNote: {
               type: Type.STRING,
-              description: 'Satu catatan singkat bahasa Indonesia tentang batas keamanan kontrak.',
+              description: 'One short English note highlighting the smart-contract safety limit.',
             },
           },
           required: ['summary', 'riskNote'],
@@ -65,7 +65,7 @@ Berikan ringkasan analisa yang simpel, jelas, ramah UMKM, serta satu catatan pen
     const parsed = JSON.parse((response.text ?? '{}').trim());
     return NextResponse.json(parsed);
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Gagal menjalankan audit AI Gemini.';
+    const message = err instanceof Error ? err.message : 'Failed to run Gemini AI audit.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

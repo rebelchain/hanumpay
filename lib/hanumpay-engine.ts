@@ -56,48 +56,48 @@ export function checkShopEligibility(stats: ShopStatsSnapshot): EligibilityCheck
 
   const checks = [
     {
-      label: 'Izin Penjaga AI (AI Guarantor) toko aktif',
+      label: 'Merchant AI Guarantor permission active',
       passed: !stats.agentPaused,
-      detail: stats.agentPaused ? 'Dijeda oleh pemilik toko' : 'Aktif',
+      detail: stats.agentPaused ? 'Paused by shop owner' : 'Active',
     },
     {
-      label: 'Tidak ada pinjaman aktif atau tertunda',
+      label: 'No active or pending loan',
       passed: !stats.hasActiveOrProposedLoan,
-      detail: stats.hasActiveOrProposedLoan ? 'Pinjaman yang ada harus lunas dulu' : 'Aman',
+      detail: stats.hasActiveOrProposedLoan ? 'Existing loan must finish first' : 'Clear',
     },
     {
-      label: 'Masa jeda 30 hari terpenuhi',
+      label: '30-day cooldown satisfied',
       passed: !stats.inCooldown,
       detail: stats.inCooldown
-        ? `Sisa ${stats.cooldownDaysRemaining} hari lagi`
-        : 'Tidak ada masa jeda',
+        ? `${stats.cooldownDaysRemaining} days remaining`
+        : 'Not in cooldown',
     },
     {
-      label: `Minimal ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} pembeli berbeda (30 hari)`,
+      label: `At least ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} unique buyers (30d)`,
       passed: stats.uniqueCustomers30d >= CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS,
-      detail: `${stats.uniqueCustomers30d} / ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} pembeli unik`,
+      detail: `${stats.uniqueCustomers30d} / ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} unique buyers`,
     },
     {
-      label: `Riwayat penjualan minimal ${CONTRACT_LIMITS.MIN_SALES_DAYS} hari`,
+      label: `Minimum ${CONTRACT_LIMITS.MIN_SALES_DAYS}-day sales history`,
       passed: stats.salesHistoryDays >= CONTRACT_LIMITS.MIN_SALES_DAYS,
-      detail: `${stats.salesHistoryDays} / ${CONTRACT_LIMITS.MIN_SALES_DAYS} hari`,
+      detail: `${stats.salesHistoryDays} / ${CONTRACT_LIMITS.MIN_SALES_DAYS} days`,
     },
     {
-      label: `Batas penawaran harian (< ${CONTRACT_LIMITS.MAX_DAILY_PROPOSALS}/hari)`,
+      label: `Daily proposal cap (< ${CONTRACT_LIMITS.MAX_DAILY_PROPOSALS}/day)`,
       passed: stats.proposalsToday < CONTRACT_LIMITS.MAX_DAILY_PROPOSALS,
-      detail: `${stats.proposalsToday} / ${CONTRACT_LIMITS.MAX_DAILY_PROPOSALS} terpakai hari ini`,
+      detail: `${stats.proposalsToday} / ${CONTRACT_LIMITS.MAX_DAILY_PROPOSALS} used today`,
     },
     {
-      label: 'Pemakaian dana pool di bawah batas 80%',
+      label: 'Pool utilization below 80% cap',
       passed: stats.poolUtilizationBps < CONTRACT_LIMITS.MAX_POOL_EXPOSURE_BPS,
       detail: `${(stats.poolUtilizationBps / 100).toFixed(1)}% / 80.0%`,
     },
     {
-      label: 'Pokok pinjaman antara $5–$500 tUSD8 & dana tersedia',
+      label: 'Loan principal between $5–$500 tUSD8 & liquidity available',
       passed:
         roundedPrincipal >= CONTRACT_LIMITS.MIN_LOAN_USD8 &&
         roundedPrincipal <= stats.poolAvailableUSD8,
-      detail: `$${roundedPrincipal.toFixed(2)} tUSD8 (Dana pool: $${stats.poolAvailableUSD8.toFixed(2)})`,
+      detail: `$${roundedPrincipal.toFixed(2)} tUSD8 (Pool available: $${stats.poolAvailableUSD8.toFixed(2)})`,
     },
   ];
 
@@ -137,43 +137,43 @@ export function validateProposalAgainstContract(params: {
 
   const invariantChecks = [
     {
-      rule: 'AIGuarantor: Akses AI tidak sedang dijeda pemilik',
-      limit: 'Agen Aktif',
-      attempted: params.stats.agentPaused ? 'Dijeda Pemilik Toko' : 'Aktif',
+      rule: 'AIGuarantor: Agent not paused by shop owner',
+      limit: 'Agent Active',
+      attempted: params.stats.agentPaused ? 'Paused by Owner' : 'Active',
       passed: !params.stats.agentPaused,
     },
     {
-      rule: 'AIGuarantor: Batas Maksimal Pinjaman ($500 tUSD8)',
+      rule: 'AIGuarantor: Hard Max Loan Cap ($500 tUSD8)',
       limit: `<= $${CONTRACT_LIMITS.MAX_LOAN_USD8.toFixed(2)}`,
       attempted: `$${params.attemptedPrincipalUSD8.toFixed(2)}`,
       passed: params.attemptedPrincipalUSD8 <= CONTRACT_LIMITS.MAX_LOAN_USD8,
     },
     {
-      rule: 'AIGuarantor: Maksimal 10% dari Omzet QR 30 Hari',
+      rule: 'AIGuarantor: Max 10% of 30d Verified QR Sales',
       limit: `<= $${tenPercentLimit.toFixed(2)}`,
       attempted: `$${params.attemptedPrincipalUSD8.toFixed(2)}`,
       passed: params.attemptedPrincipalUSD8 <= tenPercentLimit,
     },
     {
-      rule: 'AIGuarantor: Min 5 Pembeli Berbeda (Anti Jualan Fiktif)',
-      limit: `>= ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} pembeli`,
-      attempted: `${params.stats.uniqueCustomers30d} pembeli`,
+      rule: 'AIGuarantor: Min 5 Unique Buyers (Anti-Wash Trading)',
+      limit: `>= ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} buyers`,
+      attempted: `${params.stats.uniqueCustomers30d} buyers`,
       passed: params.stats.uniqueCustomers30d >= CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS,
     },
     {
-      rule: 'LoanPool: Biaya Tetap 5% Tidak Bisa Diubah',
-      limit: '5.00% tetap',
+      rule: 'LoanPool: Immutable 5% Flat Fee',
+      limit: '5.00% flat',
       attempted: `${params.attemptedFeePct.toFixed(2)}%`,
       passed: Math.abs(params.attemptedFeePct - 5) < 0.01,
     },
     {
-      rule: 'LoanPool: Potongan Cicilan Otomatis 10% per Jualan',
-      limit: '10.00% per transaksi',
+      rule: 'LoanPool: Immutable 10% Auto-Deduct Repayment',
+      limit: '10.00% per sale',
       attempted: `${params.attemptedRepayPct.toFixed(2)}%`,
       passed: Math.abs(params.attemptedRepayPct - 10) < 0.01,
     },
     {
-      rule: 'LoanPool: Batas Dana Terpakai Pool (80%) & Saldo Tersedia',
+      rule: 'LoanPool: Pool Utilization Cap (80%) & Available Liquidity',
       limit: `< 80.0% & <= $${params.stats.poolAvailableUSD8.toFixed(2)}`,
       attempted: `$${params.attemptedPrincipalUSD8.toFixed(2)}`,
       passed:
@@ -184,20 +184,20 @@ export function validateProposalAgainstContract(params: {
 
   const failed = invariantChecks.filter((c) => !c.passed);
 
-  let revertError = 'LOLOS (Usulan mematuhi seluruh aturan smart contract)';
+  let revertError = 'ALLOWED (Proposal complies with all smart-contract invariants)';
   if (failed.length > 0) {
     if (params.stats.agentPaused) {
-      revertError = `ShopNotEligible("Pemilik warung sedang menjeda akses Penjaga AI")`;
+      revertError = `ShopNotEligible("Merchant paused AI Guarantor access")`;
     } else if (params.attemptedPrincipalUSD8 > CONTRACT_LIMITS.MAX_LOAN_USD8) {
-      revertError = `ExceedsMaxLoan(${params.attemptedPrincipalUSD8.toFixed(2)} tUSD8 melebihi batas 500.00 tUSD8)`;
+      revertError = `ExceedsMaxLoan(${params.attemptedPrincipalUSD8.toFixed(2)} tUSD8 > 500.00 tUSD8 cap)`;
     } else if (params.attemptedPrincipalUSD8 > tenPercentLimit) {
-      revertError = `ExceedsMaxLoanSize(diminta: ${params.attemptedPrincipalUSD8.toFixed(2)}, maks 10%: ${tenPercentLimit.toFixed(2)})`;
+      revertError = `ExceedsMaxLoanSize(requested: ${params.attemptedPrincipalUSD8.toFixed(2)}, 10% cap: ${tenPercentLimit.toFixed(2)})`;
     } else if (params.stats.uniqueCustomers30d < CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS) {
-      revertError = `ShopNotEligible("Minimal harus ada 5 pembeli berbeda dalam 30 hari")`;
+      revertError = `ShopNotEligible("Fewer than 5 unique customers in 30 days")`;
     } else if (Math.abs(params.attemptedFeePct - 5) >= 0.01 || Math.abs(params.attemptedRepayPct - 10) >= 0.01) {
-      revertError = `ImmutableTermsViolation("AI dilarang mengubah biaya 5% atau cicilan 10%")`;
+      revertError = `ImmutableTermsViolation("AI cannot alter 5% flat fee or 10% auto-repayment")`;
     } else {
-      revertError = `ExceedsPoolExposure("Dana pool melebihi batas aman 80%")`;
+      revertError = `ExceedsPoolExposure("Pool exposure exceeds 80% safety limit")`;
     }
   }
 

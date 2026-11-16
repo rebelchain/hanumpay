@@ -9,14 +9,14 @@ interface SalesTier {
   sales30d: number;
   basePos: number;
   hanumPos: number;
-  pinjolPos: number;
+  lenderPos: number;
 }
 
 const SALES_TIERS: SalesTier[] = [
-  { id: '500', label: '$500 QR', sales30d: 500, basePos: 12, hanumPos: 34, pinjolPos: 68 },
-  { id: '1250', label: '$1,250 QR', sales30d: 1250, basePos: 16, hanumPos: 42, pinjolPos: 76 },
-  { id: '2500', label: '$2,500 QR', sales30d: 2500, basePos: 20, hanumPos: 48, pinjolPos: 82 },
-  { id: '5000', label: '$5,000+ QR', sales30d: 5000, basePos: 24, hanumPos: 54, pinjolPos: 88 },
+  { id: '500', label: '$500 QR', sales30d: 500, basePos: 12, hanumPos: 34, lenderPos: 68 },
+  { id: '1250', label: '$1,250 QR', sales30d: 1250, basePos: 16, hanumPos: 42, lenderPos: 76 },
+  { id: '2500', label: '$2,500 QR', sales30d: 2500, basePos: 20, hanumPos: 48, lenderPos: 82 },
+  { id: '5000', label: '$5,000+ QR', sales30d: 5000, basePos: 24, hanumPos: 54, lenderPos: 88 },
 ];
 
 export function CreditRuler() {
@@ -29,9 +29,9 @@ export function CreditRuler() {
   );
   const hanumFee = principal * (CONTRACT_LIMITS.FLAT_FEE_BPS / 10000);
   const hanumTotal = principal + hanumFee;
-  const pinjolFee = principal * 0.35;
-  const pinjolTotal = principal + pinjolFee;
-  const saved = pinjolTotal - hanumTotal;
+  const predatoryFee = principal * 0.35;
+  const predatoryTotal = principal + predatoryFee;
+  const saved = predatoryTotal - hanumTotal;
 
   const bandWidth = tier.hanumPos - tier.basePos;
 
@@ -41,12 +41,14 @@ export function CreditRuler() {
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <p className="font-mono text-[11px] tracking-[0.12em] uppercase text-[#636966]">
-            Tingkatan Omzet 30 Hari · Perbandingan Limit &amp; Total Bayar
+            30-Day Sales Tiers · Credit Limit &amp; Total Repayment Comparison
           </p>
           <p className="mt-1 text-[15px] text-[#5C6260] tabular-nums">
-            Modal kerja terbuka:{' '}
+            Unlocked working capital:{' '}
             <span className="font-semibold text-[#151619]">${principal.toFixed(2)} tUSD8</span>
-            {tier.sales30d >= 5000 ? ' (batas maksimal $500 oleh AIGuarantor.sol)' : ' (10% dari omzet QR terverifikasi)'}
+            {tier.sales30d >= 5000
+              ? ' (hard-capped at $500 by AIGuarantor.sol)'
+              : ' (10% of verified QR revenue)'}
           </p>
         </div>
 
@@ -80,7 +82,7 @@ export function CreditRuler() {
             style={{ left: `${tier.hanumPos}%` }}
           >
             <div className="font-mono text-[11px] uppercase tracking-[0.1em] text-[#15803D]">
-              HanumPay · Biaya 5% tetap
+              HanumPay · 5% flat fee
             </div>
             <div className="text-[18px] font-semibold text-[#151619] tabular-nums">
               ${hanumTotal.toFixed(2)}
@@ -99,7 +101,7 @@ export function CreditRuler() {
               }}
             >
               <span className="font-mono text-[11px] font-medium text-[#0F6B3A] whitespace-nowrap">
-                Biaya 5% tetap
+                5% flat fee
               </span>
             </div>
 
@@ -117,7 +119,7 @@ export function CreditRuler() {
 
             <div
               className="absolute top-0 h-12 w-[2px] -translate-x-1/2 bg-[#D97706] transition-all duration-500 ease-out"
-              style={{ left: `${tier.pinjolPos}%` }}
+              style={{ left: `${tier.lenderPos}%` }}
             >
               <span className="absolute top-1/2 left-1/2 h-2 w-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[#D97706]" />
             </div>
@@ -132,30 +134,30 @@ export function CreditRuler() {
               ${principal.toFixed(2)}
             </div>
             <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[#636966]">
-              Pokok 0%
+              0% Principal
             </div>
           </div>
 
           {/* Bottom right callout */}
           <div
             className="absolute bottom-3 -translate-x-1/2 transition-all duration-500 ease-out text-center whitespace-nowrap"
-            style={{ left: `${tier.pinjolPos}%` }}
+            style={{ left: `${tier.lenderPos}%` }}
           >
             <div className="text-[14px] font-medium text-[#B45309] tabular-nums">
-              ${pinjolTotal.toFixed(2)}
+              ${predatoryTotal.toFixed(2)}
             </div>
             <div className="font-mono text-[10px] uppercase tracking-[0.1em] text-[#636966]">
-              Pinjol (+35%/bln)
+              Predatory App (+35%/mo)
             </div>
           </div>
         </div>
       </div>
 
-      {/* Ringkasan 3 kartu */}
+      {/* 3-card summary */}
       <div className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-[#E2E7E4] bg-white px-4 py-3.5">
           <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#636966]">
-            Modal Pokok Cair
+            Principal Disbursed
           </div>
           <div className="mt-1 text-[20px] font-medium text-[#151619] tabular-nums">
             ${principal.toFixed(2)} tUSD8
@@ -163,20 +165,20 @@ export function CreditRuler() {
         </div>
         <div className="rounded-xl border border-[#9FE8C3] bg-[#E8FAF0] px-4 py-3.5">
           <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#0F6B3A]">
-            Total Bayar HanumPay (5% Tetap)
+            HanumPay Total Repay (5% Flat)
           </div>
           <div className="mt-1 text-[20px] font-semibold text-[#151619] tabular-nums">
-            ${hanumTotal.toFixed(2)} · 0% denda
+            ${hanumTotal.toFixed(2)} · 0% penalty
           </div>
         </div>
         <div className="rounded-xl border border-[#E2E7E4] bg-white px-4 py-3.5">
           <div className="font-mono text-[11px] uppercase tracking-[0.12em] text-[#636966]">
-            Pinjol Umumnya (35%+/bln)
+            Predatory Lender (35%+/mo)
           </div>
           <div className="mt-1 text-[20px] font-medium text-[#5C6260] tabular-nums">
-            ${pinjolTotal.toFixed(2)}{' '}
+            ${predatoryTotal.toFixed(2)}{' '}
             <span className="text-[14px] font-semibold text-[#15803D]">
-              (hemat ${saved.toFixed(2)})
+              (save ${saved.toFixed(2)})
             </span>
           </div>
         </div>

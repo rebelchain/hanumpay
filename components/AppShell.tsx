@@ -24,35 +24,35 @@ import { QDAY_EXPLORER_URL, QDAY_FAUCET_URL, shortenAddress } from '@/lib/qday';
 
 const NAV_GROUPS = [
   {
-    label: 'Operasional Toko',
+    label: 'Shop Operations',
     items: [
-      { href: '/app/dashboard', label: 'Dasbor', icon: LayoutDashboard },
-      { href: '/app/penjualan', label: 'Catat Penjualan', icon: QrCode },
-      { href: '/app/pinjaman', label: 'Modal & Penjaga AI', icon: FileCheck2 },
+      { href: '/app/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+      { href: '/app/penjualan', label: 'Record QR Sale', icon: QrCode },
+      { href: '/app/pinjaman', label: 'Working Capital & AI', icon: FileCheck2 },
     ],
   },
   {
-    label: 'Ekosistem & Kepercayaan',
+    label: 'Ecosystem & Trust',
     items: [
-      { href: '/app/pool', label: 'Pool Dana', icon: Landmark },
-      { href: '/app/identitas', label: 'ERC-8004 & Bayar', icon: ShieldCheck },
+      { href: '/app/pool', label: 'Liquidity Pool', icon: Landmark },
+      { href: '/app/identitas', label: 'ERC-8004 & Pay Supplier', icon: ShieldCheck },
     ],
   },
   {
-    label: 'Infrastruktur QDay',
+    label: 'QDay Infrastructure',
     items: [
-      { href: '/stage', label: 'Simulasi 2 Layar', icon: Smartphone },
-      { href: '/app/docs', label: 'Kontrak & Panduan', icon: BookOpen },
+      { href: '/stage', label: '2-Phone Simulator', icon: Smartphone },
+      { href: '/app/docs', label: 'Contracts & Guide', icon: BookOpen },
     ],
   },
 ];
 
-// Bar navigasi bawah ramah ibu jari untuk HP pemilik warung
+// Thumb-friendly bottom navigation bar for merchant mobile devices
 const MOBILE_TABS = [
-  { href: '/app/dashboard', label: 'Beranda', icon: LayoutDashboard },
-  { href: '/app/penjualan', label: 'Catat QR', icon: QrCode },
-  { href: '/app/pinjaman', label: 'Modal', icon: FileCheck2 },
-  { href: '/app/identitas', label: 'Bayar', icon: ShieldCheck },
+  { href: '/app/dashboard', label: 'Home', icon: LayoutDashboard },
+  { href: '/app/penjualan', label: 'QR POS', icon: QrCode },
+  { href: '/app/pinjaman', label: 'Credit', icon: FileCheck2 },
+  { href: '/app/identitas', label: 'Pay', icon: ShieldCheck },
 ];
 
 export default function AppShell({
@@ -91,13 +91,13 @@ export default function AppShell({
             type="button"
             onClick={() => setMobileOpen(false)}
             className="lg:hidden p-2 text-slate-400 hover:text-white rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label="Tutup menu navigasi"
+            aria-label="Close navigation menu"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        <nav className="mt-6 space-y-6" aria-label="Navigasi workspace">
+        <nav className="mt-6 space-y-6" aria-label="Workspace navigation">
           {NAV_GROUPS.map((group) => (
             <div key={group.label}>
               <p className="px-3 text-xs font-medium text-slate-500 mb-2">{group.label}</p>
@@ -122,7 +122,7 @@ export default function AppShell({
                         </span>
                         {item.href === '/app/pinjaman' && proposedLoan && (
                           <span className="text-xs font-mono tabular-nums text-emerald-400">
-                            1 tawaran
+                            1 offer
                           </span>
                         )}
                       </Link>
@@ -138,10 +138,10 @@ export default function AppShell({
       <div className="space-y-3 pt-4 border-t border-slate-800/80">
         <div className="px-3 py-2.5 rounded-lg bg-slate-900/90 border border-slate-800 space-y-2">
           <div>
-            <p className="text-xs text-slate-400">Identitas Toko Aktif</p>
+            <p className="text-xs text-slate-400">Active Merchant Identity</p>
             <p className="text-sm font-medium text-white truncate mt-0.5">{activeShopName}</p>
             <p className="text-xs font-mono tabular-nums text-emerald-400 mt-1">
-              {shopAvailableTusd8.toFixed(2)} tUSD8 tersedia
+              {shopAvailableTusd8.toFixed(2)} tUSD8 available
             </p>
           </div>
           <button
@@ -159,7 +159,7 @@ export default function AppShell({
               ) : (
                 <PauseCircle className="w-3.5 h-3.5" />
               )}
-              <span>{agentPaused ? 'AI Dijeda · Aktifkan' : 'Penjaga AI Aktif'}</span>
+              <span>{agentPaused ? 'AI Paused · Resume' : 'AI Guarantor Active'}</span>
             </span>
           </button>
         </div>
@@ -171,7 +171,7 @@ export default function AppShell({
             rel="noreferrer"
             className="hover:text-white transition-colors"
           >
-            Faucet QDay
+            QDay Faucet
           </a>
           <span aria-hidden="true">·</span>
           <a
@@ -194,7 +194,7 @@ export default function AppShell({
         <div className="sticky top-0 h-screen">{sidebarContent}</div>
       </aside>
 
-      {/* Mobile Drawer for Secondary Pages (Lender Pool & Foundry Docs) */}
+      {/* Mobile Drawer for Secondary Pages */}
       {mobileOpen && (
         <div className="fixed inset-0 z-50 lg:hidden flex">
           <div
@@ -207,7 +207,7 @@ export default function AppShell({
 
       {/* Main Content */}
       <div className="flex-1 min-w-0 flex flex-col">
-        {/* Compact 52-56px Top Header */}
+        {/* Compact Top Header */}
         <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 flex items-center">
           <div className="w-full max-w-6xl mx-auto flex items-center justify-between gap-4">
             <div className="flex items-center gap-2.5 min-w-0">
@@ -215,7 +215,7 @@ export default function AppShell({
                 type="button"
                 onClick={() => setMobileOpen(true)}
                 className="lg:hidden p-2 -ml-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                aria-label="Buka menu navigasi lengkap"
+                aria-label="Open full navigation menu"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -249,7 +249,7 @@ export default function AppShell({
                     onClick={disconnectWallet}
                     className="px-3 py-1.5 text-xs font-medium text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors whitespace-nowrap min-h-[38px]"
                   >
-                    Putus
+                    Disconnect
                   </button>
                 </div>
               ) : (
@@ -261,10 +261,10 @@ export default function AppShell({
                 >
                   <Wallet className="w-3.5 h-3.5" />
                   <span className="hidden sm:inline">
-                    {wallet.isConnecting ? 'Menghubungkan...' : 'Hubungkan Dompet QDay'}
+                    {wallet.isConnecting ? 'Connecting...' : 'Connect QDay Wallet'}
                   </span>
                   <span className="sm:hidden">
-                    {wallet.isConnecting ? '...' : 'Dompet'}
+                    {wallet.isConnecting ? '...' : 'Wallet'}
                   </span>
                 </button>
               )}
@@ -276,7 +276,7 @@ export default function AppShell({
           <div className="bg-amber-50 border-b border-amber-200 px-4 sm:px-8 py-2">
             <div className="max-w-6xl mx-auto flex items-center justify-between gap-4 text-xs text-amber-900">
               <span className="truncate">{wallet.error}</span>
-              <span className="font-medium shrink-0">Mode demo aktif</span>
+              <span className="font-medium shrink-0">Demo mode active</span>
             </div>
           </div>
         )}
@@ -295,7 +295,7 @@ export default function AppShell({
                 className="hidden sm:inline-flex items-center gap-2 text-xs font-medium text-slate-700 hover:text-slate-900 border border-slate-200 bg-white px-3.5 py-2 rounded-lg whitespace-nowrap shrink-0 min-h-[40px]"
               >
                 <ArrowLeftRight className="w-3.5 h-3.5 text-[#16A34A]" />
-                <span>Catat Penjualan QR</span>
+                <span>Record QR Sale</span>
               </Link>
             </div>
 
@@ -304,9 +304,9 @@ export default function AppShell({
         </main>
       </div>
 
-      {/* Bar navigasi bawah seluler */}
+      {/* Mobile Bottom Navigation Bar */}
       <nav
-        aria-label="Navigasi cepat seluler"
+        aria-label="Mobile quick navigation"
         className="fixed bottom-0 left-0 right-0 z-40 h-16 bg-white/95 backdrop-blur-md border-t border-slate-200 grid grid-cols-4 items-center lg:hidden"
       >
         {MOBILE_TABS.map((tab) => {

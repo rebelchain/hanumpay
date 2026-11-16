@@ -14,33 +14,33 @@ export function LiveTicker() {
   } = useHanumPay();
 
   const verifiedCount = identities.filter((i) => i.active).length;
-  const savingsVsPinjol = eligibility.proposedPrincipalUSD8 * 0.3; // 35% pinjol vs 5% HanumPay
+  const savingsVsPredatory = eligibility.proposedPrincipalUSD8 * 0.3;
 
   const items = [
     {
-      pair: 'WARUNG BU SRI · QR 30 HARI',
+      pair: 'WARUNG BU SRI · 30D QR',
       value: `$${shopStats.totalSales30dUSD8.toFixed(2)} tUSD8`,
-      edge: `${shopStats.uniqueCustomers30d} pembeli unik`,
+      edge: `${shopStats.uniqueCustomers30d} unique buyers`,
     },
     {
-      pair: 'LIMIT MODAL KONTRAK',
+      pair: 'CONTRACT CREDIT LIMIT',
       value: `$${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8`,
-      edge: `batas ${CONTRACT_LIMITS.LOAN_RATIO_PCT}% · maks $${CONTRACT_LIMITS.MAX_LOAN_USD8}`,
+      edge: `${CONTRACT_LIMITS.LOAN_RATIO_PCT}% cap · max $${CONTRACT_LIMITS.MAX_LOAN_USD8}`,
     },
     {
-      pair: 'BIAYA TETAP KONTRAK',
+      pair: 'CONTRACT FLAT FEE',
       value: `5.00% ($${eligibility.proposedFlatFeeUSD8.toFixed(2)})`,
-      edge: `hemat +$${savingsVsPinjol.toFixed(2)} vs pinjol 35%`,
+      edge: `save +$${savingsVsPredatory.toFixed(2)} vs 35% lenders`,
     },
     {
-      pair: 'DANA POOL KOMUNITAS',
-      value: `$${poolDepositedUSD8.toLocaleString('id-ID')} TVL`,
-      edge: `$${poolAvailableUSD8.toLocaleString('id-ID')} siap cair`,
+      pair: 'COMMUNITY POOL TVL',
+      value: `$${poolDepositedUSD8.toLocaleString('en-US')} TVL`,
+      edge: `$${poolAvailableUSD8.toLocaleString('en-US')} ready`,
     },
     {
-      pair: 'DIREKTORI ERC-8004',
-      value: `${verifiedCount} akun resmi`,
-      edge: 'Cek penerima aktif',
+      pair: 'ERC-8004 REGISTRY',
+      value: `${verifiedCount} verified IDs`,
+      edge: 'Payee check active',
     },
   ];
 
@@ -63,14 +63,14 @@ export function LiveTicker() {
 
   return (
     <div className="relative flex h-14 w-full items-center overflow-hidden bg-[#151619] text-white">
-      {/* Label status */}
+      {/* Status Label */}
       <div className="relative z-10 flex h-full shrink-0 items-center gap-2 border-r border-white/15 bg-[#151619] px-3.5 sm:px-7">
         <span className="relative flex h-2 w-2" aria-hidden="true">
           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#9FE8C3] opacity-75" />
           <span className="relative inline-flex h-2 w-2 rounded-full bg-[#9FE8C3]" />
         </span>
         <span className="font-mono text-[10px] sm:text-[11px] font-medium tracking-[0.12em] uppercase text-white/85 whitespace-nowrap">
-          Aktif · QDay 44005
+          Live · QDay 44005
         </span>
       </div>
 

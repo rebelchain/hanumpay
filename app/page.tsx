@@ -27,135 +27,135 @@ import {
 const HOW_STEPS = [
   {
     num: '01',
-    title: 'Catat penjualan QR bebas biaya gas',
-    body: 'Setiap pembeli membayar belanjaan pakai tUSD8 di kasir, sistem otomatis mengacak ID pembeli secara aman (keccak256) lalu menyimpan bukti transaksi EIP-712 ke SalesLedger.sol tanpa biaya gas.',
+    title: 'Record QR sales with zero gas',
+    body: 'Every time a customer pays in tUSD8 at the counter, the POS hashes their identifier locally (keccak256) and relays an EIP-712 signature straight to SalesLedger.sol with zero tQDAY gas cost.',
   },
   {
     num: '02',
-    title: 'Filter otomatis cegah jualan fiktif',
-    body: 'Sebelum modal kerja terbuka, SalesLedger.sol memastikan ada minimal 5 pembeli berbeda dalam 30 hari terakhir. Transaksi pura-pura dari dompet yang sama otomatis ditolak.',
+    title: 'Sybil filter blocks wash trading',
+    body: 'Before any credit unlocks, SalesLedger.sol verifies at least 5 distinct customers over the trailing 30 days. Self-transfers from the same wallet or duplicate customer IDs are automatically rejected.',
   },
   {
     num: '03',
-    title: 'Penjaga AI berbatas aturan kontrak',
-    body: 'AIGuarantor.sol menghitung 10% dari total omzet QR 30 hari (maksimal $500 tUSD8), mengunci biaya tetap 5%, lalu mengecek izin pemilik warung sebelum mengirim penawaran.',
+    title: 'Contract-bound AI Guarantor',
+    body: 'AIGuarantor.sol caps working capital at 10% of 30-day QR sales (up to $500 tUSD8), locks a 5% flat fee, and checks the merchant pause kill switch before submitting a proposal.',
   },
   {
     num: '04',
-    title: 'Bayar pemasok aman & cicilan otomatis',
-    body: 'Dana modal dipakai kulakan langsung ke pemasok resmi di ERC8004Registry.sol agar tidak salah transfer. Tiap penjualan QR berikutnya otomatis dipotong 10% untuk melunasi pinjaman.',
+    title: 'Verified supplier pay & auto-repayment',
+    body: 'Credit funds pay whitelisted wholesale suppliers via ERC8004Registry.sol Confirmation of Payee. Every future QR sale automatically deducts 10% toward repayment until settled.',
   },
 ];
 
 const SAFETY_PRINCIPLES = [
   {
     num: '01',
-    title: 'Biaya tetap 5% tidak bisa diubah',
-    body: 'LoanPool.sol menolak usulan AI mana pun yang mencoba menaikkan biaya di atas 5% atau mengubah potongan cicilan 10%. Perintah palsu (prompt injection) tidak akan mempan.',
+    title: 'Immutable 5% flat fee cap',
+    body: 'LoanPool.sol reverts any AI proposal that attempts to raise the fee above 5% or alter the 10% auto-repayment split. Prompt-injection attacks fail deterministically at the EVM boundary.',
   },
   {
     num: '02',
-    title: 'Tombol Jeda AI di tangan pemilik',
-    body: 'Pemilik warung punya kendali penuh lewat AIGuarantor.setAgentPaused(true). Saat dijeda, AI tidak bisa mengajukan pinjaman baru, sementara kasir QR harian tetap berjalan normal.',
+    title: 'Merchant-controlled AI Pause switch',
+    body: 'Shop owners hold sovereign control via AIGuarantor.setAgentPaused(true). When paused, new AI credit proposals are blocked on-chain while daily QR sales continue uninterrupted.',
   },
   {
     num: '03',
-    title: 'Struk resmi & Paspor Kredit UMKM',
-    body: 'Setiap jualan QR, pencairan modal, dan pembayaran grosir menghasilkan struk digital yang bisa diaudit dan terhubung langsung ke identitas ERC-8004 di QDay Chain ID 44005.',
+    title: 'Auditable receipts & Credit Passport',
+    body: 'Every QR sale, credit disbursement, and wholesale supplier settlement issues a verifiable receipt tied directly to ERC-8004 identity records on QDay Chain ID 44005.',
   },
 ];
 
 const CONTRACT_CARDS = [
   {
-    tag: 'BUKTI OMZET',
+    tag: 'REVENUE PROOF',
     name: 'SalesLedger.sol',
     summary:
-      'Menyimpan bukti penjualan QR pelanggan bebas gas dengan ID teracak agar warung kecil punya riwayat kredit yang sah.',
+      'Stores gasless customer QR receipts with privacy-preserving keccak256 hashes so micro-merchants build verifiable on-chain cashflow.',
     stats: [
-      { label: 'Rentang', value: '30 hari' },
-      { label: 'Pembeli unik', value: 'Min 5 orang' },
-      { label: 'Nominal QR', value: '$0.10–$500' },
-      { label: 'Biaya gas', value: 'Gratis (Relayer)' },
+      { label: 'Window', value: '30 days' },
+      { label: 'Unique buyers', value: 'Min 5' },
+      { label: 'Ticket size', value: '$0.10–$500' },
+      { label: 'Gas cost', value: 'Gasless (Relayer)' },
     ],
     href: '/app/penjualan',
-    linkLabel: 'Buka kasir QR',
+    linkLabel: 'Open QR cashier',
   },
   {
-    tag: 'AGEN TERKENDALI',
+    tag: 'BOUNDED AGENT',
     name: 'AIGuarantor.sol',
     summary:
-      'Mengusulkan modal tUSD8 sesuai batas hitungan kontrak dan memberi hak penuh bagi pemilik toko untuk menjeda akses AI.',
+      'Proposes tUSD8 working capital strictly within deterministic contract ceilings while respecting the merchant pause kill switch.',
     stats: [
-      { label: 'Rasio omzet', value: 'Maks 10%' },
-      { label: 'Batas modal', value: '$500 tUSD8' },
-      { label: 'Kuota harian', value: '10 / hari' },
-      { label: 'Kendali toko', value: 'Jeda AI' },
+      { label: 'Revenue ratio', value: 'Max 10%' },
+      { label: 'Credit cap', value: '$500 tUSD8' },
+      { label: 'Daily quota', value: '10 / day' },
+      { label: 'Owner control', value: 'AI Pause' },
     ],
     href: '/app/docs',
-    linkLabel: 'Uji serangan AI',
+    linkLabel: 'Test AI red-team',
   },
   {
-    tag: 'BRANKAS DANA',
+    tag: 'LIQUIDITY VAULT',
     name: 'LoanPool.sol',
     summary:
-      'Menampung dana tUSD8 dari komunitas penyedia dana, menjaga batas pakai maksimal 80%, dan memotong cicilan 10% tiap penjualan.',
+      'Holds community LP tUSD8 liquidity, enforces an 80% utilization cap, and collects automatic 10% repayments from QR revenue.',
     stats: [
-      { label: 'Biaya tetap', value: '5.0% flat' },
-      { label: 'Batas pakai', value: 'Maks 80%' },
-      { label: 'Cicilan otomatis', value: '10% / laku' },
-      { label: 'Denda telat', value: '0% selamanya' },
+      { label: 'Flat fee', value: '5.0% flat' },
+      { label: 'Utilization cap', value: 'Max 80%' },
+      { label: 'Auto-repay', value: '10% / sale' },
+      { label: 'Late penalty', value: '0% forever' },
     ],
     href: '/app/pool',
-    linkLabel: 'Lihat pool dana',
+    linkLabel: 'Inspect pool',
   },
   {
-    tag: 'CEK PENERIMA',
+    tag: 'PAYEE CHECK',
     name: 'ERC8004Registry.sol',
     summary:
-      'Memastikan identitas pemasok terdaftar resmi sebelum dana dikirim, mencegah transfer nyasar ke alamat palsu.',
+      'Resolves verified wholesale supplier names against registered wallet addresses before funds move, preventing spoofing and mis-transfers.',
     stats: [
-      { label: 'Privasi', value: 'keccak256' },
-      { label: 'Cek penerima', value: 'Wajib aktif' },
-      { label: 'Identitas', value: 'ERC-8004' },
-      { label: 'Paspor Kredit', value: 'Saat lunas' },
+      { label: 'Privacy', value: 'keccak256' },
+      { label: 'Payee check', value: 'Always on' },
+      { label: 'Identity', value: 'ERC-8004' },
+      { label: 'Credit Passport', value: 'On payoff' },
     ],
     href: '/app/identitas',
-    linkLabel: 'Lihat direktori',
+    linkLabel: 'Browse directory',
   },
 ];
 
 const BUILT_FOR_ITEMS = [
-  { label: 'Jaringan', name: 'QDay Aevum 44005' },
-  { label: 'Pembayaran', name: 'Stablecoin tUSD8' },
-  { label: 'Identitas', name: 'Penerima ERC-8004' },
-  { label: 'Bebas Gas', name: 'Relayer EIP-712' },
-  { label: 'Keamanan', name: 'Foundry + Audit Gemini' },
+  { label: 'Network', name: 'QDay Aevum 44005' },
+  { label: 'Settlement', name: 'tUSD8 Stablecoin' },
+  { label: 'Identity', name: 'ERC-8004 Payee Check' },
+  { label: 'Gasless', name: 'EIP-712 Relayer' },
+  { label: 'Security', name: 'Foundry + Gemini Audit' },
 ];
 
 const FAQS = [
   {
-    q: 'Apa itu HanumPay secara singkat?',
-    a: 'HanumPay mengubah omzet penjualan QR harian di warung atau UMKM menjadi batas modal kerja tUSD8 yang jujur dengan biaya tetap 5%, cicilan otomatis 10% tiap jualan, dan pengecekan identitas pemasok ERC-8004.',
+    q: 'What is HanumPay in plain terms?',
+    a: 'HanumPay turns a small shop’s daily QR payment volume into an honest tUSD8 working-capital credit line with a 5% flat fee, 10% automatic repayment per sale, and ERC-8004 supplier Confirmation of Payee.',
   },
   {
-    q: 'Bagaimana batas modal hingga $500 bisa cair tanpa jaminan?',
-    a: 'Kontrak AIGuarantor.sol membaca langsung catatan SalesLedger.sol. Toko cukup membuktikan minimal 5 pembeli berbeda dalam 30 hari. Limit modal dihitung otomatis 10% dari total omzet 30 hari, maksimal $500 tUSD8.',
+    q: 'How does up to $500 working capital unlock without physical collateral?',
+    a: 'AIGuarantor.sol reads SalesLedger.sol directly. Once a shop proves at least 5 distinct buyers over 30 days, its credit limit unlocks at 10% of trailing 30-day revenue, capped at $500 tUSD8.',
   },
   {
-    q: 'Apakah AI bisa menaikkan biaya atau memaksa pinjaman?',
-    a: 'Tidak bisa. Biaya tetap 5% dan potongan cicilan 10% dikunci permanen di dalam kode LoanPool.sol. Pemilik toko juga wajib menyetujui lewat tanda tangan EIP-712 dan bisa menjeda akses AI kapan saja.',
+    q: 'Can the AI raise fees or force an unauthorized loan?',
+    a: 'No. The 5% flat fee cap and 10% repayment split are hardcoded in LoanPool.sol. The merchant must also sign an EIP-712 approval and can pause AI access at any time.',
   },
   {
-    q: 'Mengapa pembayaran pemasok pakai verifikasi ERC-8004?',
-    a: 'Salah kirim alamat dompet blockchain tidak bisa ditarik kembali. ERC8004Registry.sol mencocokkan nama pemasok seperti "Pak Joko Distributor" dengan alamat terverifikasi sebelum uang keluar.',
+    q: 'Why does supplier checkout use ERC-8004 verification?',
+    a: 'Blockchain transfers cannot be reversed if sent to a spoofed address. ERC8004Registry.sol matches human-readable supplier names like "Pak Joko Distributor" to verified wallets before funds leave.',
   },
   {
-    q: 'Bagaimana jika minggu ini warung sedang sepi pembeli?',
-    a: 'Cicilan otomatis ikut berhenti sementara karena potongan hanya terjadi saat ada transaksi QR yang masuk. Tidak ada denda keterlambatan dan tidak ada penagih.',
+    q: 'What happens during a slow week with fewer customers?',
+    a: 'Repayment automatically pauses when no QR sales come in, because deductions only occur per transaction. There are zero fixed due dates and zero late penalties.',
   },
   {
-    q: 'Apa saja yang sudah berjalan di QDay Aevum Testnet?',
-    a: 'Koneksi dompet langsung terhubung ke QDay Aevum Testnet (Chain ID 44005) untuk membaca saldo tQDAY & tUSD8 asli, lengkap dengan verifikasi tanda tangan EIP-712, uji serangan Red-Team Gemini, dan simulasi 2 layar.',
+    q: 'What is live on QDay Aevum Testnet right now?',
+    a: 'Direct wallet connection to QDay Aevum Testnet (Chain ID 44005) reads live tQDAY and tUSD8 balances, alongside EIP-712 signature verification, Gemini red-team guardrail testing, and the 2-phone interactive simulator.',
   },
 ];
 
@@ -174,27 +174,27 @@ export default function LandingPage() {
             <div className="min-w-0">
               <Reveal y={18}>
                 <h1 className="text-[44px] sm:text-[72px] xl:text-[90px] leading-[0.98] font-semibold tracking-[-0.05em] text-[#151619]">
-                  Modal usaha adil.
+                  Fair working credit.
                   <br />
-                  Cair dari jualan.
+                  Earned from sales.
                 </h1>
               </Reveal>
 
               <Reveal delay={0.08} y={18}>
                 <p className="mt-6 max-w-[42ch] text-[16px] sm:text-[18px] leading-[1.55] font-medium text-[#1C1C1C]/80">
-                  HanumPay mencatat penjualan QR harian warung di QDay, memberi limit modal tUSD8
-                  lewat Penjaga AI, dan memotong cicilan 10% otomatis tiap ada pembeli.
+                  HanumPay records micro-merchant QR sales on QDay, unlocks contract-capped tUSD8
+                  credit through an AI Guarantor, and auto-repays 10% per sale.
                 </p>
               </Reveal>
 
               <Reveal delay={0.14} y={18}>
                 <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-5">
-                  <LaunchButton href="/stage" label="Buka Simulasi Langsung" variant="dark" />
+                  <LaunchButton href="/stage" label="Launch Live Simulator" variant="dark" />
                   <Link
                     href="/app/dashboard"
                     className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[#151619] underline decoration-[#151619]/35 underline-offset-4 transition-colors hover:decoration-[#151619] whitespace-nowrap"
                   >
-                    <span>Masuk ke dasbor usaha</span>
+                    <span>Open merchant dashboard</span>
                     <ArrowRight className="h-3.5 w-3.5" />
                   </Link>
                 </div>
@@ -208,7 +208,7 @@ export default function LandingPage() {
                       5.0%
                     </div>
                     <p className="mt-2 text-[13px] leading-[1.45] text-[#1C1C1C]/75">
-                      biaya tetap di smart contract vs bunga pinjol 35%+/bulan
+                      contract-locked flat fee vs 35%+/mo predatory loan apps
                     </p>
                   </div>
                   <div className="min-w-0">
@@ -216,7 +216,7 @@ export default function LandingPage() {
                       10%
                     </div>
                     <p className="mt-2 text-[13px] leading-[1.45] text-[#1C1C1C]/75">
-                      limit modal dari omzet 30 hari, dicicil otomatis tiap laku
+                      credit cap of 30d revenue, auto-repaid from future sales
                     </p>
                   </div>
                 </div>
@@ -225,13 +225,13 @@ export default function LandingPage() {
                   href="/app/docs"
                   className="mt-7 sm:mt-8 inline-flex flex-wrap items-center gap-2 font-mono text-[11px] tracking-[0.12em] uppercase text-[#1C1C1C]/70 transition-colors hover:text-[#151619]"
                 >
-                  <span>Periksa kontrak QDay 44005 &amp; uji serangan AI</span>
+                  <span>Inspect QDay 44005 contracts &amp; AI red-team</span>
                   <ArrowRight className="h-3 w-3 shrink-0" />
                 </Link>
               </Reveal>
             </div>
 
-            {/* Right column: Kalkulator Kredit QR */}
+            {/* Right column: QR Credit Calculator */}
             <Reveal delay={0.12} y={24} className="min-w-0">
               <HeroCreditCalculator />
             </Reveal>
@@ -242,14 +242,14 @@ export default function LandingPage() {
       {/* 2. LIVE TICKER */}
       <LiveTicker />
 
-      {/* 3. CARA KERJA */}
+      {/* 3. HOW IT WORKS */}
       <section id="how" className="scroll-mt-16 bg-white">
         <div className={`${CONTAINER} ${SECTION_Y}`}>
           <Reveal>
             <SectionHead
-              eyebrow="CARA KERJA"
-              title="Modal dihitung dari omzet kasir, bukan rentenir."
-              note="Setiap transaksi QR tercatat aman di QDay. Setelah 5 pembeli berbeda bertransaksi dalam 30 hari, AIGuarantor.sol membuka batas modal kerja tUSD8."
+              eyebrow="HOW IT WORKS"
+              title="Credit underwritten by real POS cashflow, not loan sharks."
+              note="Every QR checkout is anchored on QDay. Once 5 distinct buyers transact within 30 days, AIGuarantor.sol unlocks bounded tUSD8 working capital."
             />
           </Reveal>
 
@@ -284,18 +284,18 @@ export default function LandingPage() {
           {/* Left Sticky Warm Off-White Display Panel */}
           <div className="min-w-0 bg-[#F5F7F5] px-5 py-14 sm:px-10 md:px-14 lg:sticky lg:top-14 lg:flex lg:h-[calc(100vh-3.5rem)] lg:flex-col lg:justify-between lg:rounded-b-[240px] lg:px-16 lg:py-24">
             <Reveal>
-              <Eyebrow>PERBANDINGAN &amp; PENGAMAN</Eyebrow>
+              <Eyebrow>COMPARISON &amp; GUARDRAILS</Eyebrow>
               <h2 className="mt-4 sm:mt-5 text-[38px] sm:text-[56px] xl:text-[68px] leading-none font-medium tracking-[-0.035em] text-[#151619]">
-                Anti mencekik.
+                Never predatory.
                 <br />
-                Selalu terukur.
+                Always bounded.
               </h2>
             </Reveal>
 
             <Reveal delay={0.1}>
               <p className="mt-6 lg:mt-8 max-w-[34ch] text-[15px] sm:text-[16px] leading-[1.6] text-[#5C6260]">
-                64 juta UMKM Indonesia bukan tidak punya omzet—mereka hanya belum punya catatan struk
-                digital yang menjaga biaya pinjaman tetap rendah dan adil.
+                64 million Indonesian MSMEs do not lack daily revenue—they lack verifiable digital
+                receipts that keep working capital fair and predictable.
               </p>
             </Reveal>
           </div>
@@ -339,9 +339,9 @@ export default function LandingPage() {
           <Reveal>
             <SectionHead
               tone="mint"
-              eyebrow="KONTRAK ON-CHAIN"
-              title="Empat kontrak teruji. Tanpa titipan pihak ketiga."
-              note="Setiap batas pinjaman, saringan pembeli asli, hingga cek identitas pemasok ERC-8004 dijaga langsung oleh Solidity di jaringan QDay."
+              eyebrow="ON-CHAIN CONTRACTS"
+              title="Four audited contracts. Zero custodial middlemen."
+              note="Every credit ceiling, sybil filter, and ERC-8004 supplier payee check is enforced directly in Solidity on QDay."
             />
           </Reveal>
 
@@ -392,7 +392,7 @@ export default function LandingPage() {
       <section className="border-y border-[#E2E7E4] bg-[#F5F7F5] py-16 lg:py-20">
         <div className={CONTAINER}>
           <Reveal>
-            <Eyebrow>DIBANGUN DI QDAY AEVUM TESTNET DENGAN</Eyebrow>
+            <Eyebrow>BUILT ON QDAY AEVUM TESTNET WITH</Eyebrow>
             <div className="mt-7 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-5 border-t border-l border-[#E2E7E4]">
               {BUILT_FOR_ITEMS.map((item) => (
                 <div
@@ -417,10 +417,10 @@ export default function LandingPage() {
         <div className={`${CONTAINER} ${SECTION_Y}`}>
           <div className="grid grid-cols-1 gap-10 lg:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)] lg:gap-16">
             <Reveal className="min-w-0 lg:sticky lg:top-24 lg:self-start">
-              <Eyebrow>TANYA JAWAB</Eyebrow>
-              <H2 className="mt-4">Semua pertanyaan terjawab.</H2>
+              <Eyebrow>FAQ</Eyebrow>
+              <H2 className="mt-4">Every question answered.</H2>
               <p className="mt-4 max-w-[32ch] text-[15px] sm:text-[16px] leading-[1.6] text-[#5C6260]">
-                Penjelasan singkat soal catatan QR bebas gas, batas aman Penjaga AI, dan pencairan di QDay.
+                Clear answers on gasless QR ledgers, AI Guarantor guardrails, and QDay settlement.
               </p>
             </Reveal>
 
@@ -448,26 +448,26 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 9. CTA AKHIR */}
+      {/* 9. FINAL CTA */}
       <section className="relative overflow-hidden bg-[#151619] text-white">
         <BlockPattern />
 
         <div className={`${CONTAINER} ${SECTION_Y} relative z-10`}>
           <Reveal>
-            <Eyebrow tone="dark">AKTIF DI QDAY TESTNET</Eyebrow>
+            <Eyebrow tone="dark">LIVE ON QDAY TESTNET</Eyebrow>
             <h2 className="mt-5 max-w-[14ch] text-[38px] sm:text-[64px] leading-[1.02] font-medium tracking-[-0.04em] text-white">
-              Dibuat untuk warung nyata.
+              Built for real shops.
               <br />
-              Dijaga langsung oleh kode.
+              Guarded by code.
             </h2>
 
             <div className="mt-10 flex flex-wrap items-center gap-5 sm:gap-6">
-              <LaunchButton href="/stage" label="Buka Simulasi Langsung" variant="light" />
+              <LaunchButton href="/stage" label="Launch Live Simulator" variant="light" />
               <Link
                 href="/app/dashboard"
                 className="inline-flex items-center gap-1.5 text-[14px] font-medium text-white/85 underline decoration-white/30 underline-offset-4 transition-colors hover:text-white hover:decoration-white whitespace-nowrap"
               >
-                <span>Buka dasbor pemilik usaha</span>
+                <span>Open merchant dashboard</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -488,52 +488,52 @@ export default function LandingPage() {
               hanumpay
             </Link>
             <p className="mt-3 max-w-[30ch] text-[14px] leading-[1.6] text-[#5C6260]">
-              Modal kerja berbatas kontrak dan jalur bayar pemasok ERC-8004 untuk UMKM Indonesia di QDay Aevum Testnet.
+              Contract-bounded working capital and ERC-8004 supplier rails for MSMEs on QDay Aevum Testnet.
             </p>
           </div>
 
           <div>
-            <Eyebrow>SIMULASI</Eyebrow>
+            <Eyebrow>SIMULATOR</Eyebrow>
             <ul className="mt-4 space-y-2.5 text-[14px] text-[#5C6260]">
               <li>
                 <Link href="/stage" className="hover:text-[#151619]">
-                  Simulasi 2 Layar Langsung
+                  2-Phone Live Simulator
                 </Link>
               </li>
               <li>
                 <Link href="/app/dashboard" className="hover:text-[#151619]">
-                  Ringkasan Usaha
+                  Merchant Overview
                 </Link>
               </li>
               <li>
                 <Link href="/app/penjualan" className="hover:text-[#151619]">
-                  Kasir Penjualan QR
+                  QR Sales Cashier
                 </Link>
               </li>
               <li>
                 <Link href="/app/pool" className="hover:text-[#151619]">
-                  Pool Dana Komunitas
+                  Community Liquidity Pool
                 </Link>
               </li>
             </ul>
           </div>
 
           <div>
-            <Eyebrow>PROTOKOL</Eyebrow>
+            <Eyebrow>PROTOCOL</Eyebrow>
             <ul className="mt-4 space-y-2.5 text-[14px] text-[#5C6260]">
               <li>
                 <Link href="/app/pinjaman" className="hover:text-[#151619]">
-                  Modal &amp; Bayar Pemasok
+                  Credit &amp; Pay Suppliers
                 </Link>
               </li>
               <li>
                 <Link href="/app/identitas" className="hover:text-[#151619]">
-                  Direktori ERC-8004
+                  ERC-8004 Directory
                 </Link>
               </li>
               <li>
                 <Link href="/app/docs" className="hover:text-[#151619]">
-                  Arsitektur &amp; Uji Serangan
+                  Architecture &amp; Red-Team
                 </Link>
               </li>
             </ul>
@@ -549,7 +549,7 @@ export default function LandingPage() {
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 hover:text-[#151619]"
                 >
-                  <span>Kontrak tUSD8</span>
+                  <span>tUSD8 Contract</span>
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </a>
               </li>
@@ -560,7 +560,7 @@ export default function LandingPage() {
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 hover:text-[#151619]"
                 >
-                  <span>Faucet Token Uji</span>
+                  <span>Testnet Faucet</span>
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </a>
               </li>

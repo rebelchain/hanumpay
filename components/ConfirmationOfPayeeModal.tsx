@@ -28,6 +28,15 @@ export default function ConfirmationOfPayeeModal({
 }) {
   if (!open || !entity) return null;
 
+  const categoryLabel =
+    entity.category === 'shop'
+      ? 'Merchant / Shop'
+      : entity.category === 'supplier'
+        ? 'Verified Supplier'
+        : entity.category === 'lender'
+          ? 'Liquidity Provider'
+          : 'AI Agent';
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-slate-950/60 backdrop-blur-xs"
@@ -52,7 +61,7 @@ export default function ConfirmationOfPayeeModal({
             type="button"
             onClick={onClose}
             className="p-2 text-slate-400 hover:text-slate-700 rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center"
-            aria-label="Tutup jendela verifikasi"
+            aria-label="Close verification modal"
           >
             <X className="w-4 h-4" />
           </button>
@@ -62,11 +71,11 @@ export default function ConfirmationOfPayeeModal({
           <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
             <div className="flex items-center justify-between gap-3">
               <span className="text-xs font-medium text-slate-500">
-                Konfirmasi Penerima ERC-8004
+                ERC-8004 Confirmation of Payee
               </span>
               <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#2563EB]">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Terverifikasi On-Chain</span>
+                <span>Verified On-Chain</span>
               </span>
             </div>
 
@@ -76,10 +85,10 @@ export default function ConfirmationOfPayeeModal({
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-slate-600 pt-1">
-              <span>Kategori: {entity.category === 'shop' ? 'Toko / Warung' : entity.category === 'supplier' ? 'Pemasok' : entity.category === 'lender' ? 'Penyedia Dana' : 'Agen AI'}</span>
+              <span>Role: {categoryLabel}</span>
               <span aria-hidden="true">·</span>
               <span className="font-mono tabular-nums">
-                Reputasi: {entity.metadata.reputationScore}/100
+                Reputation: {entity.metadata.reputationScore}/100
               </span>
               <span aria-hidden="true">·</span>
               <a
@@ -88,14 +97,14 @@ export default function ConfirmationOfPayeeModal({
                 rel="noreferrer"
                 className="text-[#2563EB] hover:underline"
               >
-                Cek di QDay Explorer
+                View on QDay Explorer
               </a>
             </div>
           </div>
 
           <div className="space-y-2.5">
             <div className="flex items-center justify-between py-2 border-b border-slate-100">
-              <span className="text-sm text-slate-600">Nominal Transaksi</span>
+              <span className="text-sm text-slate-600">Transaction Amount</span>
               <span className="text-lg font-bold font-mono tabular-nums text-slate-900">
                 {amountUSD8.toFixed(2)} tUSD8
               </span>
@@ -112,8 +121,8 @@ export default function ConfirmationOfPayeeModal({
           </div>
 
           <p className="text-xs text-slate-500">
-            Ketentuan diambil langsung dari smart contract dan tidak bisa diubah setelah Anda setujui.
-            Tanda tangan EIP-712 bebas biaya gas tQDAY bagi pemilik warung.
+            Terms are fetched directly from the smart contract and cannot be altered after approval.
+            EIP-712 signatures require zero tQDAY gas from the merchant.
           </p>
         </div>
 
@@ -123,7 +132,7 @@ export default function ConfirmationOfPayeeModal({
             onClick={onClose}
             className="w-full sm:w-auto px-4 py-3 sm:py-2.5 text-sm font-medium text-slate-700 hover:text-slate-900 rounded-xl sm:rounded-lg border border-slate-200 bg-white min-h-[48px] sm:min-h-[44px]"
           >
-            Batal
+            Cancel
           </button>
           <button
             type="button"
@@ -131,7 +140,7 @@ export default function ConfirmationOfPayeeModal({
             onClick={onConfirm}
             className="w-full sm:w-auto px-5 py-3 sm:py-2.5 text-sm font-semibold text-white bg-[#16A34A] hover:bg-emerald-700 rounded-xl sm:rounded-lg transition-colors min-h-[48px] sm:min-h-[44px] disabled:opacity-60"
           >
-            {isSubmitting ? 'Mengirim EIP-712...' : actionLabel}
+            {isSubmitting ? 'Submitting EIP-712...' : actionLabel}
           </button>
         </div>
       </div>

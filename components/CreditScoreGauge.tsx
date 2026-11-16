@@ -17,7 +17,7 @@ export default function CreditScoreGauge({
   const strokeColor =
     clamped >= 70 ? '#16A34A' : clamped >= 40 ? '#D97706' : '#DC2626';
   const statusText =
-    clamped >= 70 ? 'Sangat Layak' : clamped >= 40 ? 'Membangun Riwayat' : 'Data Belum Cukup';
+    clamped >= 70 ? 'Highly Eligible' : clamped >= 40 ? 'Building History' : 'Insufficient Data';
 
   // Semicircle path math (radius 76, arc length = pi * 76 ≈ 238.76)
   const radius = 76;
@@ -28,9 +28,9 @@ export default function CreditScoreGauge({
     <div className="bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-between">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-base font-semibold text-slate-900">Skor Kelayakan On-Chain</h2>
+          <h2 className="text-base font-semibold text-slate-900">On-Chain Eligibility Score</h2>
           <p className="text-xs text-slate-500 mt-0.5">
-            Dihitung otomatis dari catatan penjualan QR 30 hari terakhir
+            Calculated deterministically from 30-day QR sales history
           </p>
         </div>
         <span
@@ -38,7 +38,7 @@ export default function CreditScoreGauge({
             eligible ? 'text-[#16A34A]' : 'text-[#D97706]'
           }`}
         >
-          {eligible ? 'Layak' : 'Belum Memenuhi'}
+          {eligible ? 'Eligible' : 'Not Yet Met'}
         </span>
       </div>
 
@@ -47,7 +47,7 @@ export default function CreditScoreGauge({
           viewBox="0 0 200 115"
           className="w-56 h-32 overflow-visible"
           role="img"
-          aria-label={`Skor kelayakan ${clamped} dari 100`}
+          aria-label={`Eligibility score ${clamped} out of 100`}
         >
           <path
             d="M 24 100 A 76 76 0 0 1 176 100"
@@ -86,7 +86,7 @@ export default function CreditScoreGauge({
       </div>
 
       <div className="pt-4 border-t border-slate-100 flex items-center justify-between gap-4 text-sm">
-        <span className="text-slate-600">Batas Limit Modal (10% omzet 30 hari)</span>
+        <span className="text-slate-600">Credit Limit Cap (10% of 30d sales)</span>
         <span className="font-mono tabular-nums font-semibold text-slate-900">
           {maxLoanUSD8.toFixed(2)} tUSD8
         </span>

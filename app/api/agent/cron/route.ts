@@ -81,7 +81,7 @@ export async function POST() {
     logs.push({
       event: 'cycle_end',
       mode: 'demo-cron',
-      note: 'Atur AGENT_PRIVATE_KEY, NEXT_PUBLIC_SALES_LEDGER_ADDRESS & NEXT_PUBLIC_AI_GUARANTOR_ADDRESS untuk menjalankan cron langsung di QDay.',
+      note: 'Set AGENT_PRIVATE_KEY, NEXT_PUBLIC_SALES_LEDGER_ADDRESS & NEXT_PUBLIC_AI_GUARANTOR_ADDRESS to run live on QDay Aevum.',
       timestamp: Date.now(),
     });
 
@@ -94,7 +94,7 @@ export async function POST() {
     return NextResponse.json(
       {
         ok: false,
-        error: err instanceof Error ? err.message : 'Siklus cron Penjaga AI gagal.',
+        error: err instanceof Error ? err.message : 'AI Guarantor cron cycle failed.',
         logs,
       },
       { status: 500 }

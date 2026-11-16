@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
     };
 
     if (!loanId || !shop) {
-      return NextResponse.json({ error: 'ID pinjaman atau alamat toko belum diisi.' }, { status: 400 });
+      return NextResponse.json({ error: 'Missing loanId or shop address.' }, { status: 400 });
     }
 
     const verifyingContract =
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
 
       if (!signatureVerified) {
         return NextResponse.json(
-          { error: 'Tanda tangan EIP-712 persetujuan pinjaman tidak cocok dengan pemilik toko.' },
+          { error: 'EIP-712 loan acceptance signature does not match merchant address.' },
           { status: 401 }
         );
       }
@@ -110,11 +110,11 @@ export async function POST(req: NextRequest) {
       mode: 'verified-demo-relay',
       txHash: null,
       signatureVerified,
-      note: 'Relayer telah memeriksa syarat pinjaman; atur RELAYER_PRIVATE_KEY & NEXT_PUBLIC_LOAN_POOL_ADDRESS untuk kirim langsung ke jaringan QDay.',
+      note: 'Relayer verified loan terms; set RELAYER_PRIVATE_KEY & NEXT_PUBLIC_LOAN_POOL_ADDRESS to broadcast live to QDay Aevum.',
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Relayer persetujuan pinjaman gagal.' },
+      { error: err instanceof Error ? err.message : 'Loan acceptance relayer failed.' },
       { status: 500 }
     );
   }

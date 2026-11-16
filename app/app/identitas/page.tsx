@@ -27,8 +27,8 @@ export default function IdentityAndSupplierPayPage() {
   // Registration form
   const [regName, setRegName] = useState('');
   const [regCategory, setRegCategory] = useState<EntityCategory>('shop');
-  const [regCity, setRegCity] = useState('Surabaya, Jawa Timur');
-  const [regType, setRegType] = useState('Toko Ritel UMKM');
+  const [regCity, setRegCity] = useState('Surabaya, East Java');
+  const [regType, setRegType] = useState('MSME Retail Shop');
   const [regFeedback, setRegFeedback] = useState<{ type: 'ok' | 'err'; text: string } | null>(null);
 
   // Supplier payment state
@@ -37,7 +37,7 @@ export default function IdentityAndSupplierPayPage() {
     suppliers[0]?.name ?? 'Pak Joko Distributor'
   );
   const [payAmount, setPayAmount] = useState('35.00');
-  const [itemNote, setItemNote] = useState('Minyak goreng 20L + beras 25kg');
+  const [itemNote, setItemNote] = useState('20L cooking oil + 25kg rice');
   const [copSupplier, setCopSupplier] = useState<ERC8004Identity | null>(null);
   const [payFeedback, setPayFeedback] = useState<{
     type: 'ok' | 'err';
@@ -49,11 +49,11 @@ export default function IdentityAndSupplierPayPage() {
     e.preventDefault();
     const res = registerIdentity(regName, regCategory, regCity, regType);
     if (!res.ok) {
-      setRegFeedback({ type: 'err', text: res.error ?? 'Gagal mendaftarkan identitas.' });
+      setRegFeedback({ type: 'err', text: res.error ?? 'Failed to register identity.' });
     } else {
       setRegFeedback({
         type: 'ok',
-        text: `"${regName.trim()}" (${regCategory}) berhasil didaftarkan ke ERC8004Registry.`,
+        text: `"${regName.trim()}" (${regCategory}) registered on ERC8004Registry.`,
       });
       setLookupQuery(regName.trim());
       setRegName('');
@@ -67,7 +67,7 @@ export default function IdentityAndSupplierPayPage() {
     if (!sup) {
       setPayFeedback({
         type: 'err',
-        text: 'Pemasok yang dipilih tidak ditemukan di ERC8004Registry.',
+        text: 'Selected supplier was not found in ERC8004Registry.',
       });
       return;
     }
@@ -80,11 +80,11 @@ export default function IdentityAndSupplierPayPage() {
     const res = payVerifiedSupplier(copSupplier.name, amt, itemNote);
     setCopSupplier(null);
     if (!res.ok) {
-      setPayFeedback({ type: 'err', text: res.error ?? 'Pembayaran pemasok gagal.' });
+      setPayFeedback({ type: 'err', text: res.error ?? 'Supplier payment failed.' });
     } else {
       setPayFeedback({
         type: 'ok',
-        text: `Berhasil membayar ${amt.toFixed(2)} tUSD8 ke ${copSupplier.name} dengan Verifikasi Penerima ERC-8004.`,
+        text: `Paid ${amt.toFixed(2)} tUSD8 to ${copSupplier.name} with ERC-8004 Confirmation of Payee.`,
         receipt: res.receipt,
       });
     }
@@ -92,8 +92,8 @@ export default function IdentityAndSupplierPayPage() {
 
   return (
     <AppShell
-      title="Identitas ERC-8004 &amp; Bayar Pemasok"
-      subtitle="Konfirmasi Penerima On-Chain untuk warung, agen AI, dan pemasok grosir B2B terverifikasi."
+      title="ERC-8004 Identity & Pay Supplier"
+      subtitle="On-chain Confirmation of Payee for shops, AI agents, and verified B2B wholesale suppliers."
     >
       {/* Supplier Payment via ERC-8004 (Confirmation of Payee Feature) */}
       <div className="grid lg:grid-cols-12 gap-6">
@@ -101,17 +101,17 @@ export default function IdentityAndSupplierPayPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Bayar Pemasok Resmi (ERC-8004)
+                Pay Verified Supplier (ERC-8004)
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Belanjakan saldo kredit tUSD8 Anda langsung ke agen grosir terverifikasi
+                Spend your tUSD8 credit balance directly with verified wholesale distributors
               </p>
             </div>
             <Truck className="w-5 h-5 text-[#16A34A] shrink-0" />
           </div>
 
           <div className="p-3.5 rounded-lg bg-[#F9FAFB] border border-slate-200 flex items-center justify-between text-sm">
-            <span className="text-slate-600">Saldo Kredit Toko Tersedia</span>
+            <span className="text-slate-600">Available Shop Credit Balance</span>
             <span className="font-mono tabular-nums font-bold text-[#16A34A]">
               {shopAvailableTusd8.toFixed(2)} tUSD8
             </span>
@@ -123,7 +123,7 @@ export default function IdentityAndSupplierPayPage() {
                 htmlFor="supplier-select"
                 className="block text-xs font-medium text-slate-700 mb-1.5"
               >
-                Pilih Pemasok Terverifikasi ERC-8004
+                Select ERC-8004 Verified Supplier
               </label>
               <select
                 id="supplier-select"
@@ -145,7 +145,7 @@ export default function IdentityAndSupplierPayPage() {
                   htmlFor="supplier-amount"
                   className="block text-xs font-medium text-slate-700 mb-1.5"
                 >
-                  Nominal (tUSD8)
+                  Amount (tUSD8)
                 </label>
                 <input
                   id="supplier-amount"
@@ -163,7 +163,7 @@ export default function IdentityAndSupplierPayPage() {
                   htmlFor="supplier-note"
                   className="block text-xs font-medium text-slate-700 mb-1.5"
                 >
-                  Catatan Faktur / Stok
+                  Invoice / Stock Note
                 </label>
                 <input
                   id="supplier-note"
@@ -194,7 +194,7 @@ export default function IdentityAndSupplierPayPage() {
                     className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md bg-white border border-emerald-300 font-semibold text-emerald-900 whitespace-nowrap shrink-0"
                   >
                     <Receipt className="w-3.5 h-3.5" />
-                    <span>Lihat Struk</span>
+                    <span>View Receipt</span>
                   </button>
                 )}
               </div>
@@ -204,7 +204,7 @@ export default function IdentityAndSupplierPayPage() {
               type="submit"
               className="w-full py-3 px-4 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors min-h-[44px]"
             >
-              Verifikasi Penerima &amp; Bayar Pemasok
+              Verify Payee &amp; Pay Supplier
             </button>
           </form>
         </div>
@@ -215,14 +215,14 @@ export default function IdentityAndSupplierPayPage() {
             <div className="flex items-center gap-2">
               <Search className="w-4 h-4 text-[#2563EB]" />
               <h2 className="text-base font-semibold text-slate-900">
-                Cek Alamat ERC-8004 On-Chain
+                On-Chain ERC-8004 Address Resolver
               </h2>
             </div>
             <input
               type="text"
               value={lookupQuery}
               onChange={(e) => setLookupQuery(e.target.value)}
-              placeholder="Ketik nama mis. HanumPay-AI-Guarantor-v1"
+              placeholder="Enter entity name e.g. HanumPay-AI-Guarantor-v1"
               className="w-full px-3.5 py-2.5 border border-slate-300 rounded-lg text-sm"
             />
             <div className="p-3.5 rounded-lg bg-slate-50 border border-slate-200 text-xs space-y-1">
@@ -233,7 +233,7 @@ export default function IdentityAndSupplierPayPage() {
                     resolvedAddress ? 'text-[#2563EB]' : 'text-amber-700'
                   }`}
                 >
-                  {resolvedAddress ? 'Terverifikasi ERC-8004' : 'Tidak Ditemukan'}
+                  {resolvedAddress ? 'ERC-8004 Verified' : 'Not Found'}
                 </span>
               </div>
               <p className="font-mono text-slate-800 break-all">
@@ -244,12 +244,12 @@ export default function IdentityAndSupplierPayPage() {
 
           <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-3">
             <h3 className="text-sm font-semibold text-slate-900">
-              Riwayat Pembayaran Pemasok Terbaru
+              Recent Supplier Settlements
             </h3>
             {supplierPayments.length === 0 ? (
               <p className="text-xs text-slate-500 py-4">
-                Belum ada pembayaran pemasok pada sesi ini. Coba bayar Pak Joko Distributor di
-                sebelah kiri untuk menguji Konfirmasi Penerima.
+                No supplier settlements recorded in this session yet. Try paying Pak Joko
+                Distributor on the left to test Confirmation of Payee.
               </p>
             ) : (
               <div className="divide-y divide-slate-100">
@@ -264,7 +264,7 @@ export default function IdentityAndSupplierPayPage() {
                           matched ?? {
                             id: `rcpt-${sp.id}`,
                             kind: 'supplier',
-                            title: `Bayar Pemasok · ${sp.supplierName}`,
+                            title: `Supplier Payment · ${sp.supplierName}`,
                             amountUSD8: sp.amountUSD8,
                             repaidDeductedUSD8: 0,
                             netAmountUSD8: sp.amountUSD8,
@@ -303,21 +303,21 @@ export default function IdentityAndSupplierPayPage() {
           <div className="flex items-center gap-2">
             <Store className="w-4 h-4 text-[#16A34A]" />
             <h2 className="text-base font-semibold text-slate-900">
-              Daftarkan Identitas ERC-8004 Baru
+              Register New ERC-8004 Identity
             </h2>
           </div>
 
           <form onSubmit={handleRegister} className="space-y-3.5">
             <div>
               <label htmlFor="reg-name" className="block text-xs font-medium text-slate-700 mb-1">
-                Nama Usaha / Entitas (maks 64 huruf)
+                Business / Entity Name (max 64 chars)
               </label>
               <input
                 id="reg-name"
                 type="text"
                 value={regName}
                 onChange={(e) => setRegName(e.target.value)}
-                placeholder="mis. Toko Berkah - Malang"
+                placeholder="e.g. Toko Berkah - Malang"
                 className="w-full px-3.5 py-2 border border-slate-300 rounded-lg text-sm"
                 required
               />
@@ -329,7 +329,7 @@ export default function IdentityAndSupplierPayPage() {
                   htmlFor="reg-cat"
                   className="block text-xs font-medium text-slate-700 mb-1"
                 >
-                  Kategori
+                  Category
                 </label>
                 <select
                   id="reg-cat"
@@ -337,10 +337,10 @@ export default function IdentityAndSupplierPayPage() {
                   onChange={(e) => setRegCategory(e.target.value as EntityCategory)}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg text-sm bg-white"
                 >
-                  <option value="shop">Toko / Warung</option>
-                  <option value="supplier">Pemasok / Grosir</option>
-                  <option value="lender">Penyedia Dana (LP)</option>
-                  <option value="agent">Agen AI</option>
+                  <option value="shop">Shop / Merchant</option>
+                  <option value="supplier">Supplier / Wholesaler</option>
+                  <option value="lender">Liquidity Provider (LP)</option>
+                  <option value="agent">AI Agent</option>
                 </select>
               </div>
               <div>
@@ -348,7 +348,7 @@ export default function IdentityAndSupplierPayPage() {
                   htmlFor="reg-city"
                   className="block text-xs font-medium text-slate-700 mb-1"
                 >
-                  Lokasi / Kota
+                  City / Location
                 </label>
                 <input
                   id="reg-city"
@@ -362,7 +362,7 @@ export default function IdentityAndSupplierPayPage() {
 
             <div>
               <label htmlFor="reg-type" className="block text-xs font-medium text-slate-700 mb-1">
-                Jenis Usaha
+                Business Type
               </label>
               <input
                 id="reg-type"
@@ -387,7 +387,7 @@ export default function IdentityAndSupplierPayPage() {
               type="submit"
               className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-[#16A34A] hover:bg-emerald-700 rounded-lg transition-colors min-h-[44px]"
             >
-              Daftarkan Identitas
+              Register Identity
             </button>
           </form>
         </div>
@@ -395,10 +395,10 @@ export default function IdentityAndSupplierPayPage() {
         <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl overflow-hidden">
           <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
             <h2 className="text-base font-semibold text-slate-900">
-              Daftar Identitas Aktif ERC-8004
+              Active ERC-8004 Directory
             </h2>
             <span className="text-xs font-mono text-slate-500">
-              {identities.length} entitas terverifikasi
+              {identities.length} verified entities
             </span>
           </div>
 
@@ -414,7 +414,7 @@ export default function IdentityAndSupplierPayPage() {
                     <p className="text-sm font-semibold text-slate-900">{id.name}</p>
                   </div>
                   <p className="text-xs text-slate-500 mt-0.5">
-                    {id.category} · {id.metadata.businessType} · Skor{' '}
+                    {id.category} · {id.metadata.businessType} · Score{' '}
                     <span className="font-mono tabular-nums">{id.metadata.reputationScore}</span>
                   </p>
                 </div>
@@ -434,14 +434,14 @@ export default function IdentityAndSupplierPayPage() {
 
       <ConfirmationOfPayeeModal
         open={Boolean(copSupplier)}
-        title="Konfirmasi Penerima Pemasok"
-        actionLabel="Konfirmasi &amp; Bayar Pemasok"
+        title="Supplier Confirmation of Payee"
+        actionLabel="Confirm & Pay Supplier"
         entity={copSupplier}
         amountUSD8={Number(payAmount) || 0}
         summaryRows={[
-          { label: 'Toko Pembayar', value: 'Warung Bu Sri - Surabaya' },
-          { label: 'Catatan Faktur', value: itemNote || 'Belanja stok warung' },
-          { label: 'Token', value: 'tUSD8 (6 desimal)' },
+          { label: 'Payer Shop', value: 'Warung Bu Sri - Surabaya' },
+          { label: 'Invoice Note', value: itemNote || 'Shop inventory restock' },
+          { label: 'Settlement Token', value: 'tUSD8 (6 decimals)' },
         ]}
         onConfirm={confirmSupplierPayment}
         onClose={() => setCopSupplier(null)}

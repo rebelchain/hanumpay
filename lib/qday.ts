@@ -7,13 +7,16 @@ import {
   parseAbi,
   parseUnits,
   toHex,
+  type Log,
 } from 'viem';
 
 export const QDAY_CHAIN_ID = 44005;
+export const QDAY_CHAIN_ID_HEX = '0xABE5';
 export const QDAY_RPC_URL = 'https://rpc-test.qday.info';
-export const QDAY_WS_URL = 'wss://rpc-test.qday.info';
 export const QDAY_EXPLORER_URL = 'https://explorer-test.qday.info';
 export const QDAY_FAUCET_URL = 'https://faucet.qday.info/en';
+export const QDAY_EVM_VERSION = 'shanghai';
+export const QDAY_MAX_LOGS_BLOCK_RANGE = BigInt(1000);
 
 // Official tUSD8 Stablecoin Contract from Aevum Builder Challenge #1 Starter Kit (6 decimals)
 export const TUSD8_CONTRACT = {
@@ -23,9 +26,10 @@ export const TUSD8_CONTRACT = {
   chainId: QDAY_CHAIN_ID,
 };
 
+// Note: QDay Aevum RPC only supports HTTPS polling (No WebSocket RPC).
 export const qDayAevumTestnet = defineChain({
   id: QDAY_CHAIN_ID,
-  name: 'QDay Aevum Testnet',
+  name: 'QDay Aevum',
   nativeCurrency: {
     name: 'tQDAY',
     symbol: 'tQDAY',
@@ -34,7 +38,6 @@ export const qDayAevumTestnet = defineChain({
   rpcUrls: {
     default: {
       http: [QDAY_RPC_URL],
-      webSocket: [QDAY_WS_URL],
     },
   },
   blockExplorers: {
@@ -50,6 +53,42 @@ export const qDayPublicClient = createPublicClient({
   chain: qDayAevumTestnet,
   transport: http(QDAY_RPC_URL, { timeout: 8000 }),
 });
+
+/**
+ * QDay Aevum limits `eth_getLogs` to at most 1,000 blocks per request.
+ * Use this helper to paginate block ranges safely over HTTPS.
+ */
+export async function getLogsChunked(params: {
+  address?: `0x${string}` | `0x${string}`[];
+  fromBlock: bigint;
+  toBlock: bigint;
+  chunkSize?: bigint;
+}): Promise<Log[]> {
+  const step =
+    params.chunkSize && params.chunkSize <= QDAY_MAX_LOGS_BLOCK_RANGE
+      ? params.chunkSize
+      : QDAY_MAX_LOGS_BLOCK_RANGE;
+
+  const logs: Log[] = [];
+  let cursor = params.fromBlock;
+
+  while (cursor <= params.toBlock) {
+    const end =
+      cursor + step - BigInt(1) < params.toBlock
+        ? cursor + step - BigInt(1)
+        : params.toBlock;
+
+    const batch = await qDayPublicClient.getLogs({
+      address: params.address,
+      fromBlock: cursor,
+      toBlock: end,
+    });
+    logs.push(...batch);
+    cursor = end + BigInt(1);
+  }
+
+  return logs;
+}
 
 const ERC20_BALANCE_ABI = parseAbi([
   'function balanceOf(address owner) view returns (uint256)',
@@ -139,33 +178,38 @@ export function getInjectedProvider(): EthereumProvider | null {
   return win.ethereum ?? null;
 }
 
+// EIP-3085 wallet_addEthereumChain configuration from QDay Wiki
 export async function addOrSwitchQDayNetwork(provider: EthereumProvider): Promise<void> {
-  const chainIdHex = `0x${QDAY_CHAIN_ID.toString(16)}`; // 0xabe5
   try {
     await provider.request({
       method: 'wallet_switchEthereumChain',
-      params: [{ chainId: chainIdHex }],
+      params: [{ chainId: QDAY_CHAIN_ID_HEX }],
     });
   } catch (err) {
     const code = (err as { code?: number })?.code;
-    if (code === 4902 || code === -32603 || true) {
+    if (code === 4001) {
+      throw err;
+    }
+    if (code === 4902 || code === -32603 || code === undefined) {
       await provider.request({
         method: 'wallet_addEthereumChain',
         params: [
           {
-            chainId: chainIdHex,
-            chainName: 'QDay Aevum Testnet',
+            chainId: QDAY_CHAIN_ID_HEX, // 44005
+            chainName: 'QDay Aevum',
+            rpcUrls: [QDAY_RPC_URL],
+            blockExplorerUrls: [QDAY_EXPLORER_URL],
             nativeCurrency: {
               name: 'tQDAY',
               symbol: 'tQDAY',
               decimals: 18,
             },
-            rpcUrls: [QDAY_RPC_URL],
-            blockExplorerUrls: [QDAY_EXPLORER_URL],
           },
         ],
       });
+      return;
     }
+    throw err;
   }
 }
 

@@ -52,46 +52,46 @@ export default function VerifiableReceiptModal() {
           <div className="w-10 h-1.5 bg-slate-300 rounded-full" />
         </div>
 
-        {/* Dark Kinsign-style Obsidian Header */}
+        {/* Dark Obsidian Header */}
         <div className="bg-[#070D14] text-white px-6 py-5 flex items-start justify-between gap-4">
           <div className="space-y-1">
             <div className="flex items-center gap-2 text-xs text-emerald-400 font-medium">
               <Receipt className="w-4 h-4" />
-              <span>Struk QDay Terverifikasi</span>
+              <span>Verifiable QDay Receipt</span>
             </div>
             <h3 id="receipt-modal-title" className="text-lg font-bold tracking-tight text-white">
               {activeReceipt.title}
             </h3>
             <p className="text-xs text-slate-400 font-mono tabular-nums">
-              {new Date(activeReceipt.timestamp).toLocaleString('id-ID', {
+              {new Date(activeReceipt.timestamp).toLocaleString('en-US', {
                 month: 'short',
                 day: 'numeric',
                 hour: '2-digit',
                 minute: '2-digit',
               })}{' '}
-              · {isLiveOnChain ? 'Tercatat Langsung di QDay' : 'Struk Relayer Terverifikasi'}
+              · {isLiveOnChain ? 'Settled Live on QDay' : 'Verified Relayer Receipt'}
             </p>
           </div>
           <button
             type="button"
             onClick={closeReceipt}
             className="p-2 text-slate-400 hover:text-white rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center -mr-2 -mt-1"
-            aria-label="Tutup struk transaksi"
+            aria-label="Close transaction receipt"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
-        {/* Isi Struk */}
+        {/* Receipt Body */}
         <div className="p-6 space-y-5 overflow-y-auto">
           <div className="p-4 rounded-xl bg-[#FAFAFA] border border-slate-200 flex items-center justify-between gap-4">
             <div>
-              <p className="text-xs text-slate-500">Total Transaksi</p>
+              <p className="text-xs text-slate-500">Transaction Total</p>
               <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-0.5">
                 {activeReceipt.amountUSD8.toFixed(2)} tUSD8
               </p>
               <p className="text-xs font-mono tabular-nums text-slate-500">
-                ≈ Rp {(activeReceipt.amountUSD8 * 15800).toLocaleString('id-ID')}
+                ≈ Rp {Math.round(activeReceipt.amountUSD8 * 15800).toLocaleString('en-US')} IDR
               </p>
             </div>
             {activeReceipt.erc8004Verified && (
@@ -104,39 +104,39 @@ export default function VerifiableReceiptModal() {
 
           <div className="divide-y divide-slate-100 text-sm">
             <div className="py-2.5 flex items-center justify-between gap-4">
-              <span className="text-slate-600">Pihak Terkait</span>
+              <span className="text-slate-600">Counterparty</span>
               <span className="font-medium text-slate-900 text-right">
                 {activeReceipt.counterpartyName}
               </span>
             </div>
             <div className="py-2.5 flex items-center justify-between gap-4">
-              <span className="text-slate-600">Dompet Resmi</span>
+              <span className="text-slate-600">Verified Wallet</span>
               <span className="font-mono text-xs text-slate-800">
                 {shortenAddress(activeReceipt.counterpartyWallet)}
               </span>
             </div>
             {activeReceipt.repaidDeductedUSD8 > 0 && (
               <div className="py-2.5 flex items-center justify-between gap-4">
-                <span className="text-slate-600">Potongan Cicilan (10%)</span>
+                <span className="text-slate-600">Auto-Repayment Cut (10%)</span>
                 <span className="font-mono tabular-nums font-medium text-[#D97706]">
                   -{activeReceipt.repaidDeductedUSD8.toFixed(2)} tUSD8
                 </span>
               </div>
             )}
             <div className="py-2.5 flex items-center justify-between gap-4">
-              <span className="text-slate-600">Nominal Bersih</span>
+              <span className="text-slate-600">Net Amount</span>
               <span className="font-mono tabular-nums font-semibold text-[#16A34A]">
                 {activeReceipt.netAmountUSD8.toFixed(2)} tUSD8
               </span>
             </div>
             <div className="py-2.5 flex items-center justify-between gap-4">
-              <span className="text-slate-600">Bukti / Hash</span>
+              <span className="text-slate-600">Proof / Hash</span>
               <span className="font-mono text-xs text-slate-500 truncate max-w-[190px]">
                 {activeReceipt.proofHash}
               </span>
             </div>
             <div className="py-2.5 flex items-center justify-between gap-4">
-              <span className="text-slate-600">Hash Tx QDay</span>
+              <span className="text-slate-600">QDay Tx Hash</span>
               <a
                 href={`${QDAY_EXPLORER_URL}/tx/${activeReceipt.txHash}`}
                 target="_blank"
@@ -157,7 +157,7 @@ export default function VerifiableReceiptModal() {
           )}
         </div>
 
-        {/* Tombol Bawah */}
+        {/* Footer Actions */}
         <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center gap-3">
           <button
             type="button"
@@ -167,12 +167,12 @@ export default function VerifiableReceiptModal() {
             {copied ? (
               <>
                 <Check className="w-4 h-4 text-[#16A34A]" />
-                <span>Bukti Tersalin</span>
+                <span>Proof Copied</span>
               </>
             ) : (
               <>
                 <Copy className="w-4 h-4" />
-                <span>Salin Bukti JSON</span>
+                <span>Copy JSON Proof</span>
               </>
             )}
           </button>
@@ -181,7 +181,7 @@ export default function VerifiableReceiptModal() {
             onClick={closeReceipt}
             className="px-5 py-3 text-xs font-semibold text-white bg-[#070D14] hover:bg-slate-800 rounded-xl transition-colors min-h-[44px]"
           >
-            Selesai
+            Done
           </button>
         </div>
       </div>

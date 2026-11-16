@@ -32,11 +32,11 @@ export default function LenderPoolPage() {
     const amt = Number(depositInput);
     const res = depositToPool(amt);
     if (!res.ok) {
-      setMessage({ type: 'err', text: res.error ?? 'Setoran gagal.' });
+      setMessage({ type: 'err', text: res.error ?? 'Deposit failed.' });
     } else {
       setMessage({
         type: 'ok',
-        text: `Berhasil menyetor ${amt.toFixed(2)} tUSD8 ke LoanPool. Porsi dana Anda telah diperbarui.`,
+        text: `Deposited ${amt.toFixed(2)} tUSD8 into LoanPool. Your LP share balance has been updated.`,
       });
     }
   }
@@ -46,67 +46,67 @@ export default function LenderPoolPage() {
     const amt = Number(withdrawInput);
     const res = withdrawFromPool(amt);
     if (!res.ok) {
-      setMessage({ type: 'err', text: res.error ?? 'Penarikan gagal.' });
+      setMessage({ type: 'err', text: res.error ?? 'Withdrawal failed.' });
     } else {
       setMessage({
         type: 'ok',
-        text: `Berhasil menarik ${amt.toFixed(2)} tUSD8 dari LoanPool ke dompet Anda.`,
+        text: `Withdrew ${amt.toFixed(2)} tUSD8 from LoanPool back to your wallet.`,
       });
     }
   }
 
   const EVENT_LABELS: Record<string, string> = {
-    Deposit: 'Setor Dana',
-    Withdraw: 'Tarik Dana',
-    LoanDisbursed: 'Modal Cair',
-    RepaymentReceived: 'Cicilan Masuk',
-    SupplierPaid: 'Bayar Pemasok',
+    Deposit: 'Deposit',
+    Withdraw: 'Withdraw',
+    LoanDisbursed: 'Loan Disbursed',
+    RepaymentReceived: 'Repayment Received',
+    SupplierPaid: 'Supplier Paid',
   };
 
   return (
     <AppShell
-      title="Pool Likuiditas (Penyedia Dana)"
-      subtitle="Setor tUSD8 untuk mendanai modal kerja UMKM terverifikasi dan dapatkan imbal hasil dari biaya tetap 5%."
+      title="Liquidity Pool (Community LPs)"
+      subtitle="Deposit tUSD8 to fund verified MSME working capital and earn transparent yield from the 5% flat fee."
     >
       {/* PoolStatsRow */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Total Dana Pool</p>
+          <p className="text-xs font-medium text-slate-500">Total Pool TVL</p>
           <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
             {poolDepositedUSD8.toFixed(2)} tUSD8
           </p>
           <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-            Tersedia: {poolAvailableUSD8.toFixed(2)} tUSD8
+            Available: {poolAvailableUSD8.toFixed(2)} tUSD8
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Pemakaian Pool</p>
+          <p className="text-xs font-medium text-slate-500">Pool Utilization</p>
           <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
             {utilizationPct}%
           </p>
           <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-            Batas aman kontrak: maks 80.0%
+            Contract guardrail: 80.0% max
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Estimasi Imbal Hasil (APY)</p>
+          <p className="text-xs font-medium text-slate-500">Estimated LP APY</p>
           <p className="text-2xl font-bold font-mono tabular-nums text-[#16A34A] mt-1.5">
             {estApy}%
           </p>
           <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-            Biaya terkumpul: {poolFeesEarnedUSD8.toFixed(2)} tUSD8
+            Fees earned: {poolFeesEarnedUSD8.toFixed(2)} tUSD8
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Pinjaman UMKM Aktif</p>
+          <p className="text-xs font-medium text-slate-500">Active MSME Loans</p>
           <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
             {activeLoanCount}
           </p>
           <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-            Disalurkan: {poolLoanedUSD8.toFixed(2)} tUSD8
+            Disbursed: {poolLoanedUSD8.toFixed(2)} tUSD8
           </p>
         </div>
       </div>
@@ -129,8 +129,8 @@ export default function LenderPoolPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Setor tUSD8</h2>
-              <p className="text-xs text-slate-500">Cetak porsi penyedia dana di LoanPool.sol</p>
+              <h2 className="text-base font-semibold text-slate-900">Deposit tUSD8</h2>
+              <p className="text-xs text-slate-500">Mint LP shares in LoanPool.sol</p>
             </div>
             <ArrowDownLeft className="w-5 h-5 text-[#16A34A]" />
           </div>
@@ -141,7 +141,7 @@ export default function LenderPoolPage() {
                 htmlFor="deposit-tusd8"
                 className="block text-xs font-medium text-slate-700 mb-1.5"
               >
-                Nominal Setoran (tUSD8)
+                Deposit Amount (tUSD8)
               </label>
               <input
                 id="deposit-tusd8"
@@ -158,7 +158,7 @@ export default function LenderPoolPage() {
               type="submit"
               className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-[#16A34A] hover:bg-emerald-700 rounded-lg transition-colors min-h-[44px]"
             >
-              Setor ke LoanPool
+              Deposit to LoanPool
             </button>
           </form>
         </div>
@@ -166,9 +166,9 @@ export default function LenderPoolPage() {
         <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">Tarik Dana</h2>
+              <h2 className="text-base font-semibold text-slate-900">Withdraw Liquidity</h2>
               <p className="text-xs text-slate-500 font-mono tabular-nums">
-                Porsi Anda Saat Ini: {userLenderShares.toFixed(2)} tUSD8
+                Your LP Shares: {userLenderShares.toFixed(2)} tUSD8
               </p>
             </div>
             <ArrowUpRight className="w-5 h-5 text-slate-700" />
@@ -180,7 +180,7 @@ export default function LenderPoolPage() {
                 htmlFor="withdraw-tusd8"
                 className="block text-xs font-medium text-slate-700 mb-1.5"
               >
-                Nominal Penarikan (tUSD8)
+                Withdrawal Amount (tUSD8)
               </label>
               <input
                 id="withdraw-tusd8"
@@ -197,7 +197,7 @@ export default function LenderPoolPage() {
               type="submit"
               className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-slate-900 hover:bg-slate-800 rounded-lg transition-colors min-h-[44px]"
             >
-              Tarik Likuiditas
+              Withdraw Liquidity
             </button>
           </form>
         </div>
@@ -208,19 +208,19 @@ export default function LenderPoolPage() {
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Landmark className="w-4 h-4 text-slate-500" />
-            <h2 className="text-base font-semibold text-slate-900">Riwayat Aktivitas Pool</h2>
+            <h2 className="text-base font-semibold text-slate-900">Pool Activity Feed</h2>
           </div>
-          <span className="text-xs font-mono text-slate-500">Event LoanPool.sol</span>
+          <span className="text-xs font-mono text-slate-500">LoanPool.sol Events</span>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500">
-                <th className="py-3 px-6">Aktivitas</th>
-                <th className="py-3 px-6">Pihak Terkait</th>
-                <th className="py-3 px-6 text-right">Nominal</th>
-                <th className="py-3 px-6">Referensi Tx</th>
+                <th className="py-3 px-6">Event</th>
+                <th className="py-3 px-6">Counterparty</th>
+                <th className="py-3 px-6 text-right">Amount</th>
+                <th className="py-3 px-6">Tx Reference</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">

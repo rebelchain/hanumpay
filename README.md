@@ -1,112 +1,121 @@
 # HanumPay
 
-**Modal kerja adil berbasis omzet QR harian & verifikasi identitas pemasok ERC-8004 untuk UMKM di jaringan QDay Aevum Testnet.**
+**Revenue-backed working capital and ERC-8004 Confirmation of Payee for micro-merchants on QDay Aevum Testnet.**
 
-HanumPay membantu warung dan pelaku UMKM membangun riwayat omzet kasir QR yang terverifikasi di blockchain tanpa biaya gas (*gasless EIP-712*), membuka akses limit modal kerja `tUSD8` yang diawasi oleh smart contract (**maksimal 10% dari omzet 30 hari, batas atas $500 tUSD8, biaya tetap 5% flat, tanpa denda keterlambatan**), serta melindungi pembayaran kulakan ke grosir menggunakan **ERC-8004 Confirmation of Payee**.
-
----
-
-## Fitur Utama
-
-1. **Kasir QR Bebas Gas (`SalesLedger.sol` + Relayer EIP-712)**
-   - Pelanggan membayar memakai `tUSD8`; nomor identitas/HP pembeli di-*hash* secara lokal dengan `keccak256` sebelum ditandatangani.
-   - Gerbang anti-transaksi fiktif (*anti-wash trading*): warung wajib memiliki minimal **5 pembeli unik** dalam 30 hari terakhir sebelum layak menerima modal kerja.
-2. **Penjaga AI Terbatas Smart Contract (`AIGuarantor.sol` + Gemini Audit)**
-   - Agen AI menganalisis omzet dan mengusulkan pinjaman **sebatas aturan kontrak** (rasio maks 10%, batas maks $500 `tUSD8`, kuota harian 10 pengajuan).
-   - Pemilik warung memegang **tombol Jeda AI (*Pause Kill Switch*)** untuk menghentikan seluruh tawaran pinjaman baru kapan saja tanpa mengganggu kasir QR harian.
-3. **Cicilan Otomatis 10% & Biaya Tetap 5% (`LoanPool.sol`)**
-   - Tidak ada jatuh tempo kaku dan **0% denda telat**. Setiap penjualan QR baru otomatis memotong 10% untuk melunasi pinjaman sampai selesai.
-   - Ketika lunas, riwayat tercatat sebagai **Paspor Kredit On-Chain** yang portabel.
-4. **Konfirmasi Penerima Pemasok (`ERC8004Registry.sol`)**
-   - Memverifikasi nama dan alamat dompet grosir/pemasok resmi sebelum transfer dikirim agar terhindar dari salah kirim atau penipuan alamat palsu.
-5. **Simulasi 2 Ponsel (`/stage`) & Uji Serangan AI (*Red-Team*)**
-   - Demo interaktif sisi-ke-sisi antara **Ponsel Kasir Toko**, **Monitor Penjaga AI**, dan **Panel Skenario** (termasuk serangan *prompt injection* langsung terhadap Gemini yang ditolak oleh aturan deterministik smart contract).
+HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow with zero gas cost (*gasless EIP-712*), unlocks contract-bounded `tUSD8` working capital (**max 10% of 30-day revenue, $500 tUSD8 cap, 5% flat fee, 0% late penalties**), and protects wholesale supplier payouts using **ERC-8004 Confirmation of Payee**.
 
 ---
 
-## Informasi Jaringan QDay Aevum Testnet
+## Core Features
 
-| Parameter | Nilai |
+1. **Gasless QR Cashier (`SalesLedger.sol` + EIP-712 Relayer)**
+   - Customers pay with `tUSD8`; customer phone identifiers are hashed locally via `keccak256` before signing.
+   - Anti-wash-trading sybil gate: merchants must prove at least **5 unique buyers** over the trailing 30 days before credit unlocks.
+2. **Contract-Bounded AI Guarantor (`AIGuarantor.sol` + Gemini Audit)**
+   - AI analyzes merchant cashflow and submits credit proposals **strictly within contract bounds** (max 10% ratio, $500 `tUSD8` ceiling, 10 proposals/day rate limit).
+   - Merchants hold a sovereign **AI Pause Kill Switch** to halt new credit offers at any time without interrupting daily QR checkout.
+3. **10% Auto-Repayment & 5% Flat Fee (`LoanPool.sol`)**
+   - No rigid due dates and **0% late penalties**. Every incoming QR sale automatically routes 10% toward loan repayment until settled.
+   - Once repaid, settlement history is minted as a portable **On-Chain Credit Passport**.
+4. **Supplier Confirmation of Payee (`ERC8004Registry.sol`)**
+   - Verifies registered wholesale supplier names against on-chain wallet addresses before transfer to prevent address spoofing and mis-transfers.
+5. **2-Phone Live Simulator (`/stage`) & Adversarial AI Red-Team**
+   - Side-by-side interactive theater featuring the **Shop QR POS**, **AI Guarantor Monitor**, and **Scenario Director** (including live Gemini prompt-injection tests reverted deterministically by Solidity invariants).
+
+---
+
+## QDay Aevum Testnet Configuration
+
+| Parameter | Value |
 | --- | --- |
-| **Network Name** | QDay Aevum Testnet |
-| **Chain ID** | `44005` (`0xabe5`) |
-| **RPC URL** | `https://rpc-test.qday.info` |
+| **Network Name** | QDay Aevum |
+| **Chain ID** | `44005` (`0xABE5`) |
+| **RPC URL** | `https://rpc-test.qday.info` *(HTTPS polling only — no WebSocket RPC)* |
+| **EVM Target** | `shanghai` *(required in `contracts/foundry.toml`, avoids Cancun `MCOPY`)* |
 | **Block Explorer** | `https://explorer-test.qday.info` |
 | **Faucet** | `https://faucet.qday.info/en` |
-| **Token tUSD8 (6 desimal)** | `0x456569838f1d43009A91ebA4263147Afd7233483` |
+| **tUSD8 Token (6 decimals)** | `0x456569838f1d43009A91ebA4263147Afd7233483` |
 
-### Alamat Smart Contract Ter-Deploy (Diisi Setelah Deploy Foundry)
+### QDay Aevum Technical Requirements & Wallet Integration
 
-| Kontrak | Alamat di QDay Testnet (44005) | Status |
+- **Solidity Target (`evm_version = "shanghai"`)**: Solidity `0.8.24` defaults to `cancun`, which can deploy and then revert at runtime with `invalid opcode: MCOPY`. `contracts/foundry.toml` is pre-configured with `evm_version = "shanghai"`.
+- **No WebSocket RPC & `eth_getLogs` Limit**: QDay Aevum supports HTTPS polling only (max `1,000` blocks per `eth_getLogs` call — use `getLogsChunked` in `lib/qday.ts`).
+- **Wallet Integration (Active EOA vs `@qday-io/sdk` Q1 2027)**: `@qday-io/sdk` and `@qday-io/cli` launch in Q1 2027 and are not yet published on npm. HanumPay uses the active path documented by QDay Wiki: standard EOA wallets (`MetaMask`/`Rabby` via `window.ethereum` + EIP-3085 `0xABE5`) paired with gasless EIP-712 relayer signatures.
+- **Explorer Verification & Judging**: Explorer source verification is not available yet; include this GitHub repository link and deployed contract addresses in the hackathon submission. Judging counts real on-chain transaction activity on **QDay Aevum**.
+
+### Deployed Smart Contract Addresses (Populated After Foundry Deploy)
+
+| Contract | QDay Testnet (44005) Address | Status |
 | --- | --- | --- |
-| `ERC8004Registry.sol` | *Belum diisi (Tahap 2)* | Menunggu deploy |
-| `SalesLedger.sol` | *Belum diisi (Tahap 2)* | Menunggu deploy |
-| `LoanPool.sol` | *Belum diisi (Tahap 2)* | Menunggu deploy |
-| `AIGuarantor.sol` | *Belum diisi (Tahap 2)* | Menunggu deploy |
+| `ERC8004Registry.sol` | *Pending (Stage 2)* | Ready to deploy |
+| `SalesLedger.sol` | *Pending (Stage 2)* | Ready to deploy |
+| `LoanPool.sol` | *Pending (Stage 2)* | Ready to deploy |
+| `AIGuarantor.sol` | *Pending (Stage 2)* | Ready to deploy |
 
 ---
 
-## Struktur Proyek
+## Project Structure
 
 ```text
 ├── app/
-│   ├── page.tsx                  # Landing page UMKM + kalkulator limit & penggaris biaya
-│   ├── stage/page.tsx            # Simulasi langsung 2 ponsel & panel skenario
+│   ├── page.tsx                  # Landing page + credit limit calculator & fee comparison ruler
+│   ├── stage/page.tsx            # 2-phone live simulator & scenario director
 │   ├── app/
-│   │   ├── dashboard/page.tsx    # Dasbor pemilik usaha & Paspor Kredit
-│   │   ├── penjualan/page.tsx    # Kasir QR & riwayat struk terverifikasi
-│   │   ├── pinjaman/page.tsx     # Siklus modal kerja, log audit AI, & konsol Red-Team
-│   │   ├── identitas/page.tsx    # Direktori ERC-8004 & bayar pemasok resmi
-│   │   ├── pool/page.tsx         # Pool likuiditas penyedia dana (LP)
-│   │   └── docs/page.tsx         # Panduan Foundry, status dompet QDay, & blueprint
+│   │   ├── dashboard/page.tsx    # Merchant dashboard & Credit Passport
+│   │   ├── penjualan/page.tsx    # QR cashier & verifiable receipt history
+│   │   ├── pinjaman/page.tsx     # Loan lifecycle, AI audit logs & Red-Team console
+│   │   ├── identitas/page.tsx    # ERC-8004 directory & verified supplier payouts
+│   │   ├── pool/page.tsx         # Community LP liquidity pool
+│   │   └── docs/page.tsx         # Foundry guide, Aevum readiness checker & blueprints
 │   └── api/
-│       ├── agent/audit/          # Audit kelayakan kredit dengan Gemini
-│       ├── agent/red-team/       # Pengujian prompt injection vs aturan kontrak
-│       ├── agent/cron/           # Siklus pengecekan agen guarantor
-│       └── relay/                # Endpoint relayer bebas gas (record-sale & accept-loan)
-├── components/                   # Komponen UI aplikasi & landing page
-├── lib/                          # Engine aturan kontrak, state store, klien QDay (viem)
-└── contracts/                    # Smart contract Solidity & test suite Foundry
+│       ├── agent/audit/          # Gemini credit eligibility explanation endpoint
+│       ├── agent/red-team/       # Prompt-injection vs contract invariant verifier
+│       ├── agent/cron/           # AI Guarantor check cycle
+│       └── relay/                # Gasless EIP-712 relayers (record-sale & accept-loan)
+├── components/                   # App & landing UI components
+├── lib/                          # Deterministic contract rules engine, state store, viem QDay client
+└── contracts/                    # Solidity smart contracts & Foundry test suite
     ├── src/                      # ERC8004Registry, SalesLedger, LoanPool, AIGuarantor
-    ├── script/Deploy.s.sol       # Script deployment QDay Testnet
-    └── test/HanumPay.t.sol       # Unit & invariant tests Solidity
+    ├── script/Deploy.s.sol       # QDay Testnet deployment script
+    └── test/HanumPay.t.sol       # Solidity unit & invariant tests
 ```
 
 ---
 
-## Menjalankan Aplikasi Web Secara Lokal
+## Running the Web App Locally
 
 ```bash
-# 1. Pasang dependensi
+# 1. Install dependencies
 npm install
 
-# 2. Salin contoh environment variable
+# 2. Copy environment template
 cp .env.example .env.local
-# Isi GEMINI_API_KEY di .env.local (opsional jika hanya menguji mode relayer lokal)
+# Add GEMINI_API_KEY in .env.local (optional when testing local relayer mode)
 
-# 3. Jalankan server pengembangan (port 3000)
+# 3. Start the development server (port 3000)
 npm run dev
 ```
 
 ---
 
-## Menguji & Deploy Smart Contract (Foundry)
+## Testing & Deploying Smart Contracts (Foundry)
 
 ```bash
 cd contracts
 
-# Jalankan seluruh unit & invariant test
+# Run unit & invariant test suite
 forge test -vvv
 
-# Siapkan environment untuk deploy ke QDay Aevum Testnet (Chain ID 44005)
-export DEPLOYER_PRIVATE_KEY=0xPRIVATE_KEY_DEPLOYER
-export AGENT_WALLET_ADDRESS=0xALAMAT_DOMPET_AGEN
+# Configure deployment keys for QDay Aevum Testnet (Chain ID 44005)
+export DEPLOYER_PRIVATE_KEY=0xYOUR_DEPLOYER_PRIVATE_KEY
+export AGENT_WALLET_ADDRESS=0xYOUR_AGENT_PUBLIC_ADDRESS
 
-# Deploy 4 kontrak inti ke QDay Testnet
+# Ensure foundry.toml uses evm_version = "shanghai" (pre-configured)
+# Deploy the 4 core contracts to QDay Testnet
 forge script script/Deploy.s.sol --rpc-url https://rpc-test.qday.info --broadcast --legacy
 ```
 
-Setelah deploy selesai, masukkan keempat alamat kontrak ke `.env.local` (dan Environment Variables Vercel jika di-deploy):
+Once deployed, add the four contract addresses to `.env.local` (and Vercel Environment Variables for production):
 - `NEXT_PUBLIC_ERC8004_ADDRESS`
 - `NEXT_PUBLIC_SALES_LEDGER_ADDRESS`
 - `NEXT_PUBLIC_LOAN_POOL_ADDRESS`
@@ -114,6 +123,6 @@ Setelah deploy selesai, masukkan keempat alamat kontrak ke `.env.local` (dan Env
 
 ---
 
-## Tautan Pengumpulan Hackathon
-- **Aplikasi Live (Vercel)**: *Akan diisi pada Tahap 4*
-- **Video Demo Produk**: *Akan diisi pada Tahap 5*
+## Hackathon Submission Links
+- **Live App (Vercel)**: *To be populated in Stage 4*
+- **Product Demo Video**: *To be populated in Stage 5*

@@ -1,33 +1,48 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Check, Copy, ExternalLink, RefreshCw, Terminal, Wallet } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  Circle,
+  Copy,
+  ExternalLink,
+  RefreshCw,
+  Terminal,
+  Wallet,
+  XCircle,
+} from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import { HANUMPAY_BLUEPRINTS, HACKATHON_ROADMAP } from '@/lib/hanumpay-blueprints';
 import { useHanumPay } from '@/lib/hanumpay-store';
 import {
   DEPLOYED_CONTRACTS,
   QDAY_CHAIN_ID,
+  QDAY_CHAIN_ID_HEX,
+  QDAY_EVM_VERSION,
   QDAY_EXPLORER_URL,
   QDAY_FAUCET_URL,
   QDAY_RPC_URL,
+  shortenAddress,
   TUSD8_CONTRACT,
 } from '@/lib/qday';
 
-const FOUNDRY_COMMANDS = `# 1. Pasang Foundry (sekali saja)
+const FOUNDRY_COMMANDS = `# 1. Install Foundry (one-time setup)
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
 
-# 2. Kompilasi & jalankan tes Solidity di folder /contracts
+# 2. Verify foundry.toml targets evm_version = "shanghai" (pre-configured)
+# Compile & run Solidity tests inside /contracts
 cd contracts
 forge build
 forge test -vvv
 
-# 3. Ekspor private key deployer & alamat dompet agen testnet (jangan pernah di-commit)
+# 3. Export deployer private key & testnet AI agent public address (never commit keys)
 export DEPLOYER_PRIVATE_KEY=0xYOUR_DEPLOYER_KEY
 export AGENT_WALLET_ADDRESS=0xYOUR_AGENT_PUBLIC_ADDRESS
 
-# 4. Deploy keempat kontrak ke QDay Aevum Testnet (Chain ID 44005)
+# 4. Deploy all four contracts to QDay Aevum Testnet (Chain ID 44005)
 forge script script/Deploy.s.sol --rpc-url https://rpc-test.qday.info --broadcast --legacy`;
 
 export default function DocsAndContractsPage() {
@@ -51,20 +66,83 @@ export default function DocsAndContractsPage() {
       DEPLOYED_CONTRACTS.aiGuarantor
   );
 
+  const isCorrectNetwork = wallet.connected && wallet.chainId === QDAY_CHAIN_ID;
+  const hasGasBalance = wallet.connected && parseFloat(wallet.tqdayBalance) > 0;
+  const hasTusd8Balance = wallet.connected && parseFloat(wallet.tusd8Balance.replace(/,/g, '')) > 0;
+
+  const readinessItems = [
+    {
+      id: 'wallet',
+      title: '1. Wallet connected',
+      detail: 'Connect MetaMask, Rabby, or any browser EVM wallet using the top-right button.',
+      status: wallet.connected ? ('pass' as const) : ('fail' as const),
+      valueLabel: wallet.connected && wallet.address ? shortenAddress(wallet.address) : 'not connected',
+    },
+    {
+      id: 'network',
+      title: '2. Network',
+      detail: `Requires QDay Aevum Testnet (Chain ID ${QDAY_CHAIN_ID} / ${QDAY_CHAIN_ID_HEX}).`,
+      status: !wallet.connected
+        ? ('idle' as const)
+        : isCorrectNetwork
+          ? ('pass' as const)
+          : ('fail' as const),
+      valueLabel: !wallet.connected
+        ? '—'
+        : isCorrectNetwork
+          ? 'QDay Aevum (44005)'
+          : `Wrong chain (${wallet.chainId ?? '?'})`,
+    },
+    {
+      id: 'tqday',
+      title: '3. Gas (tQDAY)',
+      detail: 'Pays for direct transactions. Gasless EIP-712 checkout does not require tQDAY.',
+      status: !wallet.connected
+        ? ('idle' as const)
+        : hasGasBalance
+          ? ('pass' as const)
+          : ('fail' as const),
+      valueLabel: wallet.connected ? `${wallet.tqdayBalance} tQDAY` : '—',
+    },
+    {
+      id: 'tusd8',
+      title: '4. tUSD8 balance',
+      detail: 'Stablecoin used for QR checkout and MSME working capital (6 decimals).',
+      status: !wallet.connected
+        ? ('idle' as const)
+        : hasTusd8Balance
+          ? ('pass' as const)
+          : ('fail' as const),
+      valueLabel: wallet.connected ? `${wallet.tusd8Balance} tUSD8` : '—',
+    },
+    {
+      id: 'contracts',
+      title: '5. HanumPay contracts',
+      detail: allDeployed
+        ? 'All four contracts deployed and reachable on QDay Aevum Testnet.'
+        : 'Pending Stage 2 deploy. App operates seamlessly in Relayer Simulation Mode until deployed.',
+      status: allDeployed ? ('pass' as const) : ('idle' as const),
+      valueLabel: allDeployed ? shortenAddress(DEPLOYED_CONTRACTS.salesLedger) : 'Pending Stage 2',
+    },
+  ];
+
+  const readyCount = readinessItems.filter((item) => item.status === 'pass').length;
+  const remainingCount = readinessItems.length - readyCount;
+
   return (
     <AppShell
-      title="Panduan Foundry, Dompet QDay &amp; Dokumen"
-      subtitle="Alur deploy kontrak ke jaringan QDay, konfigurasi Relayer API, dan spesifikasi teknis HanumPay."
+      title="Foundry Guide, QDay Wallet & Blueprints"
+      subtitle="Aevum readiness checker, Solidity deployment workflow, EOA wallet integration, and protocol specs."
     >
       {/* QDay Aevum Testnet Card */}
       <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-5">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
           <div>
             <h2 className="text-base font-semibold text-slate-900">
-              Status Dompet &amp; Relayer QDay Aevum Testnet
+              QDay Aevum Testnet Wallet &amp; Relayer Status
             </h2>
             <p className="text-xs text-slate-500 mt-0.5">
-              Chain ID {QDAY_CHAIN_ID} · RPC {QDAY_RPC_URL}
+              Chain ID {QDAY_CHAIN_ID} ({QDAY_CHAIN_ID_HEX}) · RPC {QDAY_RPC_URL} · EVM {QDAY_EVM_VERSION}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2.5">
@@ -74,7 +152,7 @@ export default function DocsAndContractsPage() {
               rel="noreferrer"
               className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-medium text-slate-700 border border-slate-300 rounded-lg hover:bg-slate-50 min-h-[40px]"
             >
-              <span>Klaim Faucet tQDAY / tUSD8</span>
+              <span>Claim tQDAY / tUSD8 Faucet</span>
               <ExternalLink className="w-3.5 h-3.5" />
             </a>
             {wallet.connected ? (
@@ -84,7 +162,7 @@ export default function DocsAndContractsPage() {
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-slate-900 rounded-lg hover:bg-slate-800 min-h-[40px]"
               >
                 <RefreshCw className="w-3.5 h-3.5" />
-                <span>Muat Ulang Saldo</span>
+                <span>Refresh Balances</span>
               </button>
             ) : (
               <button
@@ -93,7 +171,7 @@ export default function DocsAndContractsPage() {
                 className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#16A34A] rounded-lg hover:bg-emerald-700 min-h-[40px]"
               >
                 <Wallet className="w-3.5 h-3.5" />
-                <span>Tambah &amp; Hubungkan QDay Testnet</span>
+                <span>Add &amp; Connect QDay Testnet</span>
               </button>
             )}
           </div>
@@ -101,43 +179,162 @@ export default function DocsAndContractsPage() {
 
         <div className="grid sm:grid-cols-4 gap-4 text-sm">
           <div className="p-4 rounded-lg bg-[#F9FAFB] border border-slate-200">
-            <p className="text-xs text-slate-500">Kontrak tUSD8 (6 desimal)</p>
+            <p className="text-xs text-slate-500">tUSD8 Contract (6 decimals)</p>
             <p className="font-mono text-xs text-slate-900 break-all mt-1">
               {TUSD8_CONTRACT.address}
             </p>
           </div>
           <div className="p-4 rounded-lg bg-[#F9FAFB] border border-slate-200">
-            <p className="text-xs text-slate-500">Saldo tQDAY Langsung</p>
+            <p className="text-xs text-slate-500">Live tQDAY Balance</p>
             <p className="font-mono tabular-nums text-lg font-bold text-slate-900 mt-1">
-              {wallet.connected ? `${wallet.tqdayBalance}` : 'Belum terhubung'}
+              {wallet.connected ? `${wallet.tqdayBalance}` : 'Not connected'}
             </p>
           </div>
           <div className="p-4 rounded-lg bg-[#F9FAFB] border border-slate-200">
-            <p className="text-xs text-slate-500">Saldo tUSD8 Langsung</p>
+            <p className="text-xs text-slate-500">Live tUSD8 Balance</p>
             <p className="font-mono tabular-nums text-lg font-bold text-[#16A34A] mt-1">
-              {wallet.connected ? `${wallet.tusd8Balance}` : 'Belum terhubung'}
+              {wallet.connected ? `${wallet.tusd8Balance}` : 'Not connected'}
             </p>
           </div>
           <div className="p-4 rounded-lg bg-[#F9FAFB] border border-slate-200">
-            <p className="text-xs text-slate-500">Mode Kontrak</p>
+            <p className="text-xs text-slate-500">Contract Mode</p>
             <p className="font-mono text-xs font-semibold text-slate-900 mt-1">
-              {allDeployed ? 'Terhubung On-Chain' : 'Mode Simulasi Relayer'}
+              {allDeployed ? 'Live On-Chain' : 'Relayer Simulation Mode'}
             </p>
           </div>
         </div>
       </div>
 
-      {/* Hardhat -> Foundry Step-by-Step Terminal Guide */}
+      {/* 5-Step Aevum Readiness Check + Known Gotchas & Wallet Integration */}
+      <div className="grid lg:grid-cols-12 gap-6">
+        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-xl p-6 space-y-4">
+          <div className="flex items-start justify-between gap-4 border-b border-slate-100 pb-4">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-[#16A34A]">
+                Step 0 · Before You Deploy
+              </p>
+              <h2 className="text-base font-semibold text-slate-900 mt-0.5">
+                Is your setup ready for Aevum?
+              </h2>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Checks your wallet, network, tQDAY/tUSD8 balances, and contract deployment status.
+              </p>
+            </div>
+            <div className="text-right shrink-0">
+              <p className="font-mono tabular-nums text-xl font-bold text-slate-900">
+                {readyCount} <span className="text-sm font-normal text-slate-400">/ 5</span>
+              </p>
+              <p className="text-[11px] font-medium text-amber-600">
+                {remainingCount === 0 ? 'Fully ready!' : `${remainingCount} items to fix`}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            {readinessItems.map((item) => (
+              <div
+                key={item.id}
+                className="flex items-start justify-between gap-3 p-3.5 rounded-lg bg-[#F9FAFB] border border-slate-200"
+              >
+                <div className="flex items-start gap-2.5">
+                  {item.status === 'pass' ? (
+                    <CheckCircle2 className="w-4 h-4 text-[#16A34A] shrink-0 mt-0.5" />
+                  ) : item.status === 'fail' ? (
+                    <XCircle className="w-4 h-4 text-rose-500 shrink-0 mt-0.5" />
+                  ) : (
+                    <Circle className="w-4 h-4 text-slate-300 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <p className="text-xs font-semibold text-slate-900">{item.title}</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5 leading-relaxed">
+                      {item.detail}
+                    </p>
+                  </div>
+                </div>
+                <span
+                  className={`font-mono text-[11px] shrink-0 text-right ${
+                    item.status === 'pass'
+                      ? 'text-[#16A34A] font-semibold'
+                      : item.status === 'fail'
+                        ? 'text-rose-600 font-medium'
+                        : 'text-slate-400'
+                  }`}
+                >
+                  {item.valueLabel}
+                </span>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="lg:col-span-6 space-y-6">
+          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-3">
+            <div className="flex items-center gap-2 text-amber-700">
+              <AlertTriangle className="w-4 h-4 shrink-0" />
+              <h2 className="text-base font-semibold text-slate-900">
+                Known Gotchas on QDay Aevum
+              </h2>
+            </div>
+            <ul className="space-y-2 text-xs text-slate-700 leading-relaxed">
+              <li>
+                · <strong className="text-slate-900">Compile with EVM {QDAY_EVM_VERSION}:</strong>{' '}
+                <code className="px-1 py-0.5 rounded bg-slate-100 font-mono text-[11px]">
+                  contracts/foundry.toml
+                </code>{' '}
+                is locked to <code className="font-mono">evm_version = &quot;shanghai&quot;</code>.
+                Default <code className="font-mono">cancun</code> builds deploy and then fail with{' '}
+                <code className="font-mono">invalid opcode: MCOPY</code>.
+              </li>
+              <li>
+                · <strong className="text-slate-900">No WebSocket RPC:</strong> Poll over HTTPS
+                (<code className="font-mono">{QDAY_RPC_URL}</code>) only; never use{' '}
+                <code className="font-mono">wss://</code> endpoints.
+              </li>
+              <li>
+                · <strong className="text-slate-900">eth_getLogs 1,000-block limit:</strong> Use
+                the <code className="font-mono">getLogsChunked</code> helper in{' '}
+                <code className="font-mono">lib/qday.ts</code> so event queries do not exceed RPC bounds.
+              </li>
+              <li>
+                · <strong className="text-slate-900">Explorer verification unavailable:</strong>{' '}
+                Link your GitHub repository and deployed contract addresses in the hackathon submission.
+              </li>
+              <li>
+                · <strong className="text-slate-900">Judging counts on-chain Aevum activity:</strong>{' '}
+                After Stage 2 deploy, settle real test transactions on QDay Aevum (Chain ID 44005).
+              </li>
+            </ul>
+          </div>
+
+          <div className="bg-white border border-slate-200 rounded-xl p-6 space-y-2.5">
+            <h3 className="text-sm font-semibold text-slate-900">
+              Wallet Integration: Active EOA vs Q1 2027 SDK
+            </h3>
+            <p className="text-xs text-slate-600 leading-relaxed">
+              The official <code className="font-mono">@qday-io/sdk</code> and{' '}
+              <code className="font-mono">@qday-io/cli</code> packages ship in{' '}
+              <strong className="text-slate-900">Q1 2027</strong> (not yet published on npm).
+              HanumPay uses the active path documented on QDay Wiki today: standard{' '}
+              <strong className="text-slate-900">EOA wallets</strong> (MetaMask / Rabby via{' '}
+              <code className="font-mono">window.ethereum</code> &amp; EIP-3085{' '}
+              <code className="font-mono">{QDAY_CHAIN_ID_HEX}</code>) paired with{' '}
+              <strong className="text-slate-900">gasless EIP-712</strong> relayer signatures.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* Foundry Step-by-Step Terminal Guide */}
       <div className="bg-[#030712] text-slate-100 border border-slate-800 rounded-xl p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-4">
           <div className="flex items-center gap-2.5">
             <Terminal className="w-5 h-5 text-emerald-400 shrink-0" />
             <div>
               <h2 className="text-base font-semibold text-white">
-                Panduan Cepat Foundry (Deploy ke QDay Testnet)
+                Foundry Quickstart (Deploy to QDay Testnet)
               </h2>
               <p className="text-xs text-slate-400">
-                Keempat kontrak Solidity, Deploy.s.sol, dan HanumPay.t.sol sudah tersedia di folder /contracts
+                All four Solidity contracts, Deploy.s.sol, and HanumPay.t.sol live inside /contracts
               </p>
             </div>
           </div>
@@ -149,12 +346,12 @@ export default function DocsAndContractsPage() {
             {copiedId === 'foundry-cli' ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-400" />
-                <span>Perintah Tersalin</span>
+                <span>Commands Copied</span>
               </>
             ) : (
               <>
                 <Copy className="w-3.5 h-3.5" />
-                <span>Salin Perintah CLI</span>
+                <span>Copy CLI Commands</span>
               </>
             )}
           </button>
@@ -169,10 +366,10 @@ export default function DocsAndContractsPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-base font-semibold text-slate-900">
-              Rencana Eksekusi Hackathon 25 Hari (16 Nov – 11 Des 2026)
+              25-Day Hackathon Execution Plan (Nov 16 – Dec 11, 2026)
             </h2>
             <p className="text-xs text-slate-500">
-              Urutan kerja dari Kontrak Foundry → Relayer &amp; Cron → Antarmuka Web/Mobile → Pengumpulan DoraHacks
+              Milestones from Foundry Contracts → Relayer &amp; Cron → Web/Mobile UI → DoraHacks Submission
             </p>
           </div>
           <a
@@ -181,7 +378,7 @@ export default function DocsAndContractsPage() {
             rel="noreferrer"
             className="text-xs font-medium text-[#2563EB] hover:underline"
           >
-            Block Explorer QDay →
+            QDay Block Explorer →
           </a>
         </div>
 
@@ -210,7 +407,7 @@ export default function DocsAndContractsPage() {
       <div className="grid lg:grid-cols-12 gap-6">
         <div className="lg:col-span-4 space-y-2">
           <p className="text-xs font-medium text-slate-500 px-1">
-            Penjelajah Blueprint &amp; Kode Solidity
+            Blueprint &amp; Solidity Source Explorer
           </p>
           {HANUMPAY_BLUEPRINTS.map((doc) => (
             <button
@@ -243,12 +440,12 @@ export default function DocsAndContractsPage() {
               {copiedId === activeDoc.id ? (
                 <>
                   <Check className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Tersalin</span>
+                  <span>Copied</span>
                 </>
               ) : (
                 <>
                   <Copy className="w-3.5 h-3.5" />
-                  <span>Salin File</span>
+                  <span>Copy File</span>
                 </>
               )}
             </button>

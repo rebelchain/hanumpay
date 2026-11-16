@@ -47,10 +47,10 @@ export default function DashboardPage() {
 
   return (
     <AppShell
-      title="Dasbor Pemilik Usaha"
-      subtitle="Saldo kasir QR terverifikasi, Paspor Kredit ERC-8004, dan kontrol jeda agen AI."
+      title="Merchant Overview"
+      subtitle="Verified QR cashier balance, ERC-8004 Credit Passport, and AI Guarantor pause controls."
     >
-      {/* Kinsign-Inspired Obsidian-Emerald Balance Hero + 4 Quick Action Tiles */}
+      {/* Obsidian-Emerald Balance Hero + 4 Quick Action Tiles */}
       <div className="grid lg:grid-cols-12 gap-6 items-stretch">
         <div
           className="lg:col-span-6 rounded-2xl p-6 text-white flex flex-col justify-between space-y-6"
@@ -61,16 +61,16 @@ export default function DashboardPage() {
         >
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs text-slate-300">Saldo Toko &amp; Limit Modal Tersedia</p>
+              <p className="text-xs text-slate-300">Shop Balance &amp; Available Credit</p>
               <p className="text-3xl sm:text-4xl font-bold font-mono tabular-nums tracking-tight mt-1">
                 {shopAvailableTusd8.toFixed(2)} tUSD8
               </p>
               <p className="text-xs font-mono tabular-nums text-slate-400 mt-1">
-                ≈ Rp {(shopAvailableTusd8 * 15800).toLocaleString('id-ID')}
+                ≈ Rp {Math.round(shopAvailableTusd8 * 15800).toLocaleString('en-US')} IDR
               </p>
             </div>
             <span className="text-xs font-medium text-emerald-400 whitespace-nowrap">
-              {isERC8004Verified(activeShopName) ? 'Terverifikasi ERC-8004' : 'Belum Terdaftar'}
+              {isERC8004Verified(activeShopName) ? 'ERC-8004 Verified' : 'Unregistered'}
             </span>
           </div>
 
@@ -80,15 +80,15 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* 4 Tactile Quick Action Tiles (Mobile + Desktop Unified Ergonomics) */}
+        {/* 4 Tactile Quick Action Tiles */}
         <div className="lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between space-y-4">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Aksi Kasir Cepat</h2>
+            <h2 className="text-sm font-semibold text-slate-900">Quick Cashier Actions</h2>
             <Link
               href="/stage"
               className="text-xs font-medium text-[#2563EB] hover:underline whitespace-nowrap"
             >
-              Buka Simulasi 2 Ponsel →
+              Open 2-Phone Simulator →
             </Link>
           </div>
 
@@ -99,7 +99,7 @@ export default function DashboardPage() {
             >
               <QrCode className="w-5 h-5 text-[#16A34A]" />
               <span className="text-xs font-semibold text-slate-800 mt-2 whitespace-nowrap">
-                Catat QR
+                Record QR
               </span>
             </Link>
 
@@ -109,7 +109,7 @@ export default function DashboardPage() {
             >
               <Truck className="w-5 h-5 text-[#2563EB]" />
               <span className="text-xs font-semibold text-slate-800 mt-2 whitespace-nowrap">
-                Bayar Pemasok
+                Pay Supplier
               </span>
             </Link>
 
@@ -119,7 +119,7 @@ export default function DashboardPage() {
             >
               <FileCheck2 className="w-5 h-5 text-slate-800" />
               <span className="text-xs font-semibold text-slate-800 mt-2 whitespace-nowrap">
-                Modal &amp; AI
+                Credit &amp; AI
               </span>
             </Link>
 
@@ -138,7 +138,7 @@ export default function DashboardPage() {
                 <PauseCircle className="w-5 h-5 text-slate-700" />
               )}
               <span className="text-xs font-semibold mt-2 whitespace-nowrap">
-                {agentPaused ? 'Lanjut AI' : 'Jeda AI'}
+                {agentPaused ? 'Resume AI' : 'Pause AI'}
               </span>
             </button>
           </div>
@@ -152,11 +152,11 @@ export default function DashboardPage() {
             <PauseCircle className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" />
             <div>
               <p className="text-sm font-semibold text-slate-900">
-                Akses Penjaga AI Dijeda oleh Pemilik
+                AI Guarantor Access Paused by Merchant
               </p>
               <p className="text-xs text-amber-900 mt-0.5">
-                AIGuarantor.shopPausedAgent sedang aktif. Tawaran pinjaman baru diblokir on-chain,
-                sementara transaksi jualan QR dan bayar pemasok tetap berjalan normal.
+                AIGuarantor.shopPausedAgent is active. New credit proposals are blocked on-chain,
+                while daily QR sales and supplier payments remain unaffected.
               </p>
             </div>
           </div>
@@ -165,7 +165,7 @@ export default function DashboardPage() {
             onClick={toggleAgentPaused}
             className="px-4 py-2.5 text-xs font-semibold text-white bg-[#D97706] hover:bg-amber-700 rounded-lg transition-colors whitespace-nowrap shrink-0 min-h-[44px]"
           >
-            Aktifkan Kembali Akses AI
+            Resume AI Access
           </button>
         </div>
       )}
@@ -177,15 +177,15 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 text-xs font-medium text-emerald-800">
               <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
               <span>
-                Tawaran #{proposedLoan.id} · {proposedLoan.agentName} (Terverifikasi ERC-8004)
+                Proposal #{proposedLoan.id} · {proposedLoan.agentName} (ERC-8004 Verified)
               </span>
             </div>
             <p className="text-sm sm:text-base font-semibold text-slate-900">
-              Tawaran modal kerja siap diambil:{' '}
+              Working capital offer ready:{' '}
               <span className="font-mono tabular-nums">
                 {proposedLoan.principalUSD8.toFixed(2)} tUSD8
               </span>{' '}
-              dengan biaya tetap{' '}
+              with a flat fee of{' '}
               <span className="font-mono tabular-nums">
                 {proposedLoan.flatFeeUSD8.toFixed(2)} tUSD8
               </span>
@@ -195,7 +195,7 @@ export default function DashboardPage() {
             href="/app/pinjaman"
             className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#16A34A] hover:bg-emerald-700 rounded-lg transition-colors whitespace-nowrap shrink-0 min-h-[44px]"
           >
-            <span>Tinjau &amp; Setujui (Bebas Gas)</span>
+            <span>Review &amp; Accept (Gasless)</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
@@ -204,37 +204,37 @@ export default function DashboardPage() {
       {/* 4-Stat KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Penjualan Terbaru</p>
+          <p className="text-xs font-medium text-slate-500">Recent Sales</p>
           <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
             {salesTodayUSD8.toFixed(2)} tUSD8
           </p>
           <p className="text-xs text-slate-500 mt-1">
-            ~Rp {(salesTodayUSD8 * 15800).toLocaleString('id-ID')}
+            ~Rp {Math.round(salesTodayUSD8 * 15800).toLocaleString('en-US')} IDR
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Omzet 30 Hari</p>
+          <p className="text-xs font-medium text-slate-500">30-Day Revenue</p>
           <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
             {shopStats.totalSales30dUSD8.toFixed(2)} tUSD8
           </p>
           <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-            {shopStats.uniqueCustomers30d} pembeli unik teracak
+            {shopStats.uniqueCustomers30d} hashed unique buyers
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Skor Kredit</p>
+          <p className="text-xs font-medium text-slate-500">Credit Score</p>
           <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
             {eligibility.creditScore} / 100
           </p>
           <p className="text-xs text-[#16A34A] font-medium mt-1">
-            {isERC8004Verified(activeShopName) ? 'Toko Terverifikasi ERC-8004' : 'Toko Belum Terdaftar'}
+            {isERC8004Verified(activeShopName) ? 'ERC-8004 Verified Shop' : 'Unregistered Shop'}
           </p>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Pinjaman Aktif</p>
+          <p className="text-xs font-medium text-slate-500">Active Credit Balance</p>
           {activeLoan ? (
             <>
               <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
@@ -244,7 +244,7 @@ export default function DashboardPage() {
                 <div className="h-full bg-[#16A34A]" style={{ width: `${activeProgress}%` }} />
               </div>
               <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
-                {activeProgress}% terbayar · 10% per laku
+                {activeProgress}% repaid · 10% per sale
               </p>
             </>
           ) : (
@@ -253,7 +253,7 @@ export default function DashboardPage() {
                 0.00 tUSD8
               </p>
               <p className="text-xs text-slate-500 mt-1">
-                {proposedLoan ? '1 tawaran menunggu persetujuan' : 'Tidak ada tanggungan aktif'}
+                {proposedLoan ? '1 offer awaiting approval' : 'No active balance'}
               </p>
             </>
           )}
@@ -275,10 +275,10 @@ export default function DashboardPage() {
           <div className="flex items-start justify-between gap-4">
             <div>
               <h2 className="text-base font-semibold text-slate-900">
-                Paspor Kredit On-Chain
+                On-Chain Credit Passport
               </h2>
               <p className="text-xs text-slate-500 mt-0.5">
-                Bukti pelunasan permanen yang bisa dicek di jaringan QDay Aevum
+                Immutable repayment history verifiable on QDay Aevum
               </p>
             </div>
             <Award className="w-5 h-5 text-[#D97706] shrink-0" />
@@ -287,7 +287,7 @@ export default function DashboardPage() {
           {creditPassports.length === 0 ? (
             <div className="py-8 text-center border border-dashed border-slate-200 rounded-lg">
               <p className="text-sm text-slate-600">
-                Lunasi pinjaman pertama Anda untuk mencetak catatan Paspor Kredit permanen.
+                Repay your first credit line to mint a permanent on-chain Credit Passport record.
               </p>
             </div>
           ) : (
@@ -299,10 +299,10 @@ export default function DashboardPage() {
                 >
                   <div>
                     <p className="text-sm font-semibold text-slate-900">
-                      Pinjaman #{cp.loanId} · {cp.principalUSD8.toFixed(2)} tUSD8 Lunas
+                      Loan #{cp.loanId} · {cp.principalUSD8.toFixed(2)} tUSD8 Settled
                     </p>
                     <p className="text-xs text-slate-500 font-mono tabular-nums mt-0.5">
-                      Lunas dalam {cp.daysToRepay} hari · 0 denda · Limit baru:{' '}
+                      Repaid in {cp.daysToRepay} days · 0 penalties · New limit:{' '}
                       {cp.newCreditLimitUSD8.toFixed(2)} tUSD8
                     </p>
                   </div>
@@ -319,14 +319,14 @@ export default function DashboardPage() {
               href="/app/identitas"
               className="text-xs font-semibold text-[#2563EB] hover:underline"
             >
-              Bayar Pemasok Terverifikasi ERC-8004 →
+              Pay ERC-8004 Verified Supplier →
             </Link>
             <Link
               href="/app/pinjaman"
               className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900"
             >
               <ShieldAlert className="w-3.5 h-3.5 text-[#D97706]" />
-              <span>Jalankan Uji Serangan AI</span>
+              <span>Run AI Red-Team Audit</span>
             </Link>
           </div>
         </div>
@@ -336,16 +336,16 @@ export default function DashboardPage() {
       <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Riwayat Penjualan QR Terbaru</h2>
+            <h2 className="text-base font-semibold text-slate-900">Recent QR Sales Ledger</h2>
             <p className="text-xs text-slate-500">
-              ID pembeli diacak lokal dengan keccak256 sebelum tanda tangan bebas gas EIP-712
+              Customer IDs are hashed locally with keccak256 before gasless EIP-712 signing
             </p>
           </div>
           <Link
             href="/app/penjualan"
             className="text-xs font-semibold text-[#16A34A] hover:underline whitespace-nowrap"
           >
-            Catat Penjualan Baru →
+            Record New Sale →
           </Link>
         </div>
 
@@ -353,11 +353,11 @@ export default function DashboardPage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500">
-                <th className="py-3 px-6">Pembeli (Hash)</th>
-                <th className="py-3 px-6 text-right">Nominal Kotor</th>
-                <th className="py-3 px-6 text-right">Potong Cicilan (10%)</th>
-                <th className="py-3 px-6 text-right">Bersih ke Toko</th>
-                <th className="py-3 px-6 text-right">Struk Bukti</th>
+                <th className="py-3 px-6">Buyer (Hash)</th>
+                <th className="py-3 px-6 text-right">Gross Sale</th>
+                <th className="py-3 px-6 text-right">Auto-Repay (10%)</th>
+                <th className="py-3 px-6 text-right">Net to Shop</th>
+                <th className="py-3 px-6 text-right">Receipt</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 text-sm">
@@ -390,7 +390,7 @@ export default function DashboardPage() {
                             matchedReceipt ?? {
                               id: `rcpt-${sale.id}`,
                               kind: 'sale',
-                              title: `Penjualan QR · ${sale.customerLabel}`,
+                              title: `QR Sale · ${sale.customerLabel}`,
                               amountUSD8: sale.amountUSD8,
                               repaidDeductedUSD8: sale.repaidDeductedUSD8,
                               netAmountUSD8: sale.netToShopUSD8,
@@ -407,7 +407,7 @@ export default function DashboardPage() {
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#2563EB] hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap"
                       >
                         <Receipt className="w-3.5 h-3.5" />
-                        <span>Lihat Struk</span>
+                        <span>View Receipt</span>
                       </button>
                     </td>
                   </tr>

@@ -8,12 +8,12 @@ import { shortenAddress } from '@/lib/qday';
 import { CONTAINER } from './section';
 
 const APP_LINKS = [
-  { href: '/stage', label: 'Simulasi 2 Layar', desc: 'Kasir QR Toko vs Penjaga AI' },
-  { href: '/app/dashboard', label: 'Ringkasan & Kontrak', desc: 'Status kredit & saldo warung' },
-  { href: '/app/penjualan', label: 'Kasir Penjualan QR', desc: 'Catat omzet bebas biaya gas' },
-  { href: '/app/pinjaman', label: 'Modal Kerja & Pemasok', desc: 'Tawaran AI & cek penerima resmi' },
-  { href: '/app/pool', label: 'Pool Likuiditas', desc: 'Simpanan dana komunitas & TVL' },
-  { href: '/app/docs', label: 'Arsitektur & Audit', desc: 'Aturan QDay & uji serangan AI' },
+  { href: '/stage', label: '2-Phone Simulator', desc: 'Shop QR POS vs AI Guarantor' },
+  { href: '/app/dashboard', label: 'Overview & Contracts', desc: 'Credit status & merchant balance' },
+  { href: '/app/penjualan', label: 'QR Sales Cashier', desc: 'Record gasless EIP-712 sales' },
+  { href: '/app/pinjaman', label: 'Working Capital & Payees', desc: 'AI offers & ERC-8004 check' },
+  { href: '/app/pool', label: 'Liquidity Pool', desc: 'Community deposits & live TVL' },
+  { href: '/app/docs', label: 'Architecture & Audits', desc: 'QDay checklist & red-team tests' },
 ];
 
 export function LandingHeader() {
@@ -80,25 +80,25 @@ export function LandingHeader() {
               href="#how"
               className="text-[14px] font-medium text-[#151619]/80 transition-colors hover:text-[#151619] whitespace-nowrap"
             >
-              Cara kerja
+              How it works
             </a>
             <a
               href="#compare"
               className="text-[14px] font-medium text-[#151619]/80 transition-colors hover:text-[#151619] whitespace-nowrap"
             >
-              Bandingkan
+              Compare
             </a>
             <a
               href="#contracts"
               className="text-[14px] font-medium text-[#151619]/80 transition-colors hover:text-[#151619] whitespace-nowrap"
             >
-              Kontrak
+              Contracts
             </a>
             <a
               href="#faq"
               className="text-[14px] font-medium text-[#151619]/80 transition-colors hover:text-[#151619] whitespace-nowrap"
             >
-              Tanya Jawab
+              FAQ
             </a>
 
             {/* App quick dropdown */}
@@ -109,7 +109,7 @@ export function LandingHeader() {
                 className="inline-flex items-center gap-1 text-[14px] font-medium text-[#151619]/80 transition-colors hover:text-[#151619] whitespace-nowrap cursor-pointer"
                 aria-expanded={appMenuOpen}
               >
-                <span>Aplikasi</span>
+                <span>App</span>
                 <ChevronDown
                   className={`h-3.5 w-3.5 transition-transform duration-200 ${
                     appMenuOpen ? 'rotate-180' : ''
@@ -141,7 +141,7 @@ export function LandingHeader() {
               href="/stage"
               className="hidden sm:inline-flex items-center rounded-full px-3.5 py-1.5 text-[13px] font-medium text-[#151619]/80 hover:text-[#151619] whitespace-nowrap"
             >
-              Coba Simulasi
+              Try Simulator
             </Link>
 
             <button
@@ -155,17 +155,17 @@ export function LandingHeader() {
               }`}
             >
               {wallet.isConnecting
-                ? 'Menghubungkan...'
+                ? 'Connecting...'
                 : wallet.connected && wallet.address
                   ? shortenAddress(wallet.address)
-                  : 'Hubungkan Dompet'}
+                  : 'Connect Wallet'}
             </button>
 
             <button
               type="button"
               onClick={() => setMobileOpen((o) => !o)}
               className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/80 text-[#151619] md:hidden cursor-pointer"
-              aria-label="Buka menu navigasi"
+              aria-label="Open navigation menu"
             >
               {mobileOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
             </button>
@@ -181,28 +181,28 @@ export function LandingHeader() {
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg px-3 py-2 text-[14px] font-medium text-[#151619] hover:bg-[#F5F7F5]"
               >
-                Cara kerja
+                How it works
               </a>
               <a
                 href="#compare"
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg px-3 py-2 text-[14px] font-medium text-[#151619] hover:bg-[#F5F7F5]"
               >
-                Bandingkan
+                Compare
               </a>
               <a
                 href="#contracts"
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg px-3 py-2 text-[14px] font-medium text-[#151619] hover:bg-[#F5F7F5]"
               >
-                Kontrak
+                Contracts
               </a>
               <a
                 href="#faq"
                 onClick={() => setMobileOpen(false)}
                 className="rounded-lg px-3 py-2 text-[14px] font-medium text-[#151619] hover:bg-[#F5F7F5]"
               >
-                Tanya Jawab
+                FAQ
               </a>
             </div>
             <div className="mt-3 grid gap-1">

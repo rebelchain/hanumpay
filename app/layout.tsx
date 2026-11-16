@@ -28,27 +28,27 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: 'HanumPay — Modal Usaha & Pembayaran QR Aman untuk UMKM',
+  title: 'HanumPay — Working Capital Credit & Verified Payee Layer for MSMEs',
   description:
-    'Modal kerja jujur, verifikasi penerima ERC-8004, dan catatan penjualan QR harian untuk UMKM Indonesia di Jaringan QDay Aevum Testnet.',
+    'On-chain working capital credit, ERC-8004 Confirmation of Payee, and verified QR sales ledger for small merchants on QDay Aevum Testnet.',
   openGraph: {
-    title: 'HanumPay — Modal Usaha & Pembayaran QR Aman untuk UMKM',
+    title: 'HanumPay — Working Capital Credit & Verified Payee Layer for MSMEs',
     description:
-      'Ubah omzet QR harian jadi batas modal kerja tUSD8 yang adil, diawasi Penjaga AI dan verifikasi penerima ERC-8004.',
+      'Turn daily QR sales into fair tUSD8 working capital limits guarded by smart-contract AI constraints and ERC-8004 payee verification.',
     type: 'website',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'HanumPay — Modal Usaha & Pembayaran QR Aman untuk UMKM',
+    title: 'HanumPay — Working Capital Credit & Verified Payee Layer for MSMEs',
     description:
-      'Ubah omzet QR harian jadi batas modal kerja tUSD8 yang adil, diawasi Penjaga AI dan verifikasi penerima ERC-8004.',
+      'Turn daily QR sales into fair tUSD8 working capital limits guarded by smart-contract AI constraints and ERC-8004 payee verification.',
   },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
-      lang="id"
+      lang="en"
       className={`${plusJakarta.variable} ${dmSans.variable} ${manrope.variable} ${jetbrainsMono.variable}`}
     >
       <body suppressHydrationWarning className="min-h-screen bg-[#F9FAFB] text-slate-900">

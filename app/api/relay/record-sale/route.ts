@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
 
     if (!shop || !customerIdHash || Number.isNaN(amountUSD8) || amountUSD8 < 0.1 || amountUSD8 > 500) {
       return NextResponse.json(
-        { error: 'Data penjualan tidak valid. Nominal harus antara 0.10–500.00 tUSD8.' },
+        { error: 'Invalid sale data. Amount must be between 0.10–500.00 tUSD8.' },
         { status: 400 }
       );
     }
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
       if (!signatureVerified) {
         return NextResponse.json(
-          { error: 'Tanda tangan EIP-712 transaksi QR tidak cocok dengan alamat toko.' },
+          { error: 'EIP-712 QR sale signature does not match shop address.' },
           { status: 401 }
         );
       }
@@ -100,11 +100,11 @@ export async function POST(req: NextRequest) {
       mode: 'verified-demo-relay',
       txHash: null,
       signatureVerified,
-      note: 'Relayer memeriksa data transaksi; atur RELAYER_PRIVATE_KEY & NEXT_PUBLIC_SALES_LEDGER_ADDRESS untuk kirim langsung ke QDay Testnet.',
+      note: 'Relayer verified payload; set RELAYER_PRIVATE_KEY & NEXT_PUBLIC_SALES_LEDGER_ADDRESS to broadcast live to QDay Aevum.',
     });
   } catch (err) {
     return NextResponse.json(
-      { error: err instanceof Error ? err.message : 'Relayer pencatatan penjualan gagal.' },
+      { error: err instanceof Error ? err.message : 'Sales relayer failed.' },
       { status: 500 }
     );
   }

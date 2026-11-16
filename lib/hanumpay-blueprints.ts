@@ -11,123 +11,125 @@ export const HANUMPAY_BLUEPRINTS: BlueprintDoc[] = [
   {
     id: 'claude-md',
     filename: 'CLAUDE.md',
-    title: 'CLAUDE.md — Konteks Proyek HanumPay',
+    title: 'CLAUDE.md — HanumPay Project Context',
     category: 'docs',
-    description: 'Panduan utama arsitektur, teknologi, dan aturan baku HanumPay.',
-    content: `# CLAUDE.md — Konteks Proyek HanumPay
+    description: 'Core architecture guide, tech stack, and immutable protocol rules.',
+    content: `# CLAUDE.md — HanumPay Project Context
 
-## Apa Itu HanumPay
+## What Is HanumPay
 
-HanumPay adalah protokol modal kerja on-chain dan pembayaran terverifikasi ERC-8004 untuk 64 juta UMKM lokal Indonesia.
-Sistem ini mengubah catatan penjualan QR harian menjadi riwayat terverifikasi di blockchain, lalu dibaca Penjaga AI untuk menawarkan modal mikro — tanpa agunan, tanpa denda keterlambatan, dan tanpa penagih utang.
-Cicilan dipotong otomatis sebesar 10% dari setiap penjualan QR berikutnya, dan pemilik warung bisa membayar langsung ke pemasok resmi (ERC-8004).
+HanumPay is an on-chain working-capital credit and ERC-8004 Confirmation of Payee protocol for 64M Indonesian MSMEs.
+It turns daily QR cashier sales into verifiable on-chain cashflow history, read by an AI Guarantor to propose micro-loans — zero collateral, zero late fees, zero debt collectors.
+Repayments are auto-deducted at 10% from incoming QR sales, and merchants can pay verified wholesalers directly using ERC-8004 Confirmation of Payee.
 
-Dibangun untuk: **Aevum Builder Challenge #1** (QDay Network)
-Batas Waktu: **11 Desember 2026**
+Built for: **Aevum Builder Challenge #1** (QDay Network)
+Deadline: **December 11, 2026**
 
-## Teknologi Utama (Aturan Baku)
+## Core Stack (Locked Rules)
 
-| Lapisan | Teknologi |
-|---------|-----------|
-| Jaringan | QDay Aevum Testnet — Chain ID: \`44005\` |
-| RPC | \`https://rpc-test.qday.info\` |
-| Stablecoin | tUSD8 — ERC-20, 6 desimal — \`0x456569838f1d43009A91ebA4263147Afd7233483\` |
-| Kontrak | Solidity \`^0.8.24\` + Foundry |
-| Identitas | ERC-8004 Registry (Konfirmasi Penerima On-Chain) |
-| Frontend | Next.js App Router + TypeScript + Tailwind + Viem |
-| Agen AI | Node.js + TypeScript (cron) + Audit Gemini |
+| Layer | Technology |
+|-------|------------|
+| Network | QDay Aevum Testnet — Chain ID: \`44005\` (\`0xABE5\`) |
+| RPC | \`https://rpc-test.qday.info\` (HTTPS polling only, no WebSocket) |
+| EVM Target | \`shanghai\` (mandatory in \`foundry.toml\`, avoids Cancun \`MCOPY\`) |
+| Stablecoin | tUSD8 — ERC-20, 6 decimals — \`0x456569838f1d43009A91ebA4263147Afd7233483\` |
+| Contracts | Solidity \`^0.8.24\` + Foundry |
+| Wallets | EOA (\`window.ethereum\` EIP-3085) active now; \`@qday-io/sdk\` ships Q1 2027 |
+| Identity | ERC-8004 Registry (On-Chain Confirmation of Payee) |
+| Frontend | Next.js App Router + TypeScript + Tailwind + Viem (\`getLogsChunked\` <= 1,000 blocks) |
+| AI Agent | Node.js + TypeScript (cron) + Gemini Audit |
 
-## Aturan Keamanan Utama
+## Core Security Invariants
 
-1. Jangan pernah unggah \`.env\` atau private key ke git. Selalu gunakan \`.env.example\`.
-2. \`tUSD8\` memakai **6 desimal** — selalu gunakan \`parseUnits(amount, 6)\`, bukan \`parseEther\`.
-3. Agen AI HANYA boleh memanggil \`proposeLoan(address shop)\` — tidak ada fungsi tulis lain.
-4. Pemilik toko bebas biaya gas — gunakan tanda tangan EIP-712 untuk semua transaksi toko.
-5. Syarat pinjaman berasal dari smart contract — tidak bisa diubah oleh frontend atau AI.
-6. ERC-8004 diverifikasi langsung di blockchain.`,
+1. Never commit \`.env\` or private keys to git. Always use \`.env.example\`.
+2. \`tUSD8\` uses **6 decimals** — always use \`parseUnits(amount, 6)\`, never \`parseEther\`.
+3. AI Agent may ONLY call \`proposeLoan(address shop)\` — no other write access.
+4. Merchants pay zero gas — use EIP-712 signatures for all shop actions.
+5. Loan terms are hardcoded in smart contracts — neither frontend nor AI can override them.
+6. ERC-8004 identities are verified directly on-chain.`,
   },
   {
     id: 'project-md',
     filename: 'docs/PROJECT.md',
-    title: 'PROJECT.md — Visi & Keunggulan HanumPay',
+    title: 'PROJECT.md — Vision & Problem Statement',
     category: 'docs',
-    description: 'Rumusan masalah UMKM, solusi nyata, dan kesesuaian juri.',
+    description: 'MSME cashflow problem, solution design, and hackathon alignment.',
     content: `# PROJECT.md — HanumPay
 
-## Ringkasan Singkat
+## One-Sentence Summary
 
-Lapisan identitas on-chain dan pembayaran terverifikasi yang mengubah penjualan QR harian menjadi modal kerja mikro bagi 64 juta UMKM Indonesia — tanpa jaminan, tanpa denda telat, tanpa penagih.
+An on-chain identity and verified payment layer turning daily QR sales into micro working-capital loans for Indonesia's 64M small businesses — zero collateral, zero late fees, zero debt collectors.
 
-## Cara Kerja Solusi
+## How It Works
 
-Setiap penjualan QR -> tercatat permanen di QDay Aevum (tUSD8).
-Agen AI membaca riwayat 30 hari -> menghitung batas modal (10% dari omzet terverifikasi, maksimal $500 tUSD8).
-AI mengajukan penawaran pinjaman dengan syarat terkunci di smart contract (biaya tetap 5%).
-Pemilik toko menyetujui lewat satu tanda tangan EIP-712 tanpa biaya gas.
-Cicilan otomatis dipotong 10% dari penjualan QR berikutnya — tanpa tanggal jatuh tempo, tanpa denda telat.
-Pemilik bisa membayar kulakan langsung ke pemasok terverifikasi ERC-8004, sambil membangun Paspor Kredit On-Chain.
+Each QR sale -> recorded permanently on QDay Aevum (tUSD8).
+AI Agent reads 30d history -> computes credit limit (10% of verified turnover, capped at $500 tUSD8).
+AI proposes loan with smart-contract locked terms (5% flat fee).
+Merchant accepts with one gasless EIP-712 signature.
+Repayment auto-deducts 10% from incoming QR sales — no due date, no late penalties.
+Merchants pay ERC-8004 verified suppliers directly while minting a portable On-Chain Credit Passport.
 
-## Mengapa Proyek Ini Tepat Sasaran
+## Why It Fits Aevum Builder Challenge #1
 
-- **Pembayaran Stablecoin**: tUSD8 (6 desimal) untuk pencairan modal, bayar pemasok B2B, dan cicilan.
-- **Kolaborasi Manusia + Agen AI**: Pemilik warung (manusia) + HanumPay-AI-Guarantor-v1 (agen otonom) + Penyedia Dana.
-- **ERC-8004**: Konfirmasi Penerima untuk Pemilik Toko, Agen AI, dan Pemasok.
+- **Stablecoin Payments**: tUSD8 (6 decimals) for credit disbursement, B2B supplier settlement, and auto-repayment.
+- **Human + AI Collaboration**: Merchant (human) + HanumPay-AI-Guarantor-v1 (autonomous agent) + Community LPs.
+- **ERC-8004**: Confirmation of Payee for Shops, AI Agents, and Suppliers.
 - **QDay Aevum Testnet**: Chain ID 44005.
-- **Bebas Gas**: Tanda tangan EIP-712 — pemilik warung bayar 0 tQDAY.`,
+- **Gasless UX**: EIP-712 typed signatures — merchants spend 0 tQDAY.`,
   },
   {
     id: 'architecture-md',
     filename: 'docs/ARCHITECTURE.md',
-    title: 'ARCHITECTURE.md — Alur Data Sistem',
+    title: 'ARCHITECTURE.md — System Data Flow',
     category: 'docs',
-    description: 'Peta ketergantungan kontrak, siklus dana, dan aturan keamanan.',
-    content: `# ARCHITECTURE.md — Arsitektur Sistem HanumPay
+    description: 'Contract dependency graph, capital cycle, and security bounds.',
+    content: `# ARCHITECTURE.md — HanumPay System Architecture
 
-## Peta Kontrak
+## Contract Map
 
 \`\`\`
-ERC8004Registry   (lapisan identitas: toko, agen AI, pemasok, penyedia dana)
+ERC8004Registry   (identity layer: shops, AI agents, suppliers, lenders)
        ^
-SalesLedger       (catat penjualan QR EIP-712 bebas gas + panggil LoanPool.repayFromSale)
+SalesLedger       (gasless EIP-712 QR sales + calls LoanPool.repayFromSale)
        ^
-AIGuarantor       (baca SalesLedger + LoanPool; HANYA memanggil proposeLoan(shop))
+AIGuarantor       (reads SalesLedger + LoanPool; ONLY calls proposeLoan(shop))
        ^
-LoanPool          (tampung dana tUSD8, batas pemakaian 80%, cetak Paspor Kredit)
+LoanPool          (tUSD8 treasury, 80% utilization cap, Credit Passport minting)
 \`\`\`
 
-Urutan deploy: \`ERC8004Registry -> SalesLedger -> LoanPool -> AIGuarantor\`
+Deploy order: \`ERC8004Registry -> SalesLedger -> LoanPool -> AIGuarantor\`
 
-## Batas Keamanan (Dikunci di Smart Contract)
+## Security Invariants (Contract-Enforced)
 
-| Aturan | Nilai | Lokasi Penegakan |
-|--------|-------|------------------|
-| Batas maksimal pinjaman | $500 tUSD8 | AIGuarantor / LoanPool |
-| Batas penawaran harian AI | 10 / hari | AIGuarantor |
-| Maksimal pemakaian pool | 80% total pool | LoanPool |
-| Masa jeda setelah lunas | 30 hari | LoanPool |
-| Minimal pembeli berbeda | 5 dalam 30 hari | AIGuarantor |
-| Minimal riwayat jualan | 30 hari | AIGuarantor |
-| Biaya pinjaman | 5% tetap | LoanPool (tidak bisa diubah) |`,
+| Invariant | Value | Enforced In |
+|-----------|-------|-------------|
+| Max loan size | $500 tUSD8 | AIGuarantor / LoanPool |
+| Max AI proposals / day | 10 / day | AIGuarantor |
+| Max pool utilization | 80% of TVL | LoanPool |
+| Post-repayment cooldown | 30 days | LoanPool |
+| Min unique buyers | 5 within 30d | AIGuarantor |
+| Min sales history | 30 days | AIGuarantor |
+| Loan fee | 5% flat immutable | LoanPool |`,
   },
   {
     id: 'contracts-spec-md',
     filename: 'docs/CONTRACTS_SPEC.md',
-    title: 'CONTRACTS_SPEC.md — Spesifikasi Antarmuka Solidity',
+    title: 'CONTRACTS_SPEC.md — Solidity Interface Spec',
     category: 'docs',
-    description: 'Daftar fungsi ABI, domain EIP-712, dan standar 6-desimal tUSD8.',
-    content: `# CONTRACTS_SPEC.md — Antarmuka HanumPay
+    description: 'ABI signatures, EIP-712 domains, and 6-decimal tUSD8 standard.',
+    content: `# CONTRACTS_SPEC.md — HanumPay Interfaces
 
-## Domain EIP-712
+## EIP-712 Domain
 - name: \`"HanumPaySalesLedger"\`
 - version: \`"1"\`
 - chainId: \`44005\`
 
-## Token tUSD8
+## tUSD8 Token
 - address: \`0x456569838f1d43009A91ebA4263147Afd7233483\`
 - decimals: \`6\`
-- Selalu gunakan \`parseUnits(amount, 6)\`
+- Always use \`parseUnits(amount, 6)\`
 
-## Fungsi Utama
+## Core Functions
 - \`ERC8004Registry.register(name, category, metadata)\`
 - \`ERC8004Registry.resolve(name) -> address\`
 - \`SalesLedger.recordSale(shop, amountUSD8, customerId, deadline, signature)\`
@@ -140,9 +142,9 @@ Urutan deploy: \`ERC8004Registry -> SalesLedger -> LoanPool -> AIGuarantor\`
   {
     id: 'erc8004-sol',
     filename: 'contracts/src/ERC8004Registry.sol',
-    title: 'ERC8004Registry.sol — Konfirmasi Penerima',
+    title: 'ERC8004Registry.sol — Confirmation of Payee',
     category: 'contracts',
-    description: 'Buku identitas on-chain untuk warung, agen AI, pemasok, dan penyedia dana.',
+    description: 'On-chain identity directory for merchants, AI agents, suppliers, and lenders.',
     content: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -224,9 +226,9 @@ contract ERC8004Registry {
   {
     id: 'sales-ledger-sol',
     filename: 'contracts/src/SalesLedger.sol',
-    title: 'SalesLedger.sol — Catatan Penjualan QR Bebas Gas',
+    title: 'SalesLedger.sol — Gasless QR Sales Ledger',
     category: 'contracts',
-    description: 'Pencatatan penjualan EIP-712 bebas gas dengan rekap 30 hari dan potong cicilan otomatis.',
+    description: 'Gasless EIP-712 sales recording with 30-day rolling stats and auto-repay hook.',
     content: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -366,9 +368,9 @@ contract SalesLedger {
   {
     id: 'ai-guarantor-sol',
     filename: 'contracts/src/AIGuarantor.sol',
-    title: 'AIGuarantor.sol — Kontrak Penjaga AI Terbatas',
+    title: 'AIGuarantor.sol — Contract-Bounded AI Agent',
     category: 'contracts',
-    description: 'Kontrak pengaman batas maksimal $500 tUSD8, 10 penawaran/hari, cap pool 80%, & min 5 pembeli unik.',
+    description: 'Guardrail contract enforcing $500 cap, 10 proposals/day, 80% pool cap & 5 unique buyers.',
     content: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -458,35 +460,37 @@ contract AIGuarantor {
   {
     id: 'loan-pool-sol',
     filename: 'contracts/src/LoanPool.sol',
-    title: 'LoanPool.sol — Pool Dana, EIP-712 & Paspor Kredit',
+    title: 'LoanPool.sol — Treasury, EIP-712 & Credit Passport',
     category: 'contracts',
-    description: 'Mengelola simpanan tUSD8, batas pemakaian 80%, pencairan bebas gas, cicilan otomatis & Paspor Kredit.',
+    description: 'Manages tUSD8 liquidity, 80% utilization cap, gasless acceptance, auto-repay & Credit Passports.',
     content: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-// Kode lengkap tersedia di /contracts/src/LoanPool.sol
-// Jalankan lokal: cd contracts && forge build && forge test -vvv`,
+// Full source available in /contracts/src/LoanPool.sol
+// Run locally: cd contracts && forge build && forge test -vvv`,
   },
   {
     id: 'deploy-script-sol',
     filename: 'contracts/script/Deploy.s.sol',
-    title: 'Deploy.s.sol — Skrip Deploy QDay Testnet',
+    title: 'Deploy.s.sol — QDay Testnet Deployment Script',
     category: 'contracts',
-    description: 'Men-deploy 4 kontrak HanumPay dan menghubungkan SalesLedger <-> LoanPool <-> AIGuarantor.',
-    content: `// Jalankan dari folder /contracts:
+    description: 'Deploys all 4 HanumPay contracts and wires SalesLedger <-> LoanPool <-> AIGuarantor.',
+    content: `// Ensure foundry.toml sets evm_version = "shanghai" (required on QDay Aevum).
+// Run from /contracts:
 // export DEPLOYER_PRIVATE_KEY=0x...
 // export AGENT_WALLET_ADDRESS=0x...
-// forge script script/Deploy.s.sol --rpc-url https://rpc-test.qday.info --broadcast --legacy`,
+// forge script script/Deploy.s.sol --rpc-url https://rpc-test.qday.info --broadcast --legacy
+// Note: Explorer contract verification is not yet available; link repo + addresses in submission.`,
   },
   {
     id: 'foundry-tests-sol',
     filename: 'contracts/test/HanumPay.t.sol',
-    title: 'HanumPay.t.sol — Uji Keamanan Foundry',
+    title: 'HanumPay.t.sol — Foundry Invariant & Safety Tests',
     category: 'contracts',
-    description: 'Menguji aturan anti-jualan fiktif 5 pembeli, verifikasi EIP-712, dan batas kredit 10%.',
-    content: `// Jalankan dari folder /contracts:
+    description: 'Verifies 5-unique-buyer anti-wash-trading, EIP-712 signatures, and 10% credit limit.',
+    content: `// Run from /contracts:
 // forge test -vvv
-// Pengujian mencakup:
+// Test suite includes:
 // 1. testCannotProposeWithFewerThan5Customers()
 // 2. testEndToEndGaslessSaleAndAIProposal()`,
   },
@@ -494,53 +498,53 @@ pragma solidity ^0.8.24;
 
 export const HACKATHON_ROADMAP = [
   {
-    phase: 'Tahap 1 · Fondasi',
-    dates: '16 Nov – 18 Nov',
-    focus: 'Persiapan Foundry, faucet QDay Aevum Testnet, skema ERC-8004 & arsitektur sistem.',
+    phase: 'Stage 1 · Foundation',
+    dates: 'Nov 16 – Nov 18',
+    focus: 'Foundry setup, QDay Aevum Testnet faucets, ERC-8004 schema & system architecture.',
     tasks: [
-      'Atur Foundry dengan RPC QDay (https://rpc-test.qday.info, Chain ID 44005)',
-      'Klaim token uji coba tQDAY dan tUSD8 dari faucet.qday.info',
-      'Finalisasi spesifikasi HanumPay /docs dan skema ERC-8004 Confirmation of Payee',
+      'Configure Foundry with evm_version = "shanghai" & QDay RPC (Chain ID 44005)',
+      'Claim tQDAY and tUSD8 test tokens from faucet.qday.info',
+      'Finalize HanumPay /docs specs and ERC-8004 Confirmation of Payee schema',
     ],
   },
   {
-    phase: 'Tahap 2 · Smart Contract',
-    dates: '19 Nov – 22 Nov',
-    focus: 'Tulis, uji unit, dan deploy 4 kontrak inti ke QDay Aevum Testnet.',
+    phase: 'Stage 2 · Smart Contracts',
+    dates: 'Nov 19 – Nov 22',
+    focus: 'Write, unit-test, and deploy all 4 core contracts to QDay Aevum Testnet.',
     tasks: [
-      'Implementasi & uji ERC8004Registry.sol dan SalesLedger.sol (EIP-712 + keccak256)',
-      'Implementasi & uji LoanPool.sol (batas 80%, saham LP) serta AIGuarantor.sol',
-      'Jalankan Deploy.s.sol di Chain 44005 dan simpan alamat kontrak ke testnet.json',
+      'Implement & test ERC8004Registry.sol and SalesLedger.sol (EIP-712 + keccak256)',
+      'Implement & test LoanPool.sol (80% cap, LP shares) and AIGuarantor.sol',
+      'Run Deploy.s.sol on Chain 44005 and save deployed addresses',
     ],
   },
   {
-    phase: 'Tahap 3 · Antarmuka & Dompet',
-    dates: '23 Nov – 29 Nov',
-    focus: 'Hubungkan aplikasi Next.js dengan pembacaan kontrak langsung & tanda tangan bebas gas.',
+    phase: 'Stage 3 · UI & Wallets',
+    dates: 'Nov 23 – Nov 29',
+    focus: 'Wire Next.js UI to live contract reads, EOA EIP-3085 wallet & gasless signatures.',
     tasks: [
-      'Lengkapi alur /app/dashboard, /app/penjualan, /app/pinjaman, /app/pool, /app/identitas',
-      'Terapkan format 6-desimal tUSD8 dan cek verifikasi ERC-8004 on-chain',
-      'Selesaikan fitur Bayar Pemasok & tampilan Paspor Kredit UMKM',
+      'Polish /app/dashboard, /app/penjualan, /app/pinjaman, /app/pool, /app/identitas',
+      'Enforce 6-decimal tUSD8 formatting and on-chain ERC-8004 verification checks',
+      'Complete Verified Supplier Pay & Credit Passport views',
     ],
   },
   {
-    phase: 'Tahap 4 · Agen AI Otonom',
-    dates: '30 Nov – 4 Des',
-    focus: 'Jalankan cron Penjaga AI dan validasi penawaran pinjaman otomatis.',
+    phase: 'Stage 4 · Autonomous AI',
+    dates: 'Nov 30 – Dec 4',
+    focus: 'Run AI Guarantor cron loop and validate automated underwriting proposals.',
     tasks: [
-      'Daftarkan HanumPay-AI-Guarantor-v1 di ERC8004Registry',
-      'Jalankan siklus 15 menit membaca SalesLedger dan mengirim proposeLoan(shop)',
-      'Simpan log audit JSON & uji serangan Red-Team untuk pembuktian keamanan',
+      'Register HanumPay-AI-Guarantor-v1 on ERC8004Registry',
+      'Run 15-minute cron cycle reading SalesLedger and submitting proposeLoan(shop)',
+      'Store structured JSON audit logs & verify Red-Team guardrail rejections',
     ],
   },
   {
-    phase: 'Tahap 5 · Penyempurnaan & Kirim',
-    dates: '5 Des – 11 Des',
-    focus: 'Penanganan error, video demo maksimal 3-5 menit, repositori GitHub & DoraHacks.',
+    phase: 'Stage 5 · Polish & Submit',
+    dates: 'Dec 5 – Dec 11',
+    focus: 'Error handling, 3–5 min product demo video, public GitHub repo & DoraHacks submission.',
     tasks: [
-      'Pastikan tanpa .env di git, README rapi, dan repositori publik siap diperiksa',
-      'Rekam video demo menyeluruh di QDay Testnet tanpa hambatan login',
-      'Kirim ke dorahacks.io/hackathon/qday sebelum 11 Desember, 16:00 HKT',
+      'Verify zero .env secrets in git, clean README, and reproducible repo',
+      'Record end-to-end QDay Testnet walkthrough with zero login friction',
+      'Submit to dorahacks.io/hackathon/qday before Dec 11, 16:00 HKT',
     ],
   },
 ];
