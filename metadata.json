@@ -1,0 +1,6 @@
+{
+  "name": "HanumPay",
+  "description": "On-chain credit, ERC-8004 Confirmation of Payee, and verified stablecoin payment layer for Indonesia's informal small businesses on QDay Aevum Testnet.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
