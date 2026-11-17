@@ -2,7 +2,7 @@
 
 **Revenue-backed working capital and ERC-8004 Confirmation of Payee for micro-merchants on QDay Aevum Testnet.**
 
-HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow with zero gas cost (_gasless EIP-712_), unlocks contract-bounded `tUSD8` working capital (**max 10% of 30-day revenue, $500 tUSD8 cap, 5% flat fee, 0% late penalties**), and protects wholesale supplier payouts using **ERC-8004 Confirmation of Payee**.
+HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow with zero gas cost (*gasless EIP-712*), unlocks contract-bounded `tUSD8` working capital (**max 10% of 30-day revenue, $500 tUSD8 cap, 5% flat fee, 0% late penalties**), and protects wholesale supplier payouts using **ERC-8004 Confirmation of Payee**.
 
 ---
 
@@ -26,15 +26,15 @@ HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow
 
 ## QDay Aevum Testnet Configuration
 
-| Parameter                    | Value                                                                      |
-| ---------------------------- | -------------------------------------------------------------------------- |
-| **Network Name**             | QDay Aevum                                                                 |
-| **Chain ID**                 | `44005` (`0xABE5`)                                                         |
-| **RPC URL**                  | `https://rpc-test.qday.info` _(HTTPS polling only — no WebSocket RPC)_     |
-| **EVM Target**               | `shanghai` _(required in `contracts/foundry.toml`, avoids Cancun `MCOPY`)_ |
-| **Block Explorer**           | `https://explorer-test.qday.info`                                          |
-| **Faucet**                   | `https://faucet.qday.info/en`                                              |
-| **tUSD8 Token (6 decimals)** | `0x456569838f1d43009A91ebA4263147Afd7233483`                               |
+| Parameter | Value |
+| --- | --- |
+| **Network Name** | QDay Aevum |
+| **Chain ID** | `44005` (`0xABE5`) |
+| **RPC URL** | `https://rpc-test.qday.info` *(HTTPS polling only — no WebSocket RPC)* |
+| **EVM Target** | `shanghai` *(required in `contracts/foundry.toml`, avoids Cancun `MCOPY`)* |
+| **Block Explorer** | `https://explorer-test.qday.info` |
+| **Faucet** | `https://faucet.qday.info/en` |
+| **tUSD8 Token (6 decimals)** | `0x456569838f1d43009A91ebA4263147Afd7233483` |
 
 ### QDay Aevum Technical Requirements & Wallet Integration
 
@@ -45,25 +45,62 @@ HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow
 
 ### Deployed Smart Contract Addresses (QDay Aevum Testnet — Block `3310882`)
 
-| Contract              | QDay Testnet (44005) Address                 | Status                        |
-| --------------------- | -------------------------------------------- | ----------------------------- |
+| Contract | QDay Testnet (44005) Address | Status |
+| --- | --- | --- |
 | `ERC8004Registry.sol` | `0x5533628fE8bFa8A6227C69cca8F7E96e578709c9` | Deployed (`0x61225c...09419`) |
-| `SalesLedger.sol`     | `0xbFCe0404F4abbe73Bf4eDB2e0E7F7a0e69d33BE5` | Deployed (`0x1370ba...ae921`) |
-| `LoanPool.sol`        | `0x5FcF8175bc41B584322Af65979013AbB6FecA6DB` | Deployed (`0xaa677d...2dd1b`) |
-| `AIGuarantor.sol`     | `0x35E37e86b7676FEA5fb4704b5ce6C015492c1d64` | Deployed (`0xe7f779...484fe`) |
+| `SalesLedger.sol` | `0xbFCe0404F4abbe73Bf4eDB2e0E7F7a0e69d33BE5` | Deployed (`0x1370ba...ae921`) |
+| `LoanPool.sol` | `0x5FcF8175bc41B584322Af65979013AbB6FecA6DB` | Deployed (`0xaa677d...2dd1b`) |
+| `AIGuarantor.sol` | `0x35E37e86b7676FEA5fb4704b5ce6C015492c1d64` | Deployed (`0xe7f779...484fe`) |
 
 ### Sample On-Chain Activity Proofs (QDay Explorer)
 
-| Flow                                  | Transaction Hash / Explorer Link                                     | Notes                                             |
-| ------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------- |
-| **4-Contract Deployment Batch**       | `0x61225c341f230224c2b8423e0138aaa142962f52e38f67579fd32be311709419` | Block `3310882` (`0.003943121 tQDAY` gas)         |
-| **Gasless QR Sale (EIP-712 Relayer)** | `0x98731de9e728d4cd43b9eb7eed153d8a90ce526b1fc961f5fae80688784c55c6` | `SalesLedger.recordSale` on Chain `44005`         |
-| **Community LP Deposit (`tUSD8`)**    | `0x1fc8460f1eeeede30c03db8793b7119b92039fe1ad2e8644bfbc324ef5413f4e` | `LoanPool.deposit` within `5 tUSD8` faucet budget |
+| Flow | Transaction Hash / Explorer Link | Notes |
+| --- | --- | --- |
+| **4-Contract Deployment Batch** | `0x61225c341f230224c2b8423e0138aaa142962f52e38f67579fd32be311709419` | Block `3310882` (`0.003943121 tQDAY` gas) |
+| **Gasless QR Sale (EIP-712 Relayer)** | `0x98731de9e728d4cd43b9eb7eed153d8a90ce526b1fc961f5fae80688784c55c6` | `SalesLedger.recordSale` on Chain `44005` |
+| **Community LP Deposit (`tUSD8`)** | `0x1fc8460f1eeeede30c03db8793b7119b92039fe1ad2e8644bfbc324ef5413f4e` | `LoanPool.deposit` within `5 tUSD8` faucet budget |
 
 > **Testnet Faucet & On-Chain Guardrail Notes**
->
 > - QDay Aevum's public faucet distributes **`1 tQDAY` and `5 tUSD8`** per claim, keeping live testnet `LoanPool` liquidity intentionally small while proving real on-chain settlement flows.
 > - `AIGuarantor.sol` enforces a **`30-day` minimum shop history** (`shopRegisteredAt`) and **`>= 5` unique buyers** before submitting live on-chain loan proposals. On day one after deployment, `/api/agent/cron` connects cleanly to QDay RPC (`200 OK`) and deterministically skips shops under 30 days, while Gemini AI underwriting (`/api/agent/audit`), adversarial testing (`/api/agent/red-team` with `ThinkingLevel.LOW` + automatic retry/fallback), and the `/stage` simulator demonstrate full credit lifecycle mechanics.
+
+---
+
+## System Architecture
+
+```text
++-----------------------------------------------------------------------------------+
+|                        CLIENT LAYER (Next.js 15 + Tailwind)                       |
+|  Merchant POS (/app/penjualan)  |  Credit & Red-Team (/app/pinjaman)              |
+|  Payee Directory (/app/identitas) | LP Pool (/app/pool) | Simulator (/stage)      |
++-------------------------------+-------------------------------+-------------------+
+                                | EIP-712 / HTTPS               | REST (fetch)
+                                v                               v
++---------------------------------------+       +-----------------------------------+
+|      GASLESS RELAYER & AGENT API      |       |      GEMINI AI UNDERWRITING       |
+|  - /api/relay/record-sale (EIP-712)   |       |  - /api/agent/audit (summary)     |
+|  - /api/relay/accept-loan (EIP-712)   |       |  - /api/agent/red-team (guardrail)|
+|  - /api/agent/cron (eligibility loop) |       |    ThinkingLevel.LOW + fallback   |
++-------------------+-------------------+       +-----------------+-----------------+
+                    | viem (HTTPS Polling, Chain 44005)           |
+                    v                                             v
++-----------------------------------------------------------------------------------+
+|               QDAY AEVUM TESTNET SMART CONTRACTS (Block 3310882)                  |
+|                                                                                   |
+|  +------------------+   10% Auto-Repay    +------------------------------------+  |
+|  | SalesLedger.sol  | ------------------> | LoanPool.sol                       |  |
+|  | - recordSale()   |                     | - deposit() / withdraw() LP shares |  |
+|  | - 30d sales/buyer| <------------------ | - 5% flat fee, 80% pool cap        |  |
+|  +------------------+   proposeLoan()     +------------------------------------+  |
+|           ^                                                 ^                     |
+|           | read stats                                      | bounded proposal    |
+|  +------------------+                     +------------------------------------+  |
+|  | ERC8004Registry  |                     | AIGuarantor.sol                    |  |
+|  | - Supplier CoP   |                     | - 30d age, >=5 buyers, 10%/$500 cap|  |
+|  | - Credit Passport|                     | - 10/day rate limit + Kill Switch  |  |
+|  +------------------+                     +------------------------------------+  |
++-----------------------------------------------------------------------------------+
+```
 
 ---
 
@@ -92,6 +129,18 @@ HanumPay helps small shops and MSMEs build verifiable on-chain QR sales cashflow
     ├── script/Deploy.s.sol       # QDay Testnet deployment script
     └── test/HanumPay.t.sol       # Solidity unit & invariant tests
 ```
+
+---
+
+## API References
+
+| Endpoint | Method | Purpose | Request Body / Behavior |
+| --- | --- | --- | --- |
+| `/api/relay/record-sale` | `POST` | Verifies merchant EIP-712 QR sale signature and relays `SalesLedger.recordSale` gaslessly | `{ shop, amountUSD8, customerIdHash, deadline, signature }` → `{ ok, mode, txHash, signatureVerified }` |
+| `/api/relay/accept-loan` | `POST` | Verifies merchant EIP-712 loan terms signature and relays `LoanPool.acceptLoan` | `{ loanId, shop, principalUSD8, flatFeeUSD8, repayPctBps, deadline, signature }` → `{ ok, mode, txHash, signatureVerified }` |
+| `/api/agent/cron` | `POST` | Scans `SalesLedger.getShops`, checks `AIGuarantor.checkEligibility`, and submits proposals | No body required → `{ ok, mode, agentWallet, logs }` |
+| `/api/agent/audit` | `POST` | Generates plain-English underwriting summary & risk note via Gemini (`ThinkingLevel.LOW` + fallback) | `{ shopName, totalSales30dUSD8, uniqueCustomers30d, proposedPrincipalUSD8, flatFeeUSD8 }` → `{ summary, riskNote }` |
+| `/api/agent/red-team` | `POST` | Simulates adversarial prompt injection against deterministic Solidity limits | `{ scenarioTitle, attackerPrompt, stats }` → `{ aiProposedPrincipal, aiProposedFeePct, blockedByContract, revertReason }` |
 
 ---
 
@@ -129,7 +178,6 @@ forge script script/Deploy.s.sol --rpc-url https://rpc-test.qday.info --broadcas
 ```
 
 Once deployed, add the four contract addresses to `.env.local` (and Vercel Environment Variables for production):
-
 - `NEXT_PUBLIC_ERC8004_ADDRESS`
 - `NEXT_PUBLIC_SALES_LEDGER_ADDRESS`
 - `NEXT_PUBLIC_LOAN_POOL_ADDRESS`
@@ -148,8 +196,31 @@ Ensure all Environment Variables in Vercel match `.env.local` (`GEMINI_API_KEY`,
 
 ---
 
-## Hackathon Submission Links
+## Roadmap (Testnet v1 → Mainnet v2 & Risk Hardening)
 
+### Phase 1 — QDay Aevum Testnet MVP *(Current — Live)*
+- Four Foundry-tested contracts (`ERC8004Registry`, `SalesLedger`, `LoanPool`, `AIGuarantor`) deployed at Block `3310882` on Chain `44005`.
+- Gasless EIP-712 QR sales & loan acceptance relayers, community LP pool shares, and ERC-8004 Confirmation of Payee.
+- Contract-bounded Gemini AI underwriting (`/api/agent/audit`) and adversarial prompt-injection Red-Team console (`/api/agent/red-team`).
+- Economic guardrails active today: `30-day` shop history gate, `>= 5` unique buyers, `10%` of 30d revenue cap (`$500` ceiling), `80%` pool exposure cap, and merchant AI Kill Switch.
+
+### Phase 2 — Closed-Loop Risk Hardening & Progressive KYB *(v2 Upgrade)*
+- **ERC-8004 Closed-Loop Supplier Escrow**: Upgrade `LoanPool.sol` so approved credit stays escrowed in the pool and settles `tUSD8` **exclusively to whitelisted wholesale suppliers** (`category == "supplier"`) verified in `ERC8004Registry`—eliminating cash-out and off-app transfer risk.
+- **Progressive / Tiered e-KYC & KYB**: Keep zero-KYC QR cashier onboarding during Days 1–30, then require a privacy-preserving e-KYC / distributor endorsement hash on `ERC8004Registry` to unlock live working capital at Day 30+.
+- **Graduated Credit Tiers & Default Hygiene**: Replace flat day-30 limits with tiered underwriting (`Tier 1: $25–$50` → `Tier 2: $150` → `Tier 3: $500` after on-time repayments) and automated inactivity/overdue flags recorded on the merchant's Credit Passport.
+
+### Phase 3 — QDay Mainnet, Gas Abstraction & Treasury Sustainability *(Q1 2027)*
+- **Native Account Abstraction**: Migrate EOA relayers to `@qday-io/sdk` ERC-4337 Smart Accounts and native `USD8` Paymasters upon QDay's Q1 2027 SDK release.
+- **Sustainable Protocol Revenue**: Activate on-chain fee split on the `5%` flat credit fee (`4.0%` distributed to Community LPs, `1.0%` routed to the HanumPay Protocol Treasury & relayer reserve) alongside optional `0.1%–0.25%` B2B wholesale supplier settlement fees.
+- **Real-Time Event Indexing**: Replace `1,000`-block chunked `eth_getLogs` polling with dedicated subgraph/Envio indexing for sub-second dashboard & Credit Passport queries.
+
+### Phase 4 — Distributor Network & Credit Passport Ecosystem
+- **Distributor-Sponsored Onboarding**: Enable regional FMCG distributors and merchant cooperatives to co-anchor merchant identity and earn origination rebates on verified inventory restocks.
+- **Portable Credit Passport API**: Expose permissioned, merchant-consented on-chain repayment proofs for external cooperatives, neo-banks, and supply-chain finance partners.
+
+---
+
+## Hackathon Submission Links
 - **Live App (Vercel)**: https://hanumpay.vercel.app
 - **GitHub Repository**: https://github.com/rebelchain/hanumpay
-- **Product Demo Video**: `<PASTE_DEMO_VIDEO_URL>` _(Stage 5)_
+- **Product Demo Video**: `<PASTE_DEMO_VIDEO_URL>` *(Stage 5)*
