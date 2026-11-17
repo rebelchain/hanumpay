@@ -36,7 +36,7 @@ This document serves as the shared source of truth across local development, the
 - [x] Register merchant shop on-chain (`SalesLedger.registerShop`) and verify Gasless QR Sale TX on QDay Explorer.
 - [x] Record bounded LP `tUSD8` deposit TX hash (`LoanPool.approve` + `LoanPool.deposit` within the `5 tUSD8` faucet budget).
 - [x] Expand `contracts/test/HanumPay.t.sol` covering `acceptLoan`, 10% `repayFromSale`, 30-day cooldown, `80%` pool exposure cap, `$500` ceiling, and `ERC8004Registry` revoke/spoof checks.
-- [ ] Run `forge test -vvv` locally inside `contracts/` to archive final unit & invariant test pass output.
+- [x] Run `forge test -vvv` locally inside `contracts/` — **7/7 tests passed** (`0 failed`, `0 skipped`, Solc `0.8.24` / `shanghai`).
 
 ### Stage 3 — End-to-End Integration & AI Verification (Verified Locally)
 
