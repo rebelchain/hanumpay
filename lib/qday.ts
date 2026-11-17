@@ -17,6 +17,8 @@ export const QDAY_EXPLORER_URL = "https://explorer-test.qday.info";
 export const QDAY_FAUCET_URL = "https://faucet.qday.info/en";
 export const QDAY_EVM_VERSION = "shanghai";
 export const QDAY_MAX_LOGS_BLOCK_RANGE = BigInt(1000);
+export const HANUMPAY_GITBOOK_URL = "https://rebelxyz.gitbook.io/hanumpay";
+export const HANUMPAY_GITHUB_URL = "https://github.com/rebelchain/hanumpay";
 
 // Official tUSD8 Stablecoin Contract from Aevum Builder Challenge #1 Starter Kit (6 decimals)
 export const TUSD8_CONTRACT = {

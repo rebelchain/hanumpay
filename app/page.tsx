@@ -1,7 +1,13 @@
 import React from "react";
 import Link from "next/link";
-import { ArrowRight, ArrowUpRight, Plus } from "lucide-react";
-import { QDAY_EXPLORER_URL, QDAY_FAUCET_URL, TUSD8_CONTRACT } from "@/lib/qday";
+import { ArrowRight, ArrowUpRight, BookOpen, Code2, Plus } from "lucide-react";
+import {
+  HANUMPAY_GITHUB_URL,
+  HANUMPAY_GITBOOK_URL,
+  QDAY_EXPLORER_URL,
+  QDAY_FAUCET_URL,
+  TUSD8_CONTRACT,
+} from "@/lib/qday";
 import { LandingHeader } from "@/components/landing/LandingHeader";
 import { HeroCreditCalculator } from "@/components/landing/HeroCreditCalculator";
 import { LiveTicker } from "@/components/landing/LiveTicker";
@@ -501,6 +507,54 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* 9B. COMPACT DEVELOPER & OPEN-SOURCE STRIP */}
+      <section
+        aria-label="Documentation and source code"
+        className="border-t border-[#E2E7E4] bg-[#F5F7F5] py-10 sm:py-12"
+      >
+        <div className={CONTAINER}>
+          <Reveal>
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+              <div className="min-w-0 max-w-[60ch]">
+                <Eyebrow>OPEN SOURCE &amp; DOCUMENTATION</Eyebrow>
+                <h3 className="mt-2.5 text-[22px] sm:text-[26px] font-medium tracking-[-0.025em] text-[#151619]">
+                  Inspect the protocol docs and audited source code.
+                </h3>
+                <p className="mt-1.5 text-[14px] leading-[1.6] text-[#5C6260]">
+                  Explore QDay Aevum architecture on GitBook or review the
+                  Solidity ^0.8.24 contracts, Foundry tests, and Next.js relayer
+                  on GitHub.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-3 shrink-0">
+                <a
+                  href={HANUMPAY_GITBOOK_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group inline-flex min-h-[44px] items-center gap-2.5 rounded-xl bg-[#151619] px-5 py-3 text-[14px] font-semibold text-white transition-colors duration-200 hover:bg-[#24282D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151619] focus-visible:ring-offset-2 whitespace-nowrap shrink-0"
+                >
+                  <BookOpen className="h-4 w-4 shrink-0 text-[#9FE8C3]" />
+                  <span>Read GitBook Docs</span>
+                  <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </a>
+
+                <a
+                  href={HANUMPAY_GITHUB_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="group inline-flex min-h-[44px] items-center gap-2.5 rounded-xl border border-[#E2E7E4] bg-white px-5 py-3 text-[14px] font-semibold text-[#151619] transition-colors duration-200 hover:border-[#9FE8C3] hover:bg-[#E8FAF0] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#151619] focus-visible:ring-offset-2 whitespace-nowrap shrink-0"
+                >
+                  <Code2 className="h-4 w-4 shrink-0 text-[#15803D]" />
+                  <span>View GitHub Source</span>
+                  <ArrowUpRight className="h-4 w-4 shrink-0 text-[#5C6260] transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 group-hover:text-[#151619]" />
+                </a>
+              </div>
+            </div>
+          </Reveal>
+        </div>
+      </section>
+
       {/* 10. FOOTER */}
       <footer className="border-t border-[#E2E7E4] bg-white py-14 sm:py-16">
         <div
@@ -562,6 +616,28 @@ export default function LandingPage() {
                 <Link href="/app/docs" className="hover:text-[#151619]">
                   Architecture &amp; Red-Team
                 </Link>
+              </li>
+              <li>
+                <a
+                  href={HANUMPAY_GITBOOK_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 hover:text-[#151619]"
+                >
+                  <span>GitBook Docs</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </a>
+              </li>
+              <li>
+                <a
+                  href={HANUMPAY_GITHUB_URL}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 hover:text-[#151619]"
+                >
+                  <span>GitHub Source</span>
+                  <ArrowUpRight className="h-3.5 w-3.5" />
+                </a>
               </li>
             </ul>
           </div>
