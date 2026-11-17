@@ -2,18 +2,19 @@ export interface BlueprintDoc {
   id: string;
   filename: string;
   title: string;
-  category: 'docs' | 'contracts';
+  category: "docs" | "contracts";
   description: string;
   content: string;
 }
 
 export const HANUMPAY_BLUEPRINTS: BlueprintDoc[] = [
   {
-    id: 'claude-md',
-    filename: 'CLAUDE.md',
-    title: 'CLAUDE.md — HanumPay Project Context',
-    category: 'docs',
-    description: 'Core architecture guide, tech stack, and immutable protocol rules.',
+    id: "claude-md",
+    filename: "CLAUDE.md",
+    title: "CLAUDE.md — HanumPay Project Context",
+    category: "docs",
+    description:
+      "Core architecture guide, tech stack, and immutable protocol rules.",
     content: `# CLAUDE.md — HanumPay Project Context
 
 ## What Is HanumPay
@@ -49,11 +50,12 @@ Deadline: **December 11, 2026**
 6. ERC-8004 identities are verified directly on-chain.`,
   },
   {
-    id: 'project-md',
-    filename: 'docs/PROJECT.md',
-    title: 'PROJECT.md — Vision & Problem Statement',
-    category: 'docs',
-    description: 'MSME cashflow problem, solution design, and hackathon alignment.',
+    id: "project-md",
+    filename: "docs/PROJECT.md",
+    title: "PROJECT.md — Vision & Problem Statement",
+    category: "docs",
+    description:
+      "MSME cashflow problem, solution design, and hackathon alignment.",
     content: `# PROJECT.md — HanumPay
 
 ## One-Sentence Summary
@@ -78,11 +80,12 @@ Merchants pay ERC-8004 verified suppliers directly while minting a portable On-C
 - **Gasless UX**: EIP-712 typed signatures — merchants spend 0 tQDAY.`,
   },
   {
-    id: 'architecture-md',
-    filename: 'docs/ARCHITECTURE.md',
-    title: 'ARCHITECTURE.md — System Data Flow',
-    category: 'docs',
-    description: 'Contract dependency graph, capital cycle, and security bounds.',
+    id: "architecture-md",
+    filename: "docs/ARCHITECTURE.md",
+    title: "ARCHITECTURE.md — System Data Flow",
+    category: "docs",
+    description:
+      "Contract dependency graph, capital cycle, and security bounds.",
     content: `# ARCHITECTURE.md — HanumPay System Architecture
 
 ## Contract Map
@@ -112,11 +115,12 @@ Deploy order: \`ERC8004Registry -> SalesLedger -> LoanPool -> AIGuarantor\`
 | Loan fee | 5% flat immutable | LoanPool |`,
   },
   {
-    id: 'contracts-spec-md',
-    filename: 'docs/CONTRACTS_SPEC.md',
-    title: 'CONTRACTS_SPEC.md — Solidity Interface Spec',
-    category: 'docs',
-    description: 'ABI signatures, EIP-712 domains, and 6-decimal tUSD8 standard.',
+    id: "contracts-spec-md",
+    filename: "docs/CONTRACTS_SPEC.md",
+    title: "CONTRACTS_SPEC.md — Solidity Interface Spec",
+    category: "docs",
+    description:
+      "ABI signatures, EIP-712 domains, and 6-decimal tUSD8 standard.",
     content: `# CONTRACTS_SPEC.md — HanumPay Interfaces
 
 ## EIP-712 Domain
@@ -140,11 +144,12 @@ Deploy order: \`ERC8004Registry -> SalesLedger -> LoanPool -> AIGuarantor\`
 - \`LoanPool.deposit(amount)\` / \`LoanPool.withdraw(shares)\``,
   },
   {
-    id: 'erc8004-sol',
-    filename: 'contracts/src/ERC8004Registry.sol',
-    title: 'ERC8004Registry.sol — Confirmation of Payee',
-    category: 'contracts',
-    description: 'On-chain identity directory for merchants, AI agents, suppliers, and lenders.',
+    id: "erc8004-sol",
+    filename: "contracts/src/ERC8004Registry.sol",
+    title: "ERC8004Registry.sol — Confirmation of Payee",
+    category: "contracts",
+    description:
+      "On-chain identity directory for merchants, AI agents, suppliers, and lenders.",
     content: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -224,11 +229,12 @@ contract ERC8004Registry {
 }`,
   },
   {
-    id: 'sales-ledger-sol',
-    filename: 'contracts/src/SalesLedger.sol',
-    title: 'SalesLedger.sol — Gasless QR Sales Ledger',
-    category: 'contracts',
-    description: 'Gasless EIP-712 sales recording with 30-day rolling stats and auto-repay hook.',
+    id: "sales-ledger-sol",
+    filename: "contracts/src/SalesLedger.sol",
+    title: "SalesLedger.sol — Gasless QR Sales Ledger",
+    category: "contracts",
+    description:
+      "Gasless EIP-712 sales recording with 30-day rolling stats and auto-repay hook.",
     content: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -366,11 +372,12 @@ contract SalesLedger {
 }`,
   },
   {
-    id: 'ai-guarantor-sol',
-    filename: 'contracts/src/AIGuarantor.sol',
-    title: 'AIGuarantor.sol — Contract-Bounded AI Agent',
-    category: 'contracts',
-    description: 'Guardrail contract enforcing $500 cap, 10 proposals/day, 80% pool cap & 5 unique buyers.',
+    id: "ai-guarantor-sol",
+    filename: "contracts/src/AIGuarantor.sol",
+    title: "AIGuarantor.sol — Contract-Bounded AI Agent",
+    category: "contracts",
+    description:
+      "Guardrail contract enforcing $500 cap, 10 proposals/day, 80% pool cap & 5 unique buyers.",
     content: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -458,11 +465,12 @@ contract AIGuarantor {
 }`,
   },
   {
-    id: 'loan-pool-sol',
-    filename: 'contracts/src/LoanPool.sol',
-    title: 'LoanPool.sol — Treasury, EIP-712 & Credit Passport',
-    category: 'contracts',
-    description: 'Manages tUSD8 liquidity, 80% utilization cap, gasless acceptance, auto-repay & Credit Passports.',
+    id: "loan-pool-sol",
+    filename: "contracts/src/LoanPool.sol",
+    title: "LoanPool.sol — Treasury, EIP-712 & Credit Passport",
+    category: "contracts",
+    description:
+      "Manages tUSD8 liquidity, 80% utilization cap, gasless acceptance, auto-repay & Credit Passports.",
     content: `// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
@@ -470,11 +478,12 @@ pragma solidity ^0.8.24;
 // Run locally: cd contracts && forge build && forge test -vvv`,
   },
   {
-    id: 'deploy-script-sol',
-    filename: 'contracts/script/Deploy.s.sol',
-    title: 'Deploy.s.sol — QDay Testnet Deployment Script',
-    category: 'contracts',
-    description: 'Deploys all 4 HanumPay contracts and wires SalesLedger <-> LoanPool <-> AIGuarantor.',
+    id: "deploy-script-sol",
+    filename: "contracts/script/Deploy.s.sol",
+    title: "Deploy.s.sol — QDay Testnet Deployment Script",
+    category: "contracts",
+    description:
+      "Deploys all 4 HanumPay contracts and wires SalesLedger <-> LoanPool <-> AIGuarantor.",
     content: `// Ensure foundry.toml sets evm_version = "shanghai" (required on QDay Aevum).
 // Run from /contracts:
 // export DEPLOYER_PRIVATE_KEY=0x...
@@ -483,68 +492,79 @@ pragma solidity ^0.8.24;
 // Note: Explorer contract verification is not yet available; link repo + addresses in submission.`,
   },
   {
-    id: 'foundry-tests-sol',
-    filename: 'contracts/test/HanumPay.t.sol',
-    title: 'HanumPay.t.sol — Foundry Invariant & Safety Tests',
-    category: 'contracts',
-    description: 'Verifies 5-unique-buyer anti-wash-trading, EIP-712 signatures, and 10% credit limit.',
+    id: "foundry-tests-sol",
+    filename: "contracts/test/HanumPay.t.sol",
+    title: "HanumPay.t.sol — Foundry Invariant & Safety Tests",
+    category: "contracts",
+    description:
+      "Verifies sybil gate, EIP-712 acceptance, 10% auto-repay, 80% pool cap, $500 ceiling & ERC-8004.",
     content: `// Run from /contracts:
 // forge test -vvv
 // Test suite includes:
 // 1. testCannotProposeWithFewerThan5Customers()
-// 2. testEndToEndGaslessSaleAndAIProposal()`,
+// 2. testEndToEndGaslessSaleAndAIProposal()
+// 3. testMerchantCanPauseAndResumeAgentAccess()
+// 4. testAcceptLoanAutoRepayAndCooldown()
+// 5. testPoolMaxExposure80PercentCap()
+// 6. testLoanPrincipalHardCappedAt500()
+// 7. testERC8004ConfirmationOfPayeeAndRevoke()`,
   },
 ];
 
 export const HACKATHON_ROADMAP = [
   {
-    phase: 'Stage 1 · Foundation',
-    dates: 'Nov 16 – Nov 18',
-    focus: 'Foundry setup, QDay Aevum Testnet faucets, ERC-8004 schema & system architecture.',
+    phase: "Stage 1 · Foundation",
+    dates: "Nov 16 – Nov 18",
+    focus:
+      "Foundry setup, QDay Aevum Testnet faucets, ERC-8004 schema & system architecture.",
     tasks: [
       'Configure Foundry with evm_version = "shanghai" & QDay RPC (Chain ID 44005)',
-      'Claim tQDAY and tUSD8 test tokens from faucet.qday.info',
-      'Finalize HanumPay /docs specs and ERC-8004 Confirmation of Payee schema',
+      "Claim tQDAY and tUSD8 test tokens from faucet.qday.info",
+      "Finalize HanumPay /docs specs and ERC-8004 Confirmation of Payee schema",
     ],
   },
   {
-    phase: 'Stage 2 · Smart Contracts',
-    dates: 'Nov 19 – Nov 22',
-    focus: 'Write, unit-test, and deploy all 4 core contracts to QDay Aevum Testnet.',
+    phase: "Stage 2 · Smart Contracts",
+    dates: "Nov 19 – Nov 22",
+    focus:
+      "Write, unit-test, and deploy all 4 core contracts to QDay Aevum Testnet.",
     tasks: [
-      'Implement & test ERC8004Registry.sol and SalesLedger.sol (EIP-712 + keccak256)',
-      'Implement & test LoanPool.sol (80% cap, LP shares) and AIGuarantor.sol',
-      'Run Deploy.s.sol on Chain 44005 and save deployed addresses',
+      "Implement & test ERC8004Registry.sol and SalesLedger.sol (EIP-712 + keccak256)",
+      "Implement & test LoanPool.sol (80% cap, LP shares) and AIGuarantor.sol",
+      "Run Deploy.s.sol on Chain 44005 and save deployed addresses",
     ],
   },
   {
-    phase: 'Stage 3 · UI & Wallets',
-    dates: 'Nov 23 – Nov 29',
-    focus: 'Wire Next.js UI to live contract reads, EOA EIP-3085 wallet & gasless signatures.',
+    phase: "Stage 3 · UI & Wallets",
+    dates: "Nov 23 – Nov 29",
+    focus:
+      "Wire Next.js UI to live contract reads, EOA EIP-3085 wallet & gasless signatures.",
     tasks: [
-      'Polish /app/dashboard, /app/penjualan, /app/pinjaman, /app/pool, /app/identitas',
-      'Enforce 6-decimal tUSD8 formatting and on-chain ERC-8004 verification checks',
-      'Complete Verified Supplier Pay & Credit Passport views',
+      "Polish /app/dashboard, /app/penjualan, /app/pinjaman, /app/pool, /app/identitas",
+      "Enforce 6-decimal tUSD8 formatting and on-chain ERC-8004 verification checks",
+      "Complete Verified Supplier Pay & Credit Passport views",
     ],
   },
   {
-    phase: 'Stage 4 · Autonomous AI',
-    dates: 'Nov 30 – Dec 4',
-    focus: 'Run AI Guarantor cron loop and validate automated underwriting proposals.',
+    phase: "Stage 4 · Autonomous AI",
+    dates: "Nov 30 – Dec 4",
+    focus:
+      "Run AI Guarantor cron loop and validate automated underwriting proposals.",
     tasks: [
-      'Register HanumPay-AI-Guarantor-v1 on ERC8004Registry',
-      'Run 15-minute cron cycle reading SalesLedger and submitting proposeLoan(shop)',
-      'Store structured JSON audit logs & verify Red-Team guardrail rejections',
+      "Register HanumPay-AI-Guarantor-v1 on ERC8004Registry",
+      "Run 15-minute cron cycle reading SalesLedger and submitting proposeLoan(shop)",
+      "Store structured JSON audit logs & verify Red-Team guardrail rejections",
     ],
   },
   {
-    phase: 'Stage 5 · Polish & Submit',
-    dates: 'Dec 5 – Dec 11',
-    focus: 'Error handling, 3–5 min product demo video, public GitHub repo & DoraHacks submission.',
+    phase: "Stage 5 · Polish & Submit",
+    dates: "Dec 5 – Dec 11",
+    focus:
+      "Error handling, 3–5 min product demo video, public GitHub repo & DoraHacks submission.",
     tasks: [
-      'Verify zero .env secrets in git, clean README, and reproducible repo',
-      'Record end-to-end QDay Testnet walkthrough with zero login friction',
-      'Submit to dorahacks.io/hackathon/qday before Dec 11, 16:00 HKT',
+      "Verify zero .env secrets in git, clean README, and reproducible repo",
+      "Record end-to-end QDay Testnet walkthrough with zero login friction",
+      "Submit to dorahacks.io/hackathon/qday before Dec 11, 16:00 HKT",
     ],
   },
 ];

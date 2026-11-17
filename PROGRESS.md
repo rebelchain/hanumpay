@@ -35,7 +35,8 @@ This document serves as the shared source of truth across local development, the
 - [x] Configure `.env.local`, sync `lib/qday.ts` defaults, and align EIP-712 `verifyingContract` bindings in `lib/hanumpay-store.tsx`.
 - [x] Register merchant shop on-chain (`SalesLedger.registerShop`) and verify Gasless QR Sale TX on QDay Explorer.
 - [x] Record bounded LP `tUSD8` deposit TX hash (`LoanPool.approve` + `LoanPool.deposit` within the `5 tUSD8` faucet budget).
-- [ ] Run `forge test -vvv` inside `contracts/` to archive unit & invariant test pass output.
+- [x] Expand `contracts/test/HanumPay.t.sol` covering `acceptLoan`, 10% `repayFromSale`, 30-day cooldown, `80%` pool exposure cap, `$500` ceiling, and `ERC8004Registry` revoke/spoof checks.
+- [ ] Run `forge test -vvv` locally inside `contracts/` to archive final unit & invariant test pass output.
 
 ### Stage 3 — End-to-End Integration & AI Verification (Verified Locally)
 
@@ -50,8 +51,10 @@ This document serves as the shared source of truth across local development, the
 - [x] Harmonize entire `/app/*` workspace (`AppShell`, `dashboard`, `penjualan`, `pinjaman`, `pool`, `identitas`, `docs`, and modals) to the landing white-and-mint (`#FFFFFF` / `#F5F7F5` / `#9FE8C3`) design system and fix sidebar badge wrap & `CreditScoreGauge` `"Offer Ready"` status bugs.
 - [x] Rebuild `/app/docs` as an interactive 3-pane GitBook-style portal and publish official GitBook Site Sync (`gitbook-docs.yaml` + `docs/`) at `https://rebelxyz.gitbook.io/hanumpay`.
 - [x] Add compact GitBook Docs & GitHub Open-Source CTA strip above the landing Footer + Footer protocol links.
-- [ ] Verify Environment Variable parity in Vercel (`GEMINI_API_KEY`, `QDAY_RPC_URL`, 4 `NEXT_PUBLIC_*` addresses, `RELAYER_PRIVATE_KEY`, `AGENT_PRIVATE_KEY`).
-- [ ] Smoke-test all core flows on `https://hanumpay.vercel.app` (`/app/docs` `5/5`, Gasless QR Sale TX, AI Audit + Red-Team `200 OK`, ERC-8004 Spoofing block).
+- [x] Add `GET /api/health` readiness probe, optional `CRON_SECRET` protection on `/api/agent/cron`, MIT `LICENSE`, `app/icon.svg`, and scoped AWS deployment guide (`docs/deployment-guide.md`).
+- [ ] Verify Environment Variable parity in Vercel (`GEMINI_API_KEY`, `QDAY_RPC_URL`, 4 `NEXT_PUBLIC_*` addresses, `RELAYER_PRIVATE_KEY`, `AGENT_PRIVATE_KEY`, optional `CRON_SECRET`).
+- [ ] Smoke-test all core flows on `https://hanumpay.vercel.app` (`/api/health`, `/app/docs` `5/5`, Gasless QR Sale TX, AI Audit + Red-Team `200 OK`, ERC-8004 Spoofing block).
+- [ ] _(Optional Post-Vercel)_ Connect AWS EventBridge/Lambda cron or AWS Amplify Hosting using scoped AWS access.
 
 ### Stage 5 — Hackathon Submission Packaging (DoraHacks)
 
@@ -79,6 +82,7 @@ This document serves as the shared source of truth across local development, the
 
 ## Changelog
 
+- **2026-11-17 (Stage 4d — Test Suite, Health Probe & AWS Prep)**: Expanded `contracts/test/HanumPay.t.sol` to 7 tests (`acceptLoan`, `10%` auto-repay, cooldown, `80%` cap, `$500` ceiling, ERC-8004 revoke); added `GET /api/health`, optional `CRON_SECRET` guard on `/api/agent/cron`, MIT `LICENSE`, `app/icon.svg`, and scoped AWS deployment guidance in `docs/deployment-guide.md`.
 - **2026-11-17 (Stage 4c — Documentation & Landing CTA)**: Added GitBook Site Git Sync (`gitbook-docs.yaml`, `docs/.gitbook.yaml`, `docs/*.md`) live at `https://rebelxyz.gitbook.io/hanumpay`, added the compact Open-Source & GitBook CTA strip above the landing page Footer + Footer links (`lib/qday.ts`, `app/page.tsx`), and synchronized `README.md` / `PROGRESS.md`.
 - **2026-11-17 (Stage 4b — Workspace UI Parity & Bug Fixes)**: Unified `AppShell`, all `/app/*` pages, and modals to the landing white-and-mint theme; rebuilt `/app/docs` into a 3-pane GitBook reader; fixed `"1 offer"` badge wrapping, `CreditScoreGauge` `"Offer Ready"` status, dynamic supplier modal shop name, hero calculator elevation, and `types/css.d.ts` (`noUncheckedSideEffectImports`).
 - **2026-11-16 (Stage 4)**: Deployed production app to `https://hanumpay.vercel.app`, linked `https://github.com/rebelchain/hanumpay`, hardened Gemini AI routes (`lib/gemini.ts` `ThinkingLevel.LOW` + `503` retry/fallback), and updated `README.md` / `PROGRESS.md` with Stage 4 QA checklist.
