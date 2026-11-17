@@ -1,16 +1,16 @@
-import React from 'react';
-import Link from 'next/link';
-import { ArrowRight, ArrowUpRight, Plus } from 'lucide-react';
-import { QDAY_EXPLORER_URL, QDAY_FAUCET_URL, TUSD8_CONTRACT } from '@/lib/qday';
-import { LandingHeader } from '@/components/landing/LandingHeader';
-import { HeroCreditCalculator } from '@/components/landing/HeroCreditCalculator';
-import { LiveTicker } from '@/components/landing/LiveTicker';
-import { CreditRuler } from '@/components/landing/CreditRuler';
+import React from "react";
+import Link from "next/link";
+import { ArrowRight, ArrowUpRight, Plus } from "lucide-react";
+import { QDAY_EXPLORER_URL, QDAY_FAUCET_URL, TUSD8_CONTRACT } from "@/lib/qday";
+import { LandingHeader } from "@/components/landing/LandingHeader";
+import { HeroCreditCalculator } from "@/components/landing/HeroCreditCalculator";
+import { LiveTicker } from "@/components/landing/LiveTicker";
+import { CreditRuler } from "@/components/landing/CreditRuler";
 import {
   CompareCardInteractive,
   LiveEcosystemSplit,
-} from '@/components/landing/LandingCompareAndEcosystem';
-import { Reveal } from '@/components/landing/Reveal';
+} from "@/components/landing/LandingCompareAndEcosystem";
+import { Reveal } from "@/components/landing/Reveal";
 import {
   BandArcs,
   BlockPattern,
@@ -22,140 +22,140 @@ import {
   RULE,
   SECTION_Y,
   SectionHead,
-} from '@/components/landing/section';
+} from "@/components/landing/section";
 
 const HOW_STEPS = [
   {
-    num: '01',
-    title: 'Record QR sales with zero gas',
-    body: 'Every time a customer pays in tUSD8 at the counter, the POS hashes their identifier locally (keccak256) and relays an EIP-712 signature straight to SalesLedger.sol with zero tQDAY gas cost.',
+    num: "01",
+    title: "Record QR sales with zero gas",
+    body: "Every time a customer pays in tUSD8 at the counter, the POS hashes their identifier locally (keccak256) and relays an EIP-712 signature straight to SalesLedger.sol with zero tQDAY gas cost.",
   },
   {
-    num: '02',
-    title: 'Sybil filter blocks wash trading',
-    body: 'Before any credit unlocks, SalesLedger.sol verifies at least 5 distinct customers over the trailing 30 days. Self-transfers from the same wallet or duplicate customer IDs are automatically rejected.',
+    num: "02",
+    title: "Sybil filter blocks wash trading",
+    body: "Before any credit unlocks, SalesLedger.sol verifies at least 5 distinct customers over the trailing 30 days. Self-transfers from the same wallet or duplicate customer IDs are automatically rejected.",
   },
   {
-    num: '03',
-    title: 'Contract-bound AI Guarantor',
-    body: 'AIGuarantor.sol caps working capital at 10% of 30-day QR sales (up to $500 tUSD8), locks a 5% flat fee, and checks the merchant pause kill switch before submitting a proposal.',
+    num: "03",
+    title: "Contract-bound AI Guarantor",
+    body: "AIGuarantor.sol caps working capital at 10% of 30-day QR sales (up to $500 tUSD8), locks a 5% flat fee, and checks the merchant pause kill switch before submitting a proposal.",
   },
   {
-    num: '04',
-    title: 'Verified supplier pay & auto-repayment',
-    body: 'Credit funds pay whitelisted wholesale suppliers via ERC8004Registry.sol Confirmation of Payee. Every future QR sale automatically deducts 10% toward repayment until settled.',
+    num: "04",
+    title: "Verified supplier pay & auto-repayment",
+    body: "Credit funds pay whitelisted wholesale suppliers via ERC8004Registry.sol Confirmation of Payee. Every future QR sale automatically deducts 10% toward repayment until settled.",
   },
 ];
 
 const SAFETY_PRINCIPLES = [
   {
-    num: '01',
-    title: 'Immutable 5% flat fee cap',
-    body: 'LoanPool.sol reverts any AI proposal that attempts to raise the fee above 5% or alter the 10% auto-repayment split. Prompt-injection attacks fail deterministically at the EVM boundary.',
+    num: "01",
+    title: "Immutable 5% flat fee cap",
+    body: "LoanPool.sol reverts any AI proposal that attempts to raise the fee above 5% or alter the 10% auto-repayment split. Prompt-injection attacks fail deterministically at the EVM boundary.",
   },
   {
-    num: '02',
-    title: 'Merchant-controlled AI Pause switch',
-    body: 'Shop owners hold sovereign control via AIGuarantor.setAgentPaused(true). When paused, new AI credit proposals are blocked on-chain while daily QR sales continue uninterrupted.',
+    num: "02",
+    title: "Merchant-controlled AI Pause switch",
+    body: "Shop owners hold sovereign control via AIGuarantor.setAgentPaused(true). When paused, new AI credit proposals are blocked on-chain while daily QR sales continue uninterrupted.",
   },
   {
-    num: '03',
-    title: 'Auditable receipts & Credit Passport',
-    body: 'Every QR sale, credit disbursement, and wholesale supplier settlement issues a verifiable receipt tied directly to ERC-8004 identity records on QDay Chain ID 44005.',
+    num: "03",
+    title: "Auditable receipts & Credit Passport",
+    body: "Every QR sale, credit disbursement, and wholesale supplier settlement issues a verifiable receipt tied directly to ERC-8004 identity records on QDay Chain ID 44005.",
   },
 ];
 
 const CONTRACT_CARDS = [
   {
-    tag: 'REVENUE PROOF',
-    name: 'SalesLedger.sol',
+    tag: "REVENUE PROOF",
+    name: "SalesLedger.sol",
     summary:
-      'Stores gasless customer QR receipts with privacy-preserving keccak256 hashes so micro-merchants build verifiable on-chain cashflow.',
+      "Stores gasless customer QR receipts with privacy-preserving keccak256 hashes so micro-merchants build verifiable on-chain cashflow.",
     stats: [
-      { label: 'Window', value: '30 days' },
-      { label: 'Unique buyers', value: 'Min 5' },
-      { label: 'Ticket size', value: '$0.10–$500' },
-      { label: 'Gas cost', value: 'Gasless (Relayer)' },
+      { label: "Window", value: "30 days" },
+      { label: "Unique buyers", value: "Min 5" },
+      { label: "Ticket size", value: "$0.10–$500" },
+      { label: "Gas cost", value: "Gasless (Relayer)" },
     ],
-    href: '/app/penjualan',
-    linkLabel: 'Open QR cashier',
+    href: "/app/penjualan",
+    linkLabel: "Open QR cashier",
   },
   {
-    tag: 'BOUNDED AGENT',
-    name: 'AIGuarantor.sol',
+    tag: "BOUNDED AGENT",
+    name: "AIGuarantor.sol",
     summary:
-      'Proposes tUSD8 working capital strictly within deterministic contract ceilings while respecting the merchant pause kill switch.',
+      "Proposes tUSD8 working capital strictly within deterministic contract ceilings while respecting the merchant pause kill switch.",
     stats: [
-      { label: 'Revenue ratio', value: 'Max 10%' },
-      { label: 'Credit cap', value: '$500 tUSD8' },
-      { label: 'Daily quota', value: '10 / day' },
-      { label: 'Owner control', value: 'AI Pause' },
+      { label: "Revenue ratio", value: "Max 10%" },
+      { label: "Credit cap", value: "$500 tUSD8" },
+      { label: "Daily quota", value: "10 / day" },
+      { label: "Owner control", value: "AI Pause" },
     ],
-    href: '/app/docs',
-    linkLabel: 'Test AI red-team',
+    href: "/app/docs",
+    linkLabel: "Test AI red-team",
   },
   {
-    tag: 'LIQUIDITY VAULT',
-    name: 'LoanPool.sol',
+    tag: "LIQUIDITY VAULT",
+    name: "LoanPool.sol",
     summary:
-      'Holds community LP tUSD8 liquidity, enforces an 80% utilization cap, and collects automatic 10% repayments from QR revenue.',
+      "Holds community LP tUSD8 liquidity, enforces an 80% utilization cap, and collects automatic 10% repayments from QR revenue.",
     stats: [
-      { label: 'Flat fee', value: '5.0% flat' },
-      { label: 'Utilization cap', value: 'Max 80%' },
-      { label: 'Auto-repay', value: '10% / sale' },
-      { label: 'Late penalty', value: '0% forever' },
+      { label: "Flat fee", value: "5.0% flat" },
+      { label: "Utilization cap", value: "Max 80%" },
+      { label: "Auto-repay", value: "10% / sale" },
+      { label: "Late penalty", value: "0% forever" },
     ],
-    href: '/app/pool',
-    linkLabel: 'Inspect pool',
+    href: "/app/pool",
+    linkLabel: "Inspect pool",
   },
   {
-    tag: 'PAYEE CHECK',
-    name: 'ERC8004Registry.sol',
+    tag: "PAYEE CHECK",
+    name: "ERC8004Registry.sol",
     summary:
-      'Resolves verified wholesale supplier names against registered wallet addresses before funds move, preventing spoofing and mis-transfers.',
+      "Resolves verified wholesale supplier names against registered wallet addresses before funds move, preventing spoofing and mis-transfers.",
     stats: [
-      { label: 'Privacy', value: 'keccak256' },
-      { label: 'Payee check', value: 'Always on' },
-      { label: 'Identity', value: 'ERC-8004' },
-      { label: 'Credit Passport', value: 'On payoff' },
+      { label: "Privacy", value: "keccak256" },
+      { label: "Payee check", value: "Always on" },
+      { label: "Identity", value: "ERC-8004" },
+      { label: "Credit Passport", value: "On payoff" },
     ],
-    href: '/app/identitas',
-    linkLabel: 'Browse directory',
+    href: "/app/identitas",
+    linkLabel: "Browse directory",
   },
 ];
 
 const BUILT_FOR_ITEMS = [
-  { label: 'Network', name: 'QDay Aevum 44005' },
-  { label: 'Settlement', name: 'tUSD8 Stablecoin' },
-  { label: 'Identity', name: 'ERC-8004 Payee Check' },
-  { label: 'Gasless', name: 'EIP-712 Relayer' },
-  { label: 'Security', name: 'Foundry + Gemini Audit' },
+  { label: "Network", name: "QDay Aevum 44005" },
+  { label: "Settlement", name: "tUSD8 Stablecoin" },
+  { label: "Identity", name: "ERC-8004 Payee Check" },
+  { label: "Gasless", name: "EIP-712 Relayer" },
+  { label: "Security", name: "Foundry + Gemini Audit" },
 ];
 
 const FAQS = [
   {
-    q: 'What is HanumPay in plain terms?',
-    a: 'HanumPay turns a small shop’s daily QR payment volume into an honest tUSD8 working-capital credit line with a 5% flat fee, 10% automatic repayment per sale, and ERC-8004 supplier Confirmation of Payee.',
+    q: "What is HanumPay in plain terms?",
+    a: "HanumPay turns a small shop’s daily QR payment volume into an honest tUSD8 working-capital credit line with a 5% flat fee, 10% automatic repayment per sale, and ERC-8004 supplier Confirmation of Payee.",
   },
   {
-    q: 'How does up to $500 working capital unlock without physical collateral?',
-    a: 'AIGuarantor.sol reads SalesLedger.sol directly. Once a shop proves at least 5 distinct buyers over 30 days, its credit limit unlocks at 10% of trailing 30-day revenue, capped at $500 tUSD8.',
+    q: "How does up to $500 working capital unlock without physical collateral?",
+    a: "AIGuarantor.sol reads SalesLedger.sol directly. Once a shop proves at least 5 distinct buyers over 30 days, its credit limit unlocks at 10% of trailing 30-day revenue, capped at $500 tUSD8.",
   },
   {
-    q: 'Can the AI raise fees or force an unauthorized loan?',
-    a: 'No. The 5% flat fee cap and 10% repayment split are hardcoded in LoanPool.sol. The merchant must also sign an EIP-712 approval and can pause AI access at any time.',
+    q: "Can the AI raise fees or force an unauthorized loan?",
+    a: "No. The 5% flat fee cap and 10% repayment split are hardcoded in LoanPool.sol. The merchant must also sign an EIP-712 approval and can pause AI access at any time.",
   },
   {
-    q: 'Why does supplier checkout use ERC-8004 verification?',
+    q: "Why does supplier checkout use ERC-8004 verification?",
     a: 'Blockchain transfers cannot be reversed if sent to a spoofed address. ERC8004Registry.sol matches human-readable supplier names like "Pak Joko Distributor" to verified wallets before funds leave.',
   },
   {
-    q: 'What happens during a slow week with fewer customers?',
-    a: 'Repayment automatically pauses when no QR sales come in, because deductions only occur per transaction. There are zero fixed due dates and zero late penalties.',
+    q: "What happens during a slow week with fewer customers?",
+    a: "Repayment automatically pauses when no QR sales come in, because deductions only occur per transaction. There are zero fixed due dates and zero late penalties.",
   },
   {
-    q: 'What is live on QDay Aevum Testnet right now?',
-    a: 'Direct wallet connection to QDay Aevum Testnet (Chain ID 44005) reads live tQDAY and tUSD8 balances, alongside EIP-712 signature verification, Gemini red-team guardrail testing, and the 2-phone interactive simulator.',
+    q: "What is live on QDay Aevum Testnet right now?",
+    a: "Direct wallet connection to QDay Aevum Testnet (Chain ID 44005) reads live tQDAY and tUSD8 balances, alongside EIP-712 signature verification, Gemini red-team guardrail testing, and the 2-phone interactive simulator.",
   },
 ];
 
@@ -168,7 +168,9 @@ export default function LandingPage() {
       <section className="relative overflow-hidden bg-[#9FE8C3] text-[#151619]">
         <HeroBars />
 
-        <div className={`${CONTAINER} relative z-10 pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-32 lg:pb-24`}>
+        <div
+          className={`${CONTAINER} relative z-10 pt-24 pb-14 sm:pt-28 sm:pb-16 lg:pt-24 lg:pb-16`}
+        >
           <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-[minmax(0,1.12fr)_minmax(0,0.88fr)] lg:gap-12">
             {/* Left column */}
             <div className="min-w-0">
@@ -182,14 +184,19 @@ export default function LandingPage() {
 
               <Reveal delay={0.08} y={18}>
                 <p className="mt-6 max-w-[42ch] text-[16px] sm:text-[18px] leading-[1.55] font-medium text-[#1C1C1C]/80">
-                  HanumPay records micro-merchant QR sales on QDay, unlocks contract-capped tUSD8
-                  credit through an AI Guarantor, and auto-repays 10% per sale.
+                  HanumPay records micro-merchant QR sales on QDay, unlocks
+                  contract-capped tUSD8 credit through an AI Guarantor, and
+                  auto-repays 10% per sale.
                 </p>
               </Reveal>
 
               <Reveal delay={0.14} y={18}>
                 <div className="mt-8 flex flex-wrap items-center gap-4 sm:gap-5">
-                  <LaunchButton href="/stage" label="Launch Live Simulator" variant="dark" />
+                  <LaunchButton
+                    href="/stage"
+                    label="Launch Live Simulator"
+                    variant="dark"
+                  />
                   <Link
                     href="/app/dashboard"
                     className="inline-flex items-center gap-1.5 text-[14px] font-medium text-[#151619] underline decoration-[#151619]/35 underline-offset-4 transition-colors hover:decoration-[#151619] whitespace-nowrap"
@@ -232,9 +239,11 @@ export default function LandingPage() {
             </div>
 
             {/* Right column: QR Credit Calculator */}
-            <Reveal delay={0.12} y={24} className="min-w-0">
-              <HeroCreditCalculator />
-            </Reveal>
+            <div className="min-w-0 lg:-translate-y-12">
+              <Reveal delay={0.12} y={24}>
+                <HeroCreditCalculator />
+              </Reveal>
+            </div>
           </div>
         </div>
       </section>
@@ -270,7 +279,9 @@ export default function LandingPage() {
                   <h3 className="min-w-0 text-[19px] sm:text-[20px] font-medium tracking-[-0.015em] text-[#151619]">
                     {step.title}
                   </h3>
-                  <p className="min-w-0 text-[15px] leading-[1.6] text-[#5C6260]">{step.body}</p>
+                  <p className="min-w-0 text-[15px] leading-[1.6] text-[#5C6260]">
+                    {step.body}
+                  </p>
                 </div>
               </Reveal>
             ))}
@@ -294,8 +305,9 @@ export default function LandingPage() {
 
             <Reveal delay={0.1}>
               <p className="mt-6 lg:mt-8 max-w-[34ch] text-[15px] sm:text-[16px] leading-[1.6] text-[#5C6260]">
-                64 million Indonesian MSMEs do not lack daily revenue—they lack verifiable digital
-                receipts that keep working capital fair and predictable.
+                64 million Indonesian MSMEs do not lack daily revenue—they lack
+                verifiable digital receipts that keep working capital fair and
+                predictable.
               </p>
             </Reveal>
           </div>
@@ -332,7 +344,10 @@ export default function LandingPage() {
       </section>
 
       {/* 5. MODULAR CONTRACTS BAND (#contracts, Mint-Emerald #9FE8C3 + BandArcs) */}
-      <section id="contracts" className="relative scroll-mt-16 overflow-hidden bg-[#9FE8C3] text-[#151619]">
+      <section
+        id="contracts"
+        className="relative scroll-mt-16 overflow-hidden bg-[#9FE8C3] text-[#151619]"
+      >
         <BandArcs />
 
         <div className={`${CONTAINER} ${SECTION_Y} relative z-10`}>
@@ -347,7 +362,11 @@ export default function LandingPage() {
 
           <div className="mt-12 sm:mt-14 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
             {CONTRACT_CARDS.map((card, idx) => (
-              <Reveal key={card.name} delay={idx * 0.06} className="h-full min-w-0">
+              <Reveal
+                key={card.name}
+                delay={idx * 0.06}
+                className="h-full min-w-0"
+              >
                 <div className="flex h-full flex-col rounded-2xl bg-white p-6 shadow-[0_12px_36px_rgb(15_90_54/0.08)]">
                   <Eyebrow>{card.tag}</Eyebrow>
                   <h3 className="mt-3 text-[20px] sm:text-[22px] font-medium tracking-[-0.02em] text-[#151619] break-words">
@@ -358,7 +377,9 @@ export default function LandingPage() {
                   </p>
 
                   {/* 2x2 hairline dl stats */}
-                  <dl className={`mt-6 grid grid-cols-2 border-t ${RULE} pt-4 gap-x-4 gap-y-4`}>
+                  <dl
+                    className={`mt-6 grid grid-cols-2 border-t ${RULE} pt-4 gap-x-4 gap-y-4`}
+                  >
                     {card.stats.map((st) => (
                       <div key={st.label} className="min-w-0">
                         <dt className="font-mono text-[10px] uppercase tracking-[0.12em] text-[#636966]">
@@ -420,7 +441,8 @@ export default function LandingPage() {
               <Eyebrow>FAQ</Eyebrow>
               <H2 className="mt-4">Every question answered.</H2>
               <p className="mt-4 max-w-[32ch] text-[15px] sm:text-[16px] leading-[1.6] text-[#5C6260]">
-                Clear answers on gasless QR ledgers, AI Guarantor guardrails, and QDay settlement.
+                Clear answers on gasless QR ledgers, AI Guarantor guardrails,
+                and QDay settlement.
               </p>
             </Reveal>
 
@@ -462,7 +484,11 @@ export default function LandingPage() {
             </h2>
 
             <div className="mt-10 flex flex-wrap items-center gap-5 sm:gap-6">
-              <LaunchButton href="/stage" label="Launch Live Simulator" variant="light" />
+              <LaunchButton
+                href="/stage"
+                label="Launch Live Simulator"
+                variant="light"
+              />
               <Link
                 href="/app/dashboard"
                 className="inline-flex items-center gap-1.5 text-[14px] font-medium text-white/85 underline decoration-white/30 underline-offset-4 transition-colors hover:text-white hover:decoration-white whitespace-nowrap"
@@ -488,7 +514,8 @@ export default function LandingPage() {
               hanumpay
             </Link>
             <p className="mt-3 max-w-[30ch] text-[14px] leading-[1.6] text-[#5C6260]">
-              Contract-bounded working capital and ERC-8004 supplier rails for MSMEs on QDay Aevum Testnet.
+              Contract-bounded working capital and ERC-8004 supplier rails for
+              MSMEs on QDay Aevum Testnet.
             </p>
           </div>
 
