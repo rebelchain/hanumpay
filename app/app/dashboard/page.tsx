@@ -1,7 +1,7 @@
-'use client';
+"use client";
 
-import React from 'react';
-import Link from 'next/link';
+import React from "react";
+import Link from "next/link";
 import {
   ArrowRight,
   Award,
@@ -13,11 +13,11 @@ import {
   Receipt,
   ShieldAlert,
   Truck,
-} from 'lucide-react';
-import AppShell from '@/components/AppShell';
-import CreditScoreGauge from '@/components/CreditScoreGauge';
-import { useHanumPay } from '@/lib/hanumpay-store';
-import { shortenAddress } from '@/lib/qday';
+} from "lucide-react";
+import AppShell from "@/components/AppShell";
+import CreditScoreGauge from "@/components/CreditScoreGauge";
+import { useHanumPay } from "@/lib/hanumpay-store";
+import { shortenAddress } from "@/lib/qday";
 
 export default function DashboardPage() {
   const {
@@ -37,12 +37,19 @@ export default function DashboardPage() {
     openReceipt,
   } = useHanumPay();
 
-  const salesTodayUSD8 = sales.slice(0, 3).reduce((acc, s) => acc + s.amountUSD8, 0);
+  const salesTodayUSD8 = sales
+    .slice(0, 3)
+    .reduce((acc, s) => acc + s.amountUSD8, 0);
 
-  const activeTotalDue = activeLoan ? activeLoan.principalUSD8 + activeLoan.flatFeeUSD8 : 0;
+  const activeTotalDue = activeLoan
+    ? activeLoan.principalUSD8 + activeLoan.flatFeeUSD8
+    : 0;
   const activeProgress =
     activeLoan && activeTotalDue > 0
-      ? Math.min(100, Math.round((activeLoan.totalRepaidUSD8 / activeTotalDue) * 100))
+      ? Math.min(
+          100,
+          Math.round((activeLoan.totalRepaidUSD8 / activeTotalDue) * 100),
+        )
       : 0;
 
   return (
@@ -50,43 +57,47 @@ export default function DashboardPage() {
       title="Merchant Overview"
       subtitle="Verified QR cashier balance, ERC-8004 Credit Passport, and AI Guarantor pause controls."
     >
-      {/* Obsidian-Emerald Balance Hero + 4 Quick Action Tiles */}
+      {/* Signature Mint-Emerald Balance Hero + 4 Quick Action Tiles */}
       <div className="grid lg:grid-cols-12 gap-6 items-stretch">
-        <div
-          className="lg:col-span-6 rounded-2xl p-6 text-white flex flex-col justify-between space-y-6"
-          style={{
-            background:
-              'radial-gradient(circle at 92% 15%, rgba(22, 163, 74, 0.34), transparent 52%), radial-gradient(circle at 12% 90%, rgba(37, 99, 235, 0.28), transparent 52%), #070D14',
-          }}
-        >
+        <div className="lg:col-span-6 rounded-2xl bg-[#9FE8C3] text-[#151619] border border-[#151619]/10 p-6 flex flex-col justify-between space-y-6">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <p className="text-xs text-slate-300">Shop Balance &amp; Available Credit</p>
-              <p className="text-3xl sm:text-4xl font-bold font-mono tabular-nums tracking-tight mt-1">
+              <p className="text-xs font-medium text-[#1C1C1C]/75">
+                Shop Balance &amp; Available Credit
+              </p>
+              <p className="text-3xl sm:text-4xl font-semibold font-mono tabular-nums tracking-[-0.03em] text-[#151619] mt-1.5">
                 {shopAvailableTusd8.toFixed(2)} tUSD8
               </p>
-              <p className="text-xs font-mono tabular-nums text-slate-400 mt-1">
-                ≈ Rp {Math.round(shopAvailableTusd8 * 15800).toLocaleString('en-US')} IDR
+              <p className="text-xs font-mono tabular-nums text-[#1C1C1C]/70 mt-1">
+                ≈ Rp{" "}
+                {Math.round(shopAvailableTusd8 * 15800).toLocaleString("en-US")}{" "}
+                IDR
               </p>
             </div>
-            <span className="text-xs font-medium text-emerald-400 whitespace-nowrap">
-              {isERC8004Verified(activeShopName) ? 'ERC-8004 Verified' : 'Unregistered'}
+            <span className="inline-flex items-center rounded-full bg-white/85 px-3 py-1 text-xs font-semibold text-[#15803D] whitespace-nowrap shrink-0">
+              {isERC8004Verified(activeShopName)
+                ? "ERC-8004 Verified"
+                : "Unregistered"}
             </span>
           </div>
 
-          <div className="pt-4 border-t border-white/10 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-300">
-            <span>{activeShopName}</span>
-            <span className="font-mono text-slate-400">{shortenAddress(activeShopAddress)}</span>
+          <div className="pt-4 border-t border-[#151619]/15 flex flex-wrap items-center justify-between gap-3 text-xs text-[#151619]">
+            <span className="font-medium">{activeShopName}</span>
+            <span className="font-mono text-[#1C1C1C]/75">
+              {shortenAddress(activeShopAddress)}
+            </span>
           </div>
         </div>
 
         {/* 4 Tactile Quick Action Tiles */}
-        <div className="lg:col-span-6 bg-white border border-slate-200 rounded-2xl p-5 flex flex-col justify-between space-y-4">
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-slate-900">Quick Cashier Actions</h2>
+        <div className="lg:col-span-6 bg-white border border-[#E2E7E4] rounded-2xl p-6 flex flex-col justify-between space-y-4">
+          <div className="flex items-center justify-between gap-2">
+            <h2 className="text-sm font-semibold text-[#151619]">
+              Quick Cashier Actions
+            </h2>
             <Link
               href="/stage"
-              className="text-xs font-medium text-[#2563EB] hover:underline whitespace-nowrap"
+              className="text-xs font-semibold text-[#15803D] underline decoration-[#15803D]/35 underline-offset-4 hover:decoration-[#15803D] whitespace-nowrap"
             >
               Open 2-Phone Simulator →
             </Link>
@@ -95,30 +106,30 @@ export default function DashboardPage() {
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Link
               href="/app/penjualan"
-              className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 hover:border-[#16A34A] transition-colors min-h-[76px]"
+              className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] hover:border-[#9FE8C3] hover:bg-[#E8FAF0]/70 transition-colors min-h-[82px]"
             >
-              <QrCode className="w-5 h-5 text-[#16A34A]" />
-              <span className="text-xs font-semibold text-slate-800 mt-2 whitespace-nowrap">
+              <QrCode className="w-5 h-5 text-[#15803D]" />
+              <span className="text-xs font-semibold text-[#151619] mt-2 whitespace-nowrap">
                 Record QR
               </span>
             </Link>
 
             <Link
               href="/app/identitas"
-              className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 hover:border-[#2563EB] transition-colors min-h-[76px]"
+              className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] hover:border-[#9FE8C3] hover:bg-[#E8FAF0]/70 transition-colors min-h-[82px]"
             >
-              <Truck className="w-5 h-5 text-[#2563EB]" />
-              <span className="text-xs font-semibold text-slate-800 mt-2 whitespace-nowrap">
+              <Truck className="w-5 h-5 text-[#151619]" />
+              <span className="text-xs font-semibold text-[#151619] mt-2 whitespace-nowrap">
                 Pay Supplier
               </span>
             </Link>
 
             <Link
               href="/app/pinjaman"
-              className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F8FAFC] border border-slate-200 hover:border-slate-900 transition-colors min-h-[76px]"
+              className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] hover:border-[#9FE8C3] hover:bg-[#E8FAF0]/70 transition-colors min-h-[82px]"
             >
-              <FileCheck2 className="w-5 h-5 text-slate-800" />
-              <span className="text-xs font-semibold text-slate-800 mt-2 whitespace-nowrap">
+              <FileCheck2 className="w-5 h-5 text-[#151619]" />
+              <span className="text-xs font-semibold text-[#151619] mt-2 whitespace-nowrap">
                 Credit &amp; AI
               </span>
             </Link>
@@ -126,19 +137,19 @@ export default function DashboardPage() {
             <button
               type="button"
               onClick={toggleAgentPaused}
-              className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-colors min-h-[76px] ${
+              className={`flex flex-col items-center justify-center p-3 rounded-xl border transition-colors min-h-[82px] cursor-pointer ${
                 agentPaused
-                  ? 'bg-amber-50 border-amber-300 text-amber-950'
-                  : 'bg-[#F8FAFC] border-slate-200 hover:border-slate-400 text-slate-800'
+                  ? "bg-amber-50 border-amber-200 text-[#B45309]"
+                  : "bg-[#F5F7F5] border-[#E2E7E4] hover:border-[#151619]/30 text-[#151619]"
               }`}
             >
               {agentPaused ? (
-                <PlayCircle className="w-5 h-5 text-[#D97706]" />
+                <PlayCircle className="w-5 h-5 text-[#B45309]" />
               ) : (
-                <PauseCircle className="w-5 h-5 text-slate-700" />
+                <PauseCircle className="w-5 h-5 text-[#5C6260]" />
               )}
               <span className="text-xs font-semibold mt-2 whitespace-nowrap">
-                {agentPaused ? 'Resume AI' : 'Pause AI'}
+                {agentPaused ? "Resume AI" : "Pause AI"}
               </span>
             </button>
           </div>
@@ -147,23 +158,24 @@ export default function DashboardPage() {
 
       {/* Merchant AI Pause Banner */}
       {agentPaused && (
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="flex items-start gap-3">
-            <PauseCircle className="w-5 h-5 text-[#D97706] shrink-0 mt-0.5" />
+            <PauseCircle className="w-5 h-5 text-[#B45309] shrink-0 mt-0.5" />
             <div>
-              <p className="text-sm font-semibold text-slate-900">
+              <p className="text-sm font-semibold text-[#151619]">
                 AI Guarantor Access Paused by Merchant
               </p>
-              <p className="text-xs text-amber-900 mt-0.5">
-                AIGuarantor.shopPausedAgent is active. New credit proposals are blocked on-chain,
-                while daily QR sales and supplier payments remain unaffected.
+              <p className="text-xs text-[#92400E] mt-0.5">
+                AIGuarantor.shopPausedAgent is active. New credit proposals are
+                blocked on-chain, while daily QR sales and supplier payments
+                remain unaffected.
               </p>
             </div>
           </div>
           <button
             type="button"
             onClick={toggleAgentPaused}
-            className="px-4 py-2.5 text-xs font-semibold text-white bg-[#D97706] hover:bg-amber-700 rounded-lg transition-colors whitespace-nowrap shrink-0 min-h-[44px]"
+            className="px-4 py-2.5 text-xs font-semibold text-white bg-[#B45309] hover:bg-amber-800 rounded-xl transition-colors whitespace-nowrap shrink-0 min-h-[44px] cursor-pointer"
           >
             Resume AI Access
           </button>
@@ -172,20 +184,21 @@ export default function DashboardPage() {
 
       {/* Pending Proposal Banner */}
       {proposedLoan && !agentPaused && (
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="bg-[#E8FAF0] border border-[#9FE8C3] rounded-2xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <div className="flex items-center gap-2 text-xs font-medium text-emerald-800">
-              <CheckCircle2 className="w-4 h-4 text-[#16A34A]" />
+            <div className="flex items-center gap-2 text-xs font-semibold text-[#15803D]">
+              <CheckCircle2 className="w-4 h-4 shrink-0" />
               <span>
-                Proposal #{proposedLoan.id} · {proposedLoan.agentName} (ERC-8004 Verified)
+                Proposal #{proposedLoan.id} · {proposedLoan.agentName} (ERC-8004
+                Verified)
               </span>
             </div>
-            <p className="text-sm sm:text-base font-semibold text-slate-900">
-              Working capital offer ready:{' '}
+            <p className="text-sm sm:text-base font-semibold text-[#151619]">
+              Working capital offer ready:{" "}
               <span className="font-mono tabular-nums">
                 {proposedLoan.principalUSD8.toFixed(2)} tUSD8
-              </span>{' '}
-              with a flat fee of{' '}
+              </span>{" "}
+              with a flat fee of{" "}
               <span className="font-mono tabular-nums">
                 {proposedLoan.flatFeeUSD8.toFixed(2)} tUSD8
               </span>
@@ -193,7 +206,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/app/pinjaman"
-            className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-semibold text-white bg-[#16A34A] hover:bg-emerald-700 rounded-lg transition-colors whitespace-nowrap shrink-0 min-h-[44px]"
+            className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors whitespace-nowrap shrink-0 min-h-[44px]"
           >
             <span>Review &amp; Accept (Gasless)</span>
             <ArrowRight className="w-4 h-4" />
@@ -203,57 +216,66 @@ export default function DashboardPage() {
 
       {/* 4-Stat KPI Row */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Recent Sales</p>
-          <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
+        <div className="bg-white border border-[#E2E7E4] rounded-2xl p-5">
+          <p className="text-xs font-medium text-[#636966]">Recent Sales</p>
+          <p className="text-2xl font-semibold font-mono tabular-nums text-[#151619] mt-1.5">
             {salesTodayUSD8.toFixed(2)} tUSD8
           </p>
-          <p className="text-xs text-slate-500 mt-1">
-            ~Rp {Math.round(salesTodayUSD8 * 15800).toLocaleString('en-US')} IDR
+          <p className="text-xs text-[#636966] mt-1 font-mono tabular-nums">
+            ~Rp {Math.round(salesTodayUSD8 * 15800).toLocaleString("en-US")} IDR
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">30-Day Revenue</p>
-          <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
+        <div className="bg-white border border-[#E2E7E4] rounded-2xl p-5">
+          <p className="text-xs font-medium text-[#636966]">30-Day Revenue</p>
+          <p className="text-2xl font-semibold font-mono tabular-nums text-[#151619] mt-1.5">
             {shopStats.totalSales30dUSD8.toFixed(2)} tUSD8
           </p>
-          <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
+          <p className="text-xs text-[#636966] mt-1 font-mono tabular-nums">
             {shopStats.uniqueCustomers30d} hashed unique buyers
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Credit Score</p>
-          <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
+        <div className="bg-white border border-[#E2E7E4] rounded-2xl p-5">
+          <p className="text-xs font-medium text-[#636966]">Credit Score</p>
+          <p className="text-2xl font-semibold font-mono tabular-nums text-[#151619] mt-1.5">
             {eligibility.creditScore} / 100
           </p>
-          <p className="text-xs text-[#16A34A] font-medium mt-1">
-            {isERC8004Verified(activeShopName) ? 'ERC-8004 Verified Shop' : 'Unregistered Shop'}
+          <p className="text-xs text-[#15803D] font-semibold mt-1">
+            {isERC8004Verified(activeShopName)
+              ? "ERC-8004 Verified Shop"
+              : "Unregistered Shop"}
           </p>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-xl p-5">
-          <p className="text-xs font-medium text-slate-500">Active Credit Balance</p>
+        <div className="bg-white border border-[#E2E7E4] rounded-2xl p-5">
+          <p className="text-xs font-medium text-[#636966]">
+            Active Credit Balance
+          </p>
           {activeLoan ? (
             <>
-              <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
+              <p className="text-2xl font-semibold font-mono tabular-nums text-[#151619] mt-1.5">
                 {(activeTotalDue - activeLoan.totalRepaidUSD8).toFixed(2)} tUSD8
               </p>
-              <div className="mt-2 h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
-                <div className="h-full bg-[#16A34A]" style={{ width: `${activeProgress}%` }} />
+              <div className="mt-2 h-1.5 w-full bg-[#F5F7F5] rounded-full overflow-hidden">
+                <div
+                  className="h-full bg-[#15803D]"
+                  style={{ width: `${activeProgress}%` }}
+                />
               </div>
-              <p className="text-xs text-slate-500 mt-1 font-mono tabular-nums">
+              <p className="text-xs text-[#636966] mt-1 font-mono tabular-nums">
                 {activeProgress}% repaid · 10% per sale
               </p>
             </>
           ) : (
             <>
-              <p className="text-2xl font-bold font-mono tabular-nums text-slate-900 mt-1.5">
+              <p className="text-2xl font-semibold font-mono tabular-nums text-[#151619] mt-1.5">
                 0.00 tUSD8
               </p>
-              <p className="text-xs text-slate-500 mt-1">
-                {proposedLoan ? '1 offer awaiting approval' : 'No active balance'}
+              <p className="text-xs text-[#5C6260] mt-1">
+                {proposedLoan
+                  ? "1 offer awaiting approval"
+                  : "No active balance"}
               </p>
             </>
           )}
@@ -261,52 +283,57 @@ export default function DashboardPage() {
       </div>
 
       {/* Gauge + Credit Passport Grid */}
-      <div className="grid lg:grid-cols-12 gap-6">
+      <div className="grid lg:grid-cols-12 gap-6 items-stretch">
         <div className="lg:col-span-5">
           <CreditScoreGauge
             score={eligibility.creditScore}
             maxLoanUSD8={eligibility.maxLoanUSD8}
             eligible={eligibility.eligible}
             reason={eligibility.reason}
+            loanStatus={
+              proposedLoan ? "offer_ready" : activeLoan ? "active_loan" : null
+            }
           />
         </div>
 
-        <div className="lg:col-span-7 bg-white border border-slate-200 rounded-xl p-6 flex flex-col justify-between space-y-5">
+        <div className="lg:col-span-7 bg-white border border-[#E2E7E4] rounded-2xl p-6 flex flex-col justify-between space-y-5">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h2 className="text-base font-semibold text-slate-900">
+              <h2 className="text-base font-semibold tracking-[-0.015em] text-[#151619]">
                 On-Chain Credit Passport
               </h2>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-xs text-[#5C6260] mt-0.5">
                 Immutable repayment history verifiable on QDay Aevum
               </p>
             </div>
-            <Award className="w-5 h-5 text-[#D97706] shrink-0" />
+            <Award className="w-5 h-5 text-[#15803D] shrink-0" />
           </div>
 
           {creditPassports.length === 0 ? (
-            <div className="py-8 text-center border border-dashed border-slate-200 rounded-lg">
-              <p className="text-sm text-slate-600">
-                Repay your first credit line to mint a permanent on-chain Credit Passport record.
+            <div className="py-8 text-center border border-dashed border-[#E2E7E4] rounded-xl bg-[#F5F7F5]/60">
+              <p className="text-sm text-[#5C6260]">
+                Repay your first credit line to mint a permanent on-chain Credit
+                Passport record.
               </p>
             </div>
           ) : (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-[#E2E7E4]">
               {creditPassports.map((cp) => (
                 <div
                   key={cp.loanId}
                   className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2"
                 >
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">
-                      Loan #{cp.loanId} · {cp.principalUSD8.toFixed(2)} tUSD8 Settled
+                    <p className="text-sm font-semibold text-[#151619]">
+                      Loan #{cp.loanId} · {cp.principalUSD8.toFixed(2)} tUSD8
+                      Settled
                     </p>
-                    <p className="text-xs text-slate-500 font-mono tabular-nums mt-0.5">
-                      Repaid in {cp.daysToRepay} days · 0 penalties · New limit:{' '}
+                    <p className="text-xs text-[#5C6260] font-mono tabular-nums mt-0.5">
+                      Repaid in {cp.daysToRepay} days · 0 penalties · New limit:{" "}
                       {cp.newCreditLimitUSD8.toFixed(2)} tUSD8
                     </p>
                   </div>
-                  <span className="text-xs font-mono text-[#16A34A] shrink-0">
+                  <span className="text-xs font-mono font-semibold text-[#15803D] shrink-0">
                     {cp.txHash.slice(0, 12)}...
                   </span>
                 </div>
@@ -314,18 +341,18 @@ export default function DashboardPage() {
             </div>
           )}
 
-          <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3">
+          <div className="pt-3 border-t border-[#E2E7E4] flex flex-wrap items-center justify-between gap-3">
             <Link
               href="/app/identitas"
-              className="text-xs font-semibold text-[#2563EB] hover:underline"
+              className="text-xs font-semibold text-[#15803D] underline decoration-[#15803D]/35 underline-offset-4 hover:decoration-[#15803D]"
             >
               Pay ERC-8004 Verified Supplier →
             </Link>
             <Link
               href="/app/pinjaman"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-slate-900"
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-[#5C6260] hover:text-[#151619]"
             >
-              <ShieldAlert className="w-3.5 h-3.5 text-[#D97706]" />
+              <ShieldAlert className="w-3.5 h-3.5 text-[#B45309]" />
               <span>Run AI Red-Team Audit</span>
             </Link>
           </div>
@@ -333,17 +360,20 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Sales Table with Verifiable QDay Receipt Action */}
-      <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between gap-4">
+      <div className="bg-white border border-[#E2E7E4] rounded-2xl overflow-hidden">
+        <div className="px-6 py-4 border-b border-[#E2E7E4] flex items-center justify-between gap-4">
           <div>
-            <h2 className="text-base font-semibold text-slate-900">Recent QR Sales Ledger</h2>
-            <p className="text-xs text-slate-500">
-              Customer IDs are hashed locally with keccak256 before gasless EIP-712 signing
+            <h2 className="text-base font-semibold tracking-[-0.015em] text-[#151619]">
+              Recent QR Sales Ledger
+            </h2>
+            <p className="text-xs text-[#5C6260]">
+              Customer IDs are hashed locally with keccak256 before gasless
+              EIP-712 signing
             </p>
           </div>
           <Link
             href="/app/penjualan"
-            className="text-xs font-semibold text-[#16A34A] hover:underline whitespace-nowrap"
+            className="text-xs font-semibold text-[#15803D] underline decoration-[#15803D]/35 underline-offset-4 hover:decoration-[#15803D] whitespace-nowrap"
           >
             Record New Sale →
           </Link>
@@ -352,7 +382,7 @@ export default function DashboardPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 bg-slate-50 text-xs font-medium text-slate-500">
+              <tr className="border-b border-[#E2E7E4] bg-[#F5F7F5] text-xs font-medium text-[#636966]">
                 <th className="py-3 px-6">Buyer (Hash)</th>
                 <th className="py-3 px-6 text-right">Gross Sale</th>
                 <th className="py-3 px-6 text-right">Auto-Repay (10%)</th>
@@ -360,26 +390,33 @@ export default function DashboardPage() {
                 <th className="py-3 px-6 text-right">Receipt</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100 text-sm">
+            <tbody className="divide-y divide-[#E2E7E4] text-sm">
               {sales.slice(0, 6).map((sale) => {
-                const matchedReceipt = receipts.find((r) => r.txHash === sale.txHash);
+                const matchedReceipt = receipts.find(
+                  (r) => r.txHash === sale.txHash,
+                );
                 return (
-                  <tr key={sale.id} className="hover:bg-slate-50/70">
+                  <tr
+                    key={sale.id}
+                    className="hover:bg-[#F5F7F5]/65 transition-colors"
+                  >
                     <td className="py-3 px-6">
-                      <p className="font-medium text-slate-900">{sale.customerLabel}</p>
-                      <p className="text-xs font-mono text-slate-500">
+                      <p className="font-medium text-[#151619]">
+                        {sale.customerLabel}
+                      </p>
+                      <p className="text-xs font-mono text-[#636966]">
                         {sale.customerIdHash.slice(0, 14)}...
                       </p>
                     </td>
-                    <td className="py-3 px-6 text-right font-mono tabular-nums font-medium text-slate-900">
+                    <td className="py-3 px-6 text-right font-mono tabular-nums font-medium text-[#151619]">
                       {sale.amountUSD8.toFixed(2)} tUSD8
                     </td>
-                    <td className="py-3 px-6 text-right font-mono tabular-nums text-amber-700">
+                    <td className="py-3 px-6 text-right font-mono tabular-nums text-[#B45309]">
                       {sale.repaidDeductedUSD8 > 0
                         ? `-${sale.repaidDeductedUSD8.toFixed(2)} tUSD8`
-                        : '0.00 tUSD8'}
+                        : "0.00 tUSD8"}
                     </td>
-                    <td className="py-3 px-6 text-right font-mono tabular-nums font-semibold text-[#16A34A]">
+                    <td className="py-3 px-6 text-right font-mono tabular-nums font-semibold text-[#15803D]">
                       {sale.netToShopUSD8.toFixed(2)} tUSD8
                     </td>
                     <td className="py-3 px-6 text-right">
@@ -389,7 +426,7 @@ export default function DashboardPage() {
                           openReceipt(
                             matchedReceipt ?? {
                               id: `rcpt-${sale.id}`,
-                              kind: 'sale',
+                              kind: "sale",
                               title: `QR Sale · ${sale.customerLabel}`,
                               amountUSD8: sale.amountUSD8,
                               repaidDeductedUSD8: sale.repaidDeductedUSD8,
@@ -399,14 +436,14 @@ export default function DashboardPage() {
                               erc8004Verified: true,
                               proofHash: sale.customerIdHash,
                               txHash: sale.txHash,
-                              relayMode: 'verified-demo-relay',
+                              relayMode: "verified-demo-relay",
                               timestamp: sale.timestamp,
-                            }
+                            },
                           )
                         }
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-[#2563EB] hover:bg-blue-50 rounded-lg transition-colors whitespace-nowrap"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#151619] hover:bg-[#E8FAF0] border border-[#E2E7E4] rounded-lg transition-colors whitespace-nowrap cursor-pointer"
                       >
-                        <Receipt className="w-3.5 h-3.5" />
+                        <Receipt className="w-3.5 h-3.5 text-[#15803D]" />
                         <span>View Receipt</span>
                       </button>
                     </td>
