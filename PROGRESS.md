@@ -8,6 +8,7 @@ This document serves as the shared source of truth across local development, the
 
 - **Active Stage**: Stage 4 — Vercel Production Verification & Final Submission Prep
 - **Live App (Vercel)**: `https://hanumpay.vercel.app`
+- **Official GitBook Docs**: `https://rebelxyz.gitbook.io/hanumpay`
 - **GitHub Repository**: `https://github.com/rebelchain/hanumpay`
 - **Target Network**: QDay Aevum Testnet (Chain ID `44005`)
 - **Official tUSD8 Token**: `0x456569838f1d43009A91ebA4263147Afd7233483` (6 decimals)
@@ -34,18 +35,21 @@ This document serves as the shared source of truth across local development, the
 - [x] Configure `.env.local`, sync `lib/qday.ts` defaults, and align EIP-712 `verifyingContract` bindings in `lib/hanumpay-store.tsx`.
 - [x] Register merchant shop on-chain (`SalesLedger.registerShop`) and verify Gasless QR Sale TX on QDay Explorer.
 - [x] Record bounded LP `tUSD8` deposit TX hash (`LoanPool.approve` + `LoanPool.deposit` within the `5 tUSD8` faucet budget).
-- [x] Run `forge test -vvv` inside `contracts/` to archive unit & invariant test pass output.
+- [ ] Run `forge test -vvv` inside `contracts/` to archive unit & invariant test pass output.
 
 ### Stage 3 — End-to-End Integration & AI Verification (Verified Locally)
 
 - [x] Verified EOA wallet connection (`MetaMask` / `Rabby`) on QDay Aevum (`0xABE5`) — `/app/docs` readiness panel confirmed **`5 / 5`**.
 - [x] Verified live **Gasless QR Sale** TX hash on `https://explorer-test.qday.info`.
 - [x] Verified **AI Red-Team Console** & **Gemini Audit** (`GEMINI_API_KEY` active; hardened `lib/gemini.ts` with `ThinkingLevel.LOW` + retry/fallback to `gemini-3.1-flash-lite` on `503` spikes).
-- [x] Final quick check on **ERC-8004 Payee Verification + Spoofing Attack** (`/app/identitas` & `/stage`) and responsive viewports on the live Vercel domain.
+- [ ] Final quick check on **ERC-8004 Payee Verification + Spoofing Attack** (`/app/identitas` & `/stage`) and responsive viewports on the live Vercel domain.
 
-### Stage 4 — Production Deployment on Vercel (Active)
+### Stage 4 — Production Deployment on Vercel & Documentation Parity (Active)
 
 - [x] Connect `https://github.com/rebelchain/hanumpay` to Vercel and deploy live at `https://hanumpay.vercel.app`.
+- [x] Harmonize entire `/app/*` workspace (`AppShell`, `dashboard`, `penjualan`, `pinjaman`, `pool`, `identitas`, `docs`, and modals) to the landing white-and-mint (`#FFFFFF` / `#F5F7F5` / `#9FE8C3`) design system and fix sidebar badge wrap & `CreditScoreGauge` `"Offer Ready"` status bugs.
+- [x] Rebuild `/app/docs` as an interactive 3-pane GitBook-style portal and publish official GitBook Site Sync (`gitbook-docs.yaml` + `docs/`) at `https://rebelxyz.gitbook.io/hanumpay`.
+- [x] Add compact GitBook Docs & GitHub Open-Source CTA strip above the landing Footer + Footer protocol links.
 - [ ] Verify Environment Variable parity in Vercel (`GEMINI_API_KEY`, `QDAY_RPC_URL`, 4 `NEXT_PUBLIC_*` addresses, `RELAYER_PRIVATE_KEY`, `AGENT_PRIVATE_KEY`).
 - [ ] Smoke-test all core flows on `https://hanumpay.vercel.app` (`/app/docs` `5/5`, Gasless QR Sale TX, AI Audit + Red-Team `200 OK`, ERC-8004 Spoofing block).
 
@@ -75,6 +79,8 @@ This document serves as the shared source of truth across local development, the
 
 ## Changelog
 
+- **2026-11-17 (Stage 4c — Documentation & Landing CTA)**: Added GitBook Site Git Sync (`gitbook-docs.yaml`, `docs/.gitbook.yaml`, `docs/*.md`) live at `https://rebelxyz.gitbook.io/hanumpay`, added the compact Open-Source & GitBook CTA strip above the landing page Footer + Footer links (`lib/qday.ts`, `app/page.tsx`), and synchronized `README.md` / `PROGRESS.md`.
+- **2026-11-17 (Stage 4b — Workspace UI Parity & Bug Fixes)**: Unified `AppShell`, all `/app/*` pages, and modals to the landing white-and-mint theme; rebuilt `/app/docs` into a 3-pane GitBook reader; fixed `"1 offer"` badge wrapping, `CreditScoreGauge` `"Offer Ready"` status, dynamic supplier modal shop name, hero calculator elevation, and `types/css.d.ts` (`noUncheckedSideEffectImports`).
 - **2026-11-16 (Stage 4)**: Deployed production app to `https://hanumpay.vercel.app`, linked `https://github.com/rebelchain/hanumpay`, hardened Gemini AI routes (`lib/gemini.ts` `ThinkingLevel.LOW` + `503` retry/fallback), and updated `README.md` / `PROGRESS.md` with Stage 4 QA checklist.
 - **2026-11-16 (Stage 3)**: Verified `5 / 5` Aevum wallet readiness, live Gasless QR Sale TX on QDay Explorer, and AI Red-Team Console locally.
 - **2026-11-16 (Stage 2)**: Deployed all 4 contracts to QDay Aevum Testnet (`44005`) in Block `3310882`, synced deployed defaults in `lib/qday.ts`, and aligned EIP-712 `verifyingContract` addresses in `lib/hanumpay-store.tsx`.
