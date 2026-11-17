@@ -1,0 +1,11 @@
+$schema: https://api.gitbook.com/gitbook-docs.yaml
+site:
+  title: "HanumPay Documentation"
+  structure:
+    - type: space
+      key: hanumpay-docs
+      title: "HanumPay Protocol"
+      path: docs
+      default: true
+      content:
+        directory: ./docs
