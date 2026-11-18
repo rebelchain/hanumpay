@@ -3,13 +3,17 @@ import { createWalletClient, http, parseUnits, verifyTypedData } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import {
   DEPLOYED_CONTRACTS,
+  ERC20_ABI,
+  fromTusd8Raw,
   HANUMPAY_ABIS,
   HANUMPAY_EIP712_DOMAIN,
   QDAY_RPC_URL,
   qDayAevumTestnet,
   qDayPublicClient,
   RECORD_SALE_TYPES,
+  TUSD8_CONTRACT,
 } from '@/lib/qday';
+import type { QrisSettlementInfo } from '@/lib/hanumpay-types';
 
 export async function POST(req: NextRequest) {
   try {
@@ -30,6 +34,7 @@ export async function POST(req: NextRequest) {
     }
 
     const amountRaw = parseUnits(amountUSD8.toFixed(6), 6);
+    const amountHuman = fromTusd8Raw(amountRaw);
     const verifyingContract =
       DEPLOYED_CONTRACTS.salesLedger || HANUMPAY_EIP712_DOMAIN.verifyingContract;
 
@@ -63,7 +68,12 @@ export async function POST(req: NextRequest) {
     const relayerKey = process.env.RELAYER_PRIVATE_KEY;
     const salesLedgerAddr = DEPLOYED_CONTRACTS.salesLedger;
 
-    if (relayerKey && salesLedgerAddr && /^0x[0-9a-fA-F]{64}$/.test(relayerKey) && /^0x[0-9a-fA-F]{130}$/.test(signature)) {
+    if (
+      relayerKey &&
+      salesLedgerAddr &&
+      /^0x[0-9a-fA-F]{64}$/.test(relayerKey) &&
+      /^0x[0-9a-fA-F]{130}$/.test(signature)
+    ) {
       const account = privateKeyToAccount(relayerKey as `0x${string}`);
       const walletClient = createWalletClient({
         account,
@@ -71,6 +81,55 @@ export async function POST(req: NextRequest) {
         transport: http(process.env.QDAY_RPC_URL || QDAY_RPC_URL),
       });
 
+      // Step 1: Simulate QRIS Rupiah -> tUSD8 settlement into the shop wallet if relayer holds sufficient reserve.
+      let qrisSettlement: QrisSettlementInfo = {
+        simulated: false,
+        status: 'fallback_insufficient_relayer_balance',
+        settledTxHash: null,
+        amountUSD8: amountHuman,
+        relayerBalanceUSD8: 0,
+      };
+
+      try {
+        const relayerTusd8Balance = (await qDayPublicClient.readContract({
+          address: TUSD8_CONTRACT.address,
+          abi: ERC20_ABI,
+          functionName: 'balanceOf',
+          args: [account.address],
+        })) as bigint;
+        const balanceHuman = fromTusd8Raw(relayerTusd8Balance);
+        qrisSettlement.relayerBalanceUSD8 = balanceHuman;
+
+        if (relayerTusd8Balance >= amountRaw) {
+          const settledTxHash = await walletClient.writeContract({
+            address: TUSD8_CONTRACT.address,
+            abi: ERC20_ABI,
+            functionName: 'transfer',
+            args: [shop, amountRaw],
+          });
+          await qDayPublicClient
+            .waitForTransactionReceipt({ hash: settledTxHash, timeout: 45_000 })
+            .catch(() => null);
+
+          qrisSettlement = {
+            simulated: true,
+            status: 'settled',
+            settledTxHash,
+            amountUSD8: amountHuman,
+            relayerBalanceUSD8: balanceHuman,
+          };
+        }
+      } catch {
+        qrisSettlement = {
+          simulated: false,
+          status: 'fallback_transfer_error',
+          settledTxHash: null,
+          amountUSD8: amountHuman,
+          relayerBalanceUSD8: qrisSettlement.relayerBalanceUSD8,
+        };
+      }
+
+      // Step 2: Record the verified QR sale on SalesLedger (which auto-deducts 10% if an active loan exists).
       const txHash = await walletClient.writeContract({
         address: salesLedgerAddr,
         abi: HANUMPAY_ABIS.salesLedger,
@@ -92,6 +151,7 @@ export async function POST(req: NextRequest) {
         txHash,
         relayerAddress: account.address,
         signatureVerified: true,
+        qrisSettlement,
       });
     }
 
@@ -100,6 +160,12 @@ export async function POST(req: NextRequest) {
       mode: 'verified-demo-relay',
       txHash: null,
       signatureVerified,
+      qrisSettlement: {
+        simulated: false,
+        status: 'fallback_insufficient_relayer_balance',
+        settledTxHash: null,
+        amountUSD8: amountHuman,
+      } satisfies QrisSettlementInfo,
       note: 'Relayer verified payload; set RELAYER_PRIVATE_KEY & NEXT_PUBLIC_SALES_LEDGER_ADDRESS to broadcast live to QDay Aevum.',
     });
   } catch (err) {

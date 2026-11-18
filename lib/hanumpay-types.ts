@@ -130,3 +130,15 @@ export interface RedTeamResult {
     passed: boolean;
   }[];
 }
+
+export interface QrisSettlementInfo {
+  simulated: boolean;
+  status:
+    | 'settled'
+    | 'fallback_insufficient_relayer_balance'
+    | 'fallback_transfer_error';
+  settledTxHash: string | null;
+  amountUSD8: number;
+  relayerBalanceUSD8?: number;
+}
+

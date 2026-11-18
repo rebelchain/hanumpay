@@ -7,6 +7,8 @@ import { privateKeyToAccount } from 'viem/accounts';
 import {
   ACCEPT_LOAN_TYPES,
   DEPLOYED_CONTRACTS,
+  ERC20_ABI,
+  fromTusd8Raw,
   HANUMPAY_ABIS,
   HANUMPAY_EIP712_DOMAIN,
   QDAY_CHAIN_ID,
@@ -15,6 +17,7 @@ import {
   qDayAevumTestnet,
   qDayPublicClient,
   RECORD_SALE_TYPES,
+  TUSD8_CONTRACT,
   validateProposalAgainstContract,
   type ShopStatsSnapshot,
 } from './config.js';
@@ -150,6 +153,60 @@ app.post('/api/relay/record-sale', async (req: Request, res: Response): Promise<
       transport: http(QDAY_RPC_URL),
     });
 
+    const amountHuman = fromTusd8Raw(amountRaw);
+    let qrisSettlement: {
+      simulated: boolean;
+      status: 'settled' | 'fallback_insufficient_relayer_balance' | 'fallback_transfer_error';
+      settledTxHash: `0x${string}` | null;
+      amountUSD8: number;
+      relayerBalanceUSD8: number;
+    } = {
+      simulated: false,
+      status: 'fallback_insufficient_relayer_balance',
+      settledTxHash: null,
+      amountUSD8: amountHuman,
+      relayerBalanceUSD8: 0,
+    };
+
+    try {
+      const relayerTusd8Balance = (await qDayPublicClient.readContract({
+        address: TUSD8_CONTRACT.address,
+        abi: ERC20_ABI,
+        functionName: 'balanceOf',
+        args: [account.address],
+      })) as bigint;
+      const balanceHuman = fromTusd8Raw(relayerTusd8Balance);
+      qrisSettlement.relayerBalanceUSD8 = balanceHuman;
+
+      if (relayerTusd8Balance >= amountRaw) {
+        const settledTxHash = await walletClient.writeContract({
+          address: TUSD8_CONTRACT.address,
+          abi: ERC20_ABI,
+          functionName: 'transfer',
+          args: [shop, amountRaw],
+        });
+        await qDayPublicClient
+          .waitForTransactionReceipt({ hash: settledTxHash, timeout: 45_000 })
+          .catch(() => null);
+
+        qrisSettlement = {
+          simulated: true,
+          status: 'settled',
+          settledTxHash,
+          amountUSD8: amountHuman,
+          relayerBalanceUSD8: balanceHuman,
+        };
+      }
+    } catch {
+      qrisSettlement = {
+        simulated: false,
+        status: 'fallback_transfer_error',
+        settledTxHash: null,
+        amountUSD8: amountHuman,
+        relayerBalanceUSD8: qrisSettlement.relayerBalanceUSD8,
+      };
+    }
+
     const txHash = await walletClient.writeContract({
       address: DEPLOYED_CONTRACTS.salesLedger,
       abi: HANUMPAY_ABIS.salesLedger,
@@ -171,6 +228,7 @@ app.post('/api/relay/record-sale', async (req: Request, res: Response): Promise<
       txHash,
       relayerAddress: account.address,
       signatureVerified: true,
+      qrisSettlement,
     });
   } catch (err) {
     res.status(500).json({

@@ -7,17 +7,16 @@ import {
   Award,
   CheckCircle2,
   ExternalLink,
-  FileCheck2,
   PauseCircle,
   PlayCircle,
   QrCode,
   Receipt,
-  Store,
+  Smartphone,
   Truck,
-  Wallet,
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import CreditScoreGauge from '@/components/CreditScoreGauge';
+import ShopOnboardingChecklist from '@/components/ShopOnboardingChecklist';
 import TechnicalDetailsToggle from '@/components/TechnicalDetailsToggle';
 import { useHanumPay } from '@/lib/hanumpay-store';
 import { QDAY_EXPLORER_URL, shortenAddress } from '@/lib/qday-constants';
@@ -25,9 +24,7 @@ import { QDAY_EXPLORER_URL, shortenAddress } from '@/lib/qday-constants';
 export default function DashboardPage() {
   const {
     wallet,
-    connectQDayWallet,
     isRegisteredShop,
-    registerShopOnChain,
     sales,
     shopStats,
     eligibility,
@@ -48,9 +45,6 @@ export default function DashboardPage() {
     openReceipt,
   } = useHanumPay();
 
-  const [shopNameInput, setShopNameInput] = useState('');
-  const [registering, setRegistering] = useState(false);
-  const [registerError, setRegisterError] = useState<string | null>(null);
   const [togglingPause, setTogglingPause] = useState(false);
   const [pauseError, setPauseError] = useState<string | null>(null);
 
@@ -61,19 +55,6 @@ export default function DashboardPage() {
       ? Math.min(100, Math.round((activeLoan.totalRepaidUSD8 / activeTotalDue) * 100))
       : 0;
   const balanceIdr = Math.round(shopAvailableTusd8 * 15800).toLocaleString('en-US');
-
-  async function handleRegisterShop(e: React.FormEvent) {
-    e.preventDefault();
-    setRegistering(true);
-    setRegisterError(null);
-    const res = await registerShopOnChain(shopNameInput, true);
-    setRegistering(false);
-    if (!res.ok) {
-      setRegisterError(res.error ?? 'Could not save your shop name. Please try again.');
-    } else {
-      setShopNameInput('');
-    }
-  }
 
   async function handleTogglePause() {
     setTogglingPause(true);
@@ -93,97 +74,38 @@ export default function DashboardPage() {
       headlineAccent="unlock credit."
       subtitle="See your shop balance, record QR payments, and check your working capital limit at a glance."
     >
-      {/* Disconnected State */}
+      {/* Step-by-Step Shop Onboarding Checklist (auto-shown whenever setup is incomplete) */}
+      <ShopOnboardingChecklist />
+
+      {/* Community Pool Snapshot when Disconnected */}
       {!wallet.connected && (
-        <div className="bg-white border border-[#E2E7E4] rounded-2xl p-6 sm:p-8 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-6">
-          <div className="space-y-3 max-w-xl">
-            <p className="text-xs font-semibold text-[#15803D]">Ready to start</p>
-            <h2 className="text-xl font-semibold tracking-[-0.02em] text-[#151619]">
-              Connect your account to view your live shop balance and credit limit
-            </h2>
-            <p className="text-sm text-[#5C6260] leading-relaxed">
-              Your numbers update directly from your live shop account with no pre-filled sample
-              data. Sign in with your browser wallet to register your shop or record real QR sales.
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="p-4 rounded-2xl bg-white border border-[#E2E7E4]">
+            <p className="text-xs text-[#636966]">Community Pool Liquidity</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#151619] mt-1">
+              ${poolDepositedUSD8.toFixed(2)}
             </p>
-            <div className="pt-1 flex flex-wrap items-center gap-3">
-              <button
-                type="button"
-                onClick={connectQDayWallet}
-                disabled={wallet.isConnecting}
-                className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors min-h-[44px] cursor-pointer whitespace-nowrap"
-              >
-                <Wallet className="w-4 h-4 text-[#9FE8C3]" />
-                <span>{wallet.isConnecting ? 'Connecting...' : 'Connect Account'}</span>
-              </button>
-              <Link
-                href="/stage"
-                className="inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium text-[#151619] bg-[#F7F8F9] hover:bg-[#E8FAF0] border border-[#E2E7E4] rounded-xl transition-colors min-h-[44px] whitespace-nowrap"
-              >
-                <span>Try 2-Phone Demo</span>
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
           </div>
-
-          <div className="w-full lg:w-auto lg:min-w-[300px] grid grid-cols-2 gap-3">
-            <div className="p-4 rounded-xl bg-[#F7F8F9] border border-[#E2E7E4]">
-              <p className="text-xs text-[#636966]">Community Pool</p>
-              <p className="text-lg font-semibold font-mono tabular-nums text-[#151619] mt-1">
-                ${poolDepositedUSD8.toFixed(2)}
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-[#F7F8F9] border border-[#E2E7E4]">
-              <p className="text-xs text-[#636966]">Available to Borrow</p>
-              <p className="text-lg font-semibold font-mono tabular-nums text-[#15803D] mt-1">
-                ${poolAvailableUSD8.toFixed(2)}
-              </p>
-            </div>
-            <div className="p-4 rounded-xl bg-[#F7F8F9] border border-[#E2E7E4] col-span-2 flex items-center justify-between">
-              <span className="text-xs text-[#636966]">Active Shop Loans</span>
-              <span className="font-mono text-sm font-semibold tabular-nums text-[#151619]">
-                {poolActiveLoanCount}
-              </span>
-            </div>
+          <div className="p-4 rounded-2xl bg-white border border-[#E2E7E4]">
+            <p className="text-xs text-[#636966]">Available to Borrow</p>
+            <p className="text-lg font-semibold font-mono tabular-nums text-[#15803D] mt-1">
+              ${poolAvailableUSD8.toFixed(2)}
+            </p>
           </div>
-        </div>
-      )}
-
-      {/* Connected Wallet but Unregistered Shop */}
-      {wallet.connected && !isRegisteredShop && (
-        <div className="bg-white border border-[#9FE8C3] rounded-2xl p-6 space-y-4">
-          <div className="flex items-start gap-3">
-            <Store className="w-5 h-5 text-[#15803D] shrink-0 mt-0.5" />
+          <div className="p-4 rounded-2xl bg-white border border-[#E2E7E4] flex items-center justify-between">
             <div>
-              <h2 className="text-base font-semibold text-[#151619]">
-                Name your shop to start accepting QR payments
-              </h2>
-              <p className="text-xs text-[#5C6260] mt-1">
-                Register your shop name once so customers can verify who they are paying and your
-                sales count toward your credit limit.
+              <p className="text-xs text-[#636966]">Active Shop Loans</p>
+              <p className="font-mono text-lg font-semibold tabular-nums text-[#151619] mt-1">
+                {poolActiveLoanCount}
               </p>
             </div>
-          </div>
-
-          <form onSubmit={handleRegisterShop} className="flex flex-col sm:flex-row gap-3">
-            <input
-              type="text"
-              value={shopNameInput}
-              onChange={(e) => setShopNameInput(e.target.value)}
-              placeholder="Enter your shop name (e.g. Toko Berkah)"
-              maxLength={64}
-              required
-              className="flex-1 px-3.5 py-2.5 bg-[#F7F8F9] border border-[#E2E7E4] rounded-xl text-sm text-[#151619] focus:outline-none focus:ring-2 focus:ring-[#151619] min-h-[44px]"
-            />
-            <button
-              type="submit"
-              disabled={registering}
-              className="px-5 py-2.5 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors whitespace-nowrap min-h-[44px] disabled:opacity-60 cursor-pointer"
+            <Link
+              href="/stage"
+              className="text-xs font-semibold text-[#15803D] hover:underline whitespace-nowrap"
             >
-              {registering ? 'Saving Shop...' : 'Save Shop Name'}
-            </button>
-          </form>
-
-          {registerError && <p className="text-xs text-[#DC2626] font-medium">{registerError}</p>}
+              2-Phone Demo →
+            </Link>
+          </div>
         </div>
       )}
 
@@ -261,6 +183,16 @@ export default function DashboardPage() {
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <Link
+              href="/kasir"
+              className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#E8FAF0] border border-[#9FE8C3] hover:bg-[#9FE8C3]/40 transition-colors min-h-[88px]"
+            >
+              <Smartphone className="w-5 h-5 text-[#15803D]" />
+              <span className="text-xs font-semibold text-[#151619] mt-2 whitespace-nowrap">
+                Mobile Cashier
+              </span>
+            </Link>
+
+            <Link
               href="/app/penjualan"
               className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F7F8F9] border border-[#E2E7E4] hover:border-[#15803D]/40 hover:bg-[#E8FAF0]/70 transition-colors min-h-[88px]"
             >
@@ -277,16 +209,6 @@ export default function DashboardPage() {
               <Truck className="w-5 h-5 text-[#151619]" />
               <span className="text-xs font-semibold text-[#151619] mt-2 whitespace-nowrap">
                 Pay Supplier
-              </span>
-            </Link>
-
-            <Link
-              href="/app/pinjaman"
-              className="flex flex-col items-center justify-center p-3 rounded-xl bg-[#F7F8F9] border border-[#E2E7E4] hover:border-[#15803D]/40 hover:bg-[#E8FAF0]/70 transition-colors min-h-[88px]"
-            >
-              <FileCheck2 className="w-5 h-5 text-[#151619]" />
-              <span className="text-xs font-semibold text-[#151619] mt-2 whitespace-nowrap">
-                Working Capital
               </span>
             </Link>
 

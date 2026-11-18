@@ -74,6 +74,22 @@ export const ACCEPT_LOAN_TYPES = {
   ],
 } as const;
 
+export const TUSD8_CONTRACT = {
+  address: '0x456569838f1d43009A91ebA4263147Afd7233483' as `0x${string}`,
+  decimals: 6,
+  symbol: 'tUSD8',
+  chainId: QDAY_CHAIN_ID,
+};
+
+export function fromTusd8Raw(raw: bigint): number {
+  return Number(raw) / 1_000_000;
+}
+
+export const ERC20_ABI = parseAbi([
+  'function balanceOf(address owner) view returns (uint256)',
+  'function transfer(address to, uint256 amount) returns (bool)',
+]);
+
 export const HANUMPAY_ABIS = {
   salesLedger: parseAbi([
     'function recordSale(address shop, uint256 amountUSD8, bytes32 customerId, uint256 deadline, bytes signature) external',

@@ -27,6 +27,7 @@ const NAV_GROUPS = [
     label: 'My Shop',
     items: [
       { href: '/app/dashboard', label: 'Home', icon: LayoutDashboard },
+      { href: '/kasir', label: 'Mobile Cashier', icon: Smartphone },
       { href: '/app/penjualan', label: 'Accept Payment', icon: QrCode },
       { href: '/app/pinjaman', label: 'Working Capital', icon: FileCheck2 },
     ],
@@ -49,7 +50,7 @@ const NAV_GROUPS = [
 
 const MOBILE_TABS = [
   { href: '/app/dashboard', label: 'Home', icon: LayoutDashboard },
-  { href: '/app/penjualan', label: 'Sell', icon: QrCode },
+  { href: '/kasir', label: 'Cashier', icon: Smartphone },
   { href: '/app/pinjaman', label: 'Credit', icon: FileCheck2 },
   { href: '/app/identitas', label: 'Pay', icon: ShieldCheck },
 ];

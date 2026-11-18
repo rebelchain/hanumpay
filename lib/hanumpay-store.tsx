@@ -23,6 +23,7 @@ import {
   LoanRecord,
   LoanStatus,
   PoolEvent,
+  QrisSettlementInfo,
   SaleRecord,
   SupplierPayment,
   VerifiableReceipt,
@@ -92,7 +93,13 @@ interface HanumPayContextValue {
   recordSale: (
     amountUSD8: number,
     customerIdRaw: string
-  ) => Promise<{ ok: boolean; repaidAmount: number; receipt?: VerifiableReceipt; error?: string }>;
+  ) => Promise<{
+    ok: boolean;
+    repaidAmount: number;
+    receipt?: VerifiableReceipt;
+    qrisSettlement?: QrisSettlementInfo;
+    error?: string;
+  }>;
 
   // Loans & AI Agent
   loans: LoanRecord[];
@@ -143,9 +150,13 @@ interface HanumPayContextValue {
   openReceipt: (receipt: VerifiableReceipt) => void;
   closeReceipt: () => void;
 
-  // Real QDay Wallet
+  // Real QDay Wallet & Onboarding Helpers
   wallet: WalletState;
   connectQDayWallet: () => Promise<void>;
+  switchToQDayNetwork: () => Promise<{ ok: boolean; error?: string }>;
+  approveLoanPoolAutoRepay: (
+    amountUSD8?: number
+  ) => Promise<{ ok: boolean; txHash?: string; error?: string }>;
   refreshWalletBalances: () => Promise<void>;
   disconnectWallet: () => void;
 }
@@ -1170,6 +1181,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
           ok?: boolean;
           mode?: string;
           txHash?: string | null;
+          qrisSettlement?: QrisSettlementInfo;
           error?: string;
         };
         if (!relayRes.ok || !relayData.txHash) {
@@ -1194,6 +1206,13 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
           );
         }
 
+        const qrisInfo = relayData.qrisSettlement;
+        const settlementNote = qrisInfo?.simulated
+          ? `QRIS Rupiah payment settled $${amountUSD8.toFixed(2)} tUSD8 to shop wallet${
+              estimatedRepaid > 0 ? ` (-$${estimatedRepaid.toFixed(2)} auto-repaid to pool)` : ''
+            }`
+          : 'Sale saved on QDay SalesLedger (relayer test reserve empty; skipped tUSD8 gateway top-up)';
+
         const newReceipt: VerifiableReceipt = {
           id: `rcpt-sale-${Date.now()}`,
           kind: 'sale',
@@ -1208,12 +1227,17 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
           txHash: relayData.txHash,
           relayMode: relayData.mode ?? 'qday-onchain-relay',
           timestamp: Date.now(),
-          note: 'Settled live on QDay SalesLedger via gasless EIP-712 relayer',
+          note: settlementNote,
         };
         setReceipts((prev) => [newReceipt, ...prev]);
 
         await syncOnChain();
-        return { ok: true, repaidAmount: estimatedRepaid, receipt: newReceipt };
+        return {
+          ok: true,
+          repaidAmount: estimatedRepaid,
+          receipt: newReceipt,
+          qrisSettlement: qrisInfo,
+        };
       } catch (err) {
         return {
           ok: false,
@@ -1718,6 +1742,51 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
+  const switchToQDayNetwork = useCallback(async () => {
+    const provider = getInjectedProvider();
+    if (!provider) {
+      return { ok: false, error: 'No browser Web3 wallet detected.' };
+    }
+    try {
+      await addOrSwitchQDayNetwork(provider);
+      setWallet((prev) => ({ ...prev, chainId: QDAY_CHAIN_ID, error: null }));
+      return { ok: true };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : 'Could not switch to QDay Aevum network.',
+      };
+    }
+  }, []);
+
+  const approveLoanPoolAutoRepay = useCallback(
+    async (amountUSD8 = 10000) => {
+      if (!wallet.connected || !wallet.address) {
+        return { ok: false, error: 'Connect your browser wallet first.' };
+      }
+      try {
+        const [{ parseUnits }, qday] = await Promise.all([import('viem'), import('./qday')]);
+        const rawAmount = parseUnits(amountUSD8.toFixed(6), TUSD8_CONTRACT.decimals);
+        const txHash = await qday.sendWalletWriteContract({
+          account: wallet.address,
+          address: TUSD8_CONTRACT.address,
+          abi: qday.ERC20_ABI,
+          functionName: 'approve',
+          args: [DEPLOYED_CONTRACTS.loanPool, rawAmount],
+        });
+        await refreshWalletBalances();
+        return { ok: true, txHash };
+      } catch (err) {
+        return {
+          ok: false,
+          error:
+            err instanceof Error ? err.message : 'Auto-repay permission transaction failed.',
+        };
+      }
+    },
+    [refreshWalletBalances, wallet.address, wallet.connected]
+  );
+
   const disconnectWallet = useCallback(() => {
     setWallet({
       connected: false,
@@ -1784,6 +1853,8 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     closeReceipt,
     wallet,
     connectQDayWallet,
+    switchToQDayNetwork,
+    approveLoanPoolAutoRepay,
     refreshWalletBalances,
     disconnectWallet,
   };

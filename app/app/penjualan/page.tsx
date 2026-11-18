@@ -1,11 +1,14 @@
 'use client';
 
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import {
+  ArrowRight,
   CheckCircle2,
   ExternalLink,
   QrCode,
   Receipt,
+  Smartphone,
   Store,
   Wallet,
   Zap,
@@ -88,14 +91,18 @@ export default function RecordSalePage() {
       return;
     }
 
+    const settledTag = res.qrisSettlement?.simulated
+      ? 'QRIS settled funds to your shop wallet'
+      : 'Recorded on QDay ledger (relayer test reserve empty)';
+
     setFeedback({
       type: 'ok',
       text:
         res.repaidAmount > 0
-          ? `Sale saved! $${res.repaidAmount.toFixed(2)} went toward Loan #${activeLoan?.id}, and $${(
-              parsedAmount - res.repaidAmount
-            ).toFixed(2)} is yours.`
-          : `$${parsedAmount.toFixed(2)} sale saved with zero fees for your shop.`,
+          ? `${settledTag}! $${res.repaidAmount.toFixed(2)} went toward Loan #${
+              activeLoan?.id
+            }, and $${(parsedAmount - res.repaidAmount).toFixed(2)} net stays with you.`
+          : `${settledTag} — $${parsedAmount.toFixed(2)} saved with zero shop fees.`,
       receipt: res.receipt,
     });
     setCustomerInput(
@@ -123,6 +130,22 @@ export default function RecordSalePage() {
       headlineAccent="build credit."
       subtitle="Enter the customer payment below. Zero transaction fees for your shop, and every sale counts toward your credit limit."
     >
+      <div className="bg-[#E8FAF0] border border-[#9FE8C3] rounded-2xl p-4 sm:px-6 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <Smartphone className="w-5 h-5 text-[#15803D] shrink-0" />
+          <p className="text-xs sm:text-sm font-medium text-[#151619]">
+            Prefer a clean phone keypad for busy shop counters?
+          </p>
+        </div>
+        <Link
+          href="/kasir"
+          className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors whitespace-nowrap shrink-0 min-h-[40px]"
+        >
+          <span>Open Mobile Cashier</span>
+          <ArrowRight className="w-3.5 h-3.5 text-[#9FE8C3]" />
+        </Link>
+      </div>
+
       <div className="grid lg:grid-cols-12 gap-6 items-start">
         {/* Left: Everyday Cashier Form */}
         <div className="lg:col-span-7 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
