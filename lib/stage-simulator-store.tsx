@@ -56,7 +56,7 @@ const SIM_IDENTITIES: ERC8004Identity[] = [
     wallet: SIM_AGENT_ADDRESS,
     category: 'agent',
     metadata: {
-      agentModel: 'Automated AIGuarantor + Gemini Audit',
+      agentModel: 'Behavioral Underwriter + Contract Guardrails',
       reputationScore: 99,
       completedTxCount: 412,
       validationMethod: 'ERC-8004 AgentCard + Contract Guardrails',
@@ -94,19 +94,9 @@ const SIM_IDENTITIES: ERC8004Identity[] = [
   },
 ];
 
+// Starts with 4 verified buyers across 34 days so the judge triggers the 5th QR customer sale
+// in Step 1 and immediately sees the contract Sybil gate (4/5 -> 5/5) unlock Step 2.
 const SIM_SALES: SaleRecord[] = [
-  {
-    id: 'sim-sale-108',
-    shop: SIM_SHOP_ADDRESS,
-    amountUSD8: 24.5,
-    customerIdHash: hashCustomerId('0812-8841'),
-    customerLabel: 'Customer #8841',
-    timestamp: NOW - 2 * 3600 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 24.5,
-    eip712Signature: '0x4b12e9...sandbox',
-    txHash: simProofHash('sim-sale-108'),
-  },
   {
     id: 'sim-sale-107',
     shop: SIM_SHOP_ADDRESS,
@@ -157,31 +147,18 @@ const SIM_SALES: SaleRecord[] = [
   },
 ];
 
-const SIM_LOANS: LoanRecord[] = [
-  {
-    id: 42,
-    shop: SIM_SHOP_ADDRESS,
-    principalUSD8: 125.0,
-    flatFeeUSD8: 6.25,
-    repayPctBps: 1000,
-    totalRepaidUSD8: 0,
-    proposedAt: NOW - 3 * 3600 * 1000,
-    expiresAt: NOW + 45 * 3600 * 1000,
-    status: 'Proposed',
-    agentName: 'HanumPay-AI-Guarantor-v1',
-    aiExplanation:
-      'Verified 5 unique buyers over 30 days totaling 1,250.00 tUSD8 in simulated QR sales. 10% working-capital limit = 125.00 tUSD8 at an immutable 5% flat fee (6.25 tUSD8).',
-  },
-];
+const SIM_LOANS: LoanRecord[] = [];
 
 interface StageSimulatorContextValue {
   activeShopName: string;
   activeShopAddress: `0x${string}`;
   shopAvailableTusd8: number;
+  sales: SaleRecord[];
   shopStats: ShopStatsSnapshot;
   eligibility: EligibilityCheckResult;
   proposedLoan: LoanRecord | null;
   activeLoan: LoanRecord | null;
+  lastRepaidLoan: LoanRecord | null;
   agentPaused: boolean;
   setAgentPausedState: (paused: boolean) => void;
   toggleAgentPaused: () => void;
@@ -189,7 +166,10 @@ interface StageSimulatorContextValue {
     amountUSD8: number,
     customerIdRaw: string
   ) => { ok: boolean; repaidAmount: number; receipt?: VerifiableReceipt; error?: string };
-  runAgentCycle: () => { ok: boolean; message: string };
+  runAgentCycle: (opts?: {
+    recommendedPrincipalUSD8?: number;
+    aiExplanation?: string;
+  }) => { ok: boolean; message: string; loan?: LoanRecord };
   acceptLoanProposal: (
     loanId: number
   ) => { ok: boolean; receipt?: VerifiableReceipt; error?: string };
@@ -199,6 +179,7 @@ interface StageSimulatorContextValue {
     amountUSD8: number,
     itemNote: string
   ) => { ok: boolean; receipt?: VerifiableReceipt; error?: string };
+  fastForwardLoanRepayment: () => { ok: boolean; passport?: CreditPassportRecord; error?: string };
   receipts: VerifiableReceipt[];
   activeReceipt: VerifiableReceipt | null;
   openReceipt: (receipt: VerifiableReceipt) => void;
@@ -215,7 +196,7 @@ const StageSimulatorContext = createContext<StageSimulatorContextValue | null>(n
 export function StageSimulatorProvider({ children }: { children: React.ReactNode }) {
   const [sales, setSales] = useState<SaleRecord[]>(SIM_SALES);
   const [loans, setLoans] = useState<LoanRecord[]>(SIM_LOANS);
-  const [proposalsToday, setProposalsToday] = useState<number>(1);
+  const [proposalsToday, setProposalsToday] = useState<number>(0);
   const [poolDepositedUSD8, setPoolDepositedUSD8] = useState<number>(12400);
   const [poolLoanedUSD8, setPoolLoanedUSD8] = useState<number>(3640);
   const [poolEvents, setPoolEvents] = useState<PoolEvent[]>([]);
@@ -252,6 +233,10 @@ export function StageSimulatorProvider({ children }: { children: React.ReactNode
   );
   const activeLoan = useMemo(
     () => loans.find((l) => l.status === 'Active') ?? null,
+    [loans]
+  );
+  const lastRepaidLoan = useMemo(
+    () => loans.find((l) => l.status === 'Repaid') ?? null,
     [loans]
   );
 
@@ -366,7 +351,7 @@ export function StageSimulatorProvider({ children }: { children: React.ReactNode
               shopAddress: SIM_SHOP_ADDRESS,
               principalUSD8: activeLoan.principalUSD8,
               flatFeeUSD8: activeLoan.flatFeeUSD8,
-              daysToRepay: 1,
+              daysToRepay: 12,
               newCreditLimitUSD8: nextLimit,
               txHash: simProofHash(`sim-passport-${activeLoan.id}`),
               timestamp: Date.now(),
@@ -407,8 +392,8 @@ export function StageSimulatorProvider({ children }: { children: React.ReactNode
         timestamp: newSale.timestamp,
         note:
           repaidDeducted > 0
-            ? `10% auto-repayment deducted (${repaidDeducted.toFixed(2)} tUSD8)`
-            : 'Simulated EIP-712 QR checkout receipt',
+            ? `90% to Shop (${netToShop.toFixed(2)} tUSD8) · 10% auto-repaid (${repaidDeducted.toFixed(2)} tUSD8)`
+            : '100% settled to Shop (no active loan) · gasless EIP-712 proof',
       };
 
       setSales((prev) => [newSale, ...prev]);
@@ -419,34 +404,47 @@ export function StageSimulatorProvider({ children }: { children: React.ReactNode
     [activeLoan, activeShopName, shopStats.totalSales30dUSD8]
   );
 
-  const runAgentCycle = useCallback(() => {
-    if (!eligibility.eligible) {
-      return { ok: false, message: `Simulator AI skipped: ${eligibility.reason}` };
-    }
-    const nextId = Math.max(42, ...loans.map((l) => l.id)) + 1;
-    const now = Date.now();
-    setLoans((prev) => [
-      {
+  const runAgentCycle = useCallback(
+    (opts?: { recommendedPrincipalUSD8?: number; aiExplanation?: string }) => {
+      if (!eligibility.eligible) {
+        return { ok: false, message: eligibility.reason };
+      }
+      const nextId = Math.max(41, ...loans.map((l) => l.id)) + 1;
+      const now = Date.now();
+      const boundedPrincipal =
+        typeof opts?.recommendedPrincipalUSD8 === 'number' &&
+        opts.recommendedPrincipalUSD8 >= CONTRACT_LIMITS.MIN_LOAN_USD8 &&
+        opts.recommendedPrincipalUSD8 <= eligibility.proposedPrincipalUSD8
+          ? Math.floor(opts.recommendedPrincipalUSD8 * 100) / 100
+          : eligibility.proposedPrincipalUSD8;
+      const flatFee = Math.round(boundedPrincipal * (CONTRACT_LIMITS.FLAT_FEE_BPS / 10000) * 100) / 100;
+
+      const createdLoan: LoanRecord = {
         id: nextId,
         shop: SIM_SHOP_ADDRESS,
-        principalUSD8: eligibility.proposedPrincipalUSD8,
-        flatFeeUSD8: eligibility.proposedFlatFeeUSD8,
+        principalUSD8: boundedPrincipal,
+        flatFeeUSD8: flatFee,
         repayPctBps: eligibility.proposedRepayPctBps,
         totalRepaidUSD8: 0,
         proposedAt: now,
         expiresAt: now + 48 * 3600 * 1000,
         status: 'Proposed',
         agentName: 'HanumPay-AI-Guarantor-v1',
-        aiExplanation: `Simulated check passed (${shopStats.uniqueCustomers30d} unique buyers, $${shopStats.totalSales30dUSD8.toFixed(2)} 30d sales).`,
-      },
-      ...prev,
-    ]);
-    setProposalsToday((p) => p + 1);
-    return {
-      ok: true,
-      message: `Simulator Proposal #${nextId} created for $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
-    };
-  }, [eligibility, loans, shopStats.totalSales30dUSD8, shopStats.uniqueCustomers30d]);
+        aiExplanation:
+          opts?.aiExplanation ||
+          `Behavioral scan cleared ${shopStats.uniqueCustomers30d} distinct buyers ($${shopStats.totalSales30dUSD8.toFixed(2)} 30d sales). Proposed $${boundedPrincipal.toFixed(2)} tUSD8 within 10% Solidity ceiling; 5% flat fee ($${flatFee.toFixed(2)}).`,
+      };
+
+      setLoans((prev) => [createdLoan, ...prev]);
+      setProposalsToday((p) => p + 1);
+      return {
+        ok: true,
+        loan: createdLoan,
+        message: `Proposal #${nextId} issued for ${boundedPrincipal.toFixed(2)} tUSD8 (5% flat fee: ${flatFee.toFixed(2)} tUSD8).`,
+      };
+    },
+    [eligibility, loans, shopStats.totalSales30dUSD8, shopStats.uniqueCustomers30d]
+  );
 
   const acceptLoanProposal = useCallback(
     (loanId: number) => {
@@ -542,10 +540,60 @@ export function StageSimulatorProvider({ children }: { children: React.ReactNode
     [shopAvailableTusd8]
   );
 
+  const fastForwardLoanRepayment = useCallback(() => {
+    if (!activeLoan) {
+      return { ok: false, error: 'No active working capital facility to settle.' };
+    }
+    const totalDue = activeLoan.principalUSD8 + activeLoan.flatFeeUSD8;
+    const remainingRepay = Math.max(0, Math.round((totalDue - activeLoan.totalRepaidUSD8) * 100) / 100);
+    // Required gross QR sales so 10% equals remainingRepay
+    const batchGrossSales = Math.round(remainingRepay * 10 * 100) / 100;
+    const batchNetToShop = Math.round((batchGrossSales - remainingRepay) * 100) / 100;
+
+    setLoans((prev) =>
+      prev.map((l) =>
+        l.id === activeLoan.id ? { ...l, totalRepaidUSD8: totalDue, status: 'Repaid', repaidAt: Date.now() } : l
+      )
+    );
+    setPoolLoanedUSD8((prev) => Math.max(0, prev - remainingRepay));
+    setShopAvailableTusd8((prev) => Math.round((prev + batchNetToShop) * 100) / 100);
+
+    const nextLimit = Math.min(
+      CONTRACT_LIMITS.MAX_LOAN_USD8,
+      Math.round((shopStats.totalSales30dUSD8 + batchGrossSales) * 0.1 * 100) / 100
+    );
+
+    const passport: CreditPassportRecord = {
+      loanId: activeLoan.id,
+      shopName: activeShopName,
+      shopAddress: SIM_SHOP_ADDRESS,
+      principalUSD8: activeLoan.principalUSD8,
+      flatFeeUSD8: activeLoan.flatFeeUSD8,
+      daysToRepay: 14,
+      newCreditLimitUSD8: nextLimit,
+      txHash: simProofHash(`sim-passport-${activeLoan.id}-${Date.now()}`),
+      timestamp: Date.now(),
+    };
+    setCreditPassports((prev) => [passport, ...prev]);
+    setPoolEvents((prev) => [
+      {
+        id: `sim-pe-batch-${Date.now()}`,
+        type: 'RepaymentReceived',
+        actor: activeShopName,
+        amountUSD8: remainingRepay,
+        timestamp: Date.now(),
+        txHash: passport.txHash,
+      },
+      ...prev,
+    ]);
+
+    return { ok: true, passport };
+  }, [activeLoan, activeShopName, shopStats.totalSales30dUSD8]);
+
   const resetStageDemo = useCallback(() => {
     setSales(SIM_SALES);
     setLoans(SIM_LOANS);
-    setProposalsToday(1);
+    setProposalsToday(0);
     setPoolDepositedUSD8(12400);
     setPoolLoanedUSD8(3640);
     setPoolEvents([]);
@@ -561,10 +609,12 @@ export function StageSimulatorProvider({ children }: { children: React.ReactNode
     activeShopName,
     activeShopAddress: SIM_SHOP_ADDRESS,
     shopAvailableTusd8,
+    sales,
     shopStats,
     eligibility,
     proposedLoan,
     activeLoan,
+    lastRepaidLoan,
     agentPaused,
     setAgentPausedState,
     toggleAgentPaused,
@@ -573,6 +623,7 @@ export function StageSimulatorProvider({ children }: { children: React.ReactNode
     acceptLoanProposal,
     rejectLoanProposal,
     payVerifiedSupplier,
+    fastForwardLoanRepayment,
     receipts,
     activeReceipt,
     openReceipt,
