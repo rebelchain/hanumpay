@@ -56,48 +56,48 @@ export function checkShopEligibility(stats: ShopStatsSnapshot): EligibilityCheck
 
   const checks = [
     {
-      label: 'Merchant AI Guarantor permission active',
+      label: 'Credit offers enabled for your shop',
       passed: !stats.agentPaused,
       detail: stats.agentPaused ? 'Paused by shop owner' : 'Active',
     },
     {
-      label: 'No active or pending loan',
+      label: 'No other loan currently active',
       passed: !stats.hasActiveOrProposedLoan,
-      detail: stats.hasActiveOrProposedLoan ? 'Existing loan must finish first' : 'Clear',
+      detail: stats.hasActiveOrProposedLoan ? 'Finish current plan first' : 'Clear',
     },
     {
-      label: '30-day cooldown satisfied',
+      label: 'Waiting period between loans',
       passed: !stats.inCooldown,
       detail: stats.inCooldown
-        ? `${stats.cooldownDaysRemaining} days remaining`
-        : 'Not in cooldown',
+        ? `${stats.cooldownDaysRemaining} days left`
+        : 'Ready',
     },
     {
-      label: `At least ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} unique buyers (30d)`,
+      label: `At least ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} different customers (30d)`,
       passed: stats.uniqueCustomers30d >= CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS,
-      detail: `${stats.uniqueCustomers30d} / ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} unique buyers`,
+      detail: `${stats.uniqueCustomers30d} / ${CONTRACT_LIMITS.MIN_UNIQUE_CUSTOMERS} customers`,
     },
     {
-      label: `Minimum ${CONTRACT_LIMITS.MIN_SALES_DAYS}-day sales history`,
+      label: `At least ${CONTRACT_LIMITS.MIN_SALES_DAYS} days of sales history`,
       passed: stats.salesHistoryDays >= CONTRACT_LIMITS.MIN_SALES_DAYS,
       detail: `${stats.salesHistoryDays} / ${CONTRACT_LIMITS.MIN_SALES_DAYS} days`,
     },
     {
-      label: `Daily proposal cap (< ${CONTRACT_LIMITS.MAX_DAILY_PROPOSALS}/day)`,
+      label: `Daily offer limit (max ${CONTRACT_LIMITS.MAX_DAILY_PROPOSALS}/day)`,
       passed: stats.proposalsToday < CONTRACT_LIMITS.MAX_DAILY_PROPOSALS,
       detail: `${stats.proposalsToday} / ${CONTRACT_LIMITS.MAX_DAILY_PROPOSALS} used today`,
     },
     {
-      label: 'Pool utilization below 80% cap',
+      label: 'Community pool cash reserve healthy',
       passed: stats.poolUtilizationBps < CONTRACT_LIMITS.MAX_POOL_EXPOSURE_BPS,
       detail: `${(stats.poolUtilizationBps / 100).toFixed(1)}% / 80.0%`,
     },
     {
-      label: 'Loan principal between $5–$500 tUSD8 & liquidity available',
+      label: 'Offer amount ($5–$500) & pool funds ready',
       passed:
         roundedPrincipal >= CONTRACT_LIMITS.MIN_LOAN_USD8 &&
         roundedPrincipal <= stats.poolAvailableUSD8,
-      detail: `$${roundedPrincipal.toFixed(2)} tUSD8 (Pool available: $${stats.poolAvailableUSD8.toFixed(2)})`,
+      detail: `$${roundedPrincipal.toFixed(2)} limit (Pool ready: $${stats.poolAvailableUSD8.toFixed(2)})`,
     },
   ];
 

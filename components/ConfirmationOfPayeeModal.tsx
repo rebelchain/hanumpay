@@ -2,8 +2,9 @@
 
 import React from 'react';
 import { CheckCircle2, ShieldCheck, X } from 'lucide-react';
+import TechnicalDetailsToggle from '@/components/TechnicalDetailsToggle';
 import { ERC8004Identity } from '@/lib/hanumpay-types';
-import { QDAY_EXPLORER_URL } from '@/lib/qday-constants';
+import { QDAY_EXPLORER_URL, shortenAddress } from '@/lib/qday-constants';
 
 export default function ConfirmationOfPayeeModal({
   open,
@@ -30,22 +31,23 @@ export default function ConfirmationOfPayeeModal({
 
   const categoryLabel =
     entity.category === 'shop'
-      ? 'Merchant / Shop'
+      ? 'Shop / Merchant'
       : entity.category === 'supplier'
         ? 'Verified Supplier'
         : entity.category === 'lender'
-          ? 'Liquidity Provider'
-          : 'AI Agent';
+          ? 'Community Lender'
+          : 'Credit Helper';
+
+  const idrApprox = Math.round(amountUSD8 * 15800).toLocaleString('en-US');
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[#151619]/45 backdrop-blur-xs"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4 bg-[#151619]/50 backdrop-blur-xs"
       role="dialog"
       aria-modal="true"
       aria-labelledby="cop-modal-title"
     >
-      <div className="w-full sm:max-w-lg bg-white border border-[#E2E7E4] rounded-t-3xl sm:rounded-2xl overflow-hidden max-h-[90vh] flex flex-col shadow-[0_24px_64px_rgb(21_22_25/0.16)]">
-        {/* Mobile Bottom-Sheet Drag Handle */}
+      <div className="w-full sm:max-w-lg bg-white border border-[#E2E7E4] rounded-t-3xl sm:rounded-2xl overflow-hidden max-h-[90vh] flex flex-col shadow-[0_24px_64px_rgb(21_22_25/0.18)]">
         <div className="sm:hidden pt-3 pb-1 flex justify-center">
           <div className="w-10 h-1.5 bg-[#E2E7E4] rounded-full" />
         </div>
@@ -61,53 +63,43 @@ export default function ConfirmationOfPayeeModal({
             type="button"
             onClick={onClose}
             className="p-2 text-[#636966] hover:text-[#151619] rounded-lg min-h-[44px] min-w-[44px] flex items-center justify-center cursor-pointer"
-            aria-label="Close verification modal"
+            aria-label="Close confirmation modal"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         <div className="p-6 space-y-5 overflow-y-auto">
-          <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-2.5">
+          <div className="p-4 rounded-xl bg-[#151619] text-white space-y-2">
             <div className="flex items-center justify-between gap-3">
-              <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#636966]">
-                ERC-8004 Confirmation of Payee
-              </span>
-              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#15803D] whitespace-nowrap">
+              <span className="text-xs text-white/65">Recipient Check</span>
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#9FE8C3] whitespace-nowrap">
                 <CheckCircle2 className="w-3.5 h-3.5" />
-                <span>Verified On-Chain</span>
+                <span>Verified Business</span>
               </span>
             </div>
 
             <div>
-              <p className="text-base font-semibold text-[#151619]">{entity.name}</p>
-              <p className="text-xs font-mono text-[#5C6260] break-all mt-0.5">{entity.wallet}</p>
-            </div>
-
-            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#5C6260] pt-1">
-              <span>Role: {categoryLabel}</span>
-              <span aria-hidden="true">·</span>
-              <span className="font-mono tabular-nums">
-                Reputation: {entity.metadata.reputationScore}/100
-              </span>
-              <span aria-hidden="true">·</span>
-              <a
-                href={`${QDAY_EXPLORER_URL}/address/${entity.wallet}`}
-                target="_blank"
-                rel="noreferrer"
-                className="font-medium text-[#15803D] underline decoration-[#15803D]/35 underline-offset-4 hover:decoration-[#15803D]"
-              >
-                View on QDay Explorer
-              </a>
+              <p className="text-lg font-semibold text-white">{entity.name}</p>
+              <p className="text-xs text-white/70 mt-0.5">
+                {categoryLabel}
+                {entity.metadata.city ? ` · ${entity.metadata.city}` : ''}
+                {` · Trust Score ${entity.metadata.reputationScore}/100`}
+              </p>
             </div>
           </div>
 
           <div className="space-y-2.5">
-            <div className="flex items-center justify-between py-2 border-b border-[#E2E7E4]">
-              <span className="text-sm text-[#5C6260]">Transaction Amount</span>
-              <span className="text-lg font-semibold font-mono tabular-nums text-[#151619]">
-                {amountUSD8.toFixed(2)} tUSD8
-              </span>
+            <div className="flex items-center justify-between py-2.5 border-b border-[#E2E7E4]">
+              <span className="text-sm text-[#5C6260]">Total Amount</span>
+              <div className="text-right">
+                <span className="text-lg font-semibold font-mono tabular-nums text-[#151619] block">
+                  ${amountUSD8.toFixed(2)} USD
+                </span>
+                <span className="text-xs font-mono tabular-nums text-[#636966]">
+                  ≈ Rp {idrApprox} IDR
+                </span>
+              </div>
             </div>
 
             {summaryRows.map((row) => (
@@ -120,13 +112,26 @@ export default function ConfirmationOfPayeeModal({
             ))}
           </div>
 
-          <p className="text-xs text-[#636966]">
-            Terms are fetched directly from the smart contract and cannot be altered after approval.
-            EIP-712 signatures require zero tQDAY gas from the merchant.
+          <p className="text-xs text-[#5C6260] leading-relaxed">
+            This recipient is verified in our business directory so your money goes to the right
+            account. Terms are locked once confirmed.
           </p>
+
+          <TechnicalDetailsToggle
+            label="Technical Details"
+            items={[
+              { label: 'Registry', value: 'ERC8004Registry (QDay)' },
+              {
+                label: 'Destination Wallet',
+                value: shortenAddress(entity.wallet),
+                href: `${QDAY_EXPLORER_URL}/address/${entity.wallet}`,
+              },
+              { label: 'Settlement Token', value: 'tUSD8 (6 decimals)' },
+            ]}
+          />
         </div>
 
-        <div className="px-6 py-4 bg-[#F5F7F5] border-t border-[#E2E7E4] flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-3">
+        <div className="px-6 py-4 bg-[#F7F8F9] border-t border-[#E2E7E4] flex flex-col-reverse sm:flex-row sm:items-center justify-end gap-3">
           <button
             type="button"
             onClick={onClose}
@@ -140,7 +145,7 @@ export default function ConfirmationOfPayeeModal({
             onClick={onConfirm}
             className="w-full sm:w-auto px-5 py-3 sm:py-2.5 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors min-h-[48px] sm:min-h-[44px] disabled:opacity-60 cursor-pointer"
           >
-            {isSubmitting ? 'Submitting EIP-712...' : actionLabel}
+            {isSubmitting ? 'Confirming...' : actionLabel}
           </button>
         </div>
       </div>

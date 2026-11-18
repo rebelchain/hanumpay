@@ -261,8 +261,11 @@ export default function DocsAndContractsPage() {
 
   return (
     <AppShell
-      title="GitBook Docs & Contracts"
-      subtitle="Interactive QDay Aevum documentation, readiness verification, rendered protocol blueprints, and Solidity source."
+      group="Tools & Guides"
+      title="Guides & Tech"
+      headlineLead="Clear answers,"
+      headlineAccent="open proof."
+      subtitle="Check your wallet setup readiness, explore step-by-step guides, or inspect the underlying smart contracts."
     >
       <div className="flex flex-col lg:flex-row gap-6 items-start">
         {/* Left GitBook Table of Contents Sidebar */}

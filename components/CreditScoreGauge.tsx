@@ -21,16 +21,16 @@ export default function CreditScoreGauge({
   const strokeColor =
     clamped >= 70 ? '#15803D' : clamped >= 40 ? '#B45309' : '#DC2626';
   const statusText =
-    clamped >= 70 ? 'Highly Eligible' : clamped >= 40 ? 'Building History' : 'Insufficient Data';
+    clamped >= 70 ? 'Ready for Credit' : clamped >= 40 ? 'Growing Sales' : 'Just Starting';
 
-  const badgeLabel =
+  const stateText =
     loanStatus === 'offer_ready'
       ? 'Offer Ready'
       : loanStatus === 'active_loan'
-        ? 'Active Credit'
+        ? 'Active Plan'
         : eligible
           ? 'Eligible'
-          : 'Not Yet Met';
+          : 'Building History';
 
   // Semicircle path math (radius 76, arc length = pi * 76 ≈ 238.76)
   const radius = 76;
@@ -42,20 +42,18 @@ export default function CreditScoreGauge({
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="text-base font-semibold tracking-[-0.015em] text-[#151619]">
-            On-Chain Eligibility Score
+            Credit Readiness
           </h2>
           <p className="text-xs text-[#5C6260] mt-0.5">
-            Calculated deterministically from 30-day QR sales history
+            Grows automatically from your last 30 days of QR sales
           </p>
         </div>
         <span
-          className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap shrink-0 ${
-            isPositiveState
-              ? 'bg-[#E8FAF0] text-[#15803D]'
-              : 'bg-amber-50 text-[#B45309]'
+          className={`text-xs font-semibold whitespace-nowrap shrink-0 ${
+            isPositiveState ? 'text-[#15803D]' : 'text-[#B45309]'
           }`}
         >
-          {badgeLabel}
+          {stateText}
         </span>
       </div>
 
@@ -64,7 +62,7 @@ export default function CreditScoreGauge({
           viewBox="0 0 200 115"
           className="w-56 h-32 overflow-visible"
           role="img"
-          aria-label={`Eligibility score ${clamped} out of 100`}
+          aria-label={`Credit readiness score ${clamped} out of 100`}
         >
           <path
             d="M 24 100 A 76 76 0 0 1 176 100"
@@ -102,15 +100,17 @@ export default function CreditScoreGauge({
         </svg>
       </div>
 
-      <div className="pt-4 border-t border-[#E2E7E4] flex items-center justify-between gap-4 text-sm">
-        <span className="text-[#5C6260]">Credit Limit Cap (10% of 30d sales)</span>
-        <span className="font-mono tabular-nums font-semibold text-[#151619] whitespace-nowrap">
-          {maxLoanUSD8.toFixed(2)} tUSD8
-        </span>
+      <div>
+        <div className="pt-4 border-t border-[#E2E7E4] flex items-center justify-between gap-4 text-sm">
+          <span className="text-[#5C6260]">Available Limit (10% of monthly sales)</span>
+          <span className="font-mono tabular-nums font-semibold text-[#151619] whitespace-nowrap">
+            ${maxLoanUSD8.toFixed(2)}
+          </span>
+        </div>
+        {!isPositiveState && reason && (
+          <p className="text-xs text-[#B45309] mt-2">{reason}</p>
+        )}
       </div>
-      {!isPositiveState && reason && (
-        <p className="text-xs text-[#B45309] mt-2">{reason}</p>
-      )}
     </div>
   );
 }

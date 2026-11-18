@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import {
   AlertTriangle,
   Bot,
@@ -16,6 +17,7 @@ import {
 } from 'lucide-react';
 import AppShell from '@/components/AppShell';
 import ConfirmationOfPayeeModal from '@/components/ConfirmationOfPayeeModal';
+import TechnicalDetailsToggle from '@/components/TechnicalDetailsToggle';
 import { backendUrl } from '@/lib/backend';
 import { useHanumPay } from '@/lib/hanumpay-store';
 import { RedTeamResult, VerifiableReceipt } from '@/lib/hanumpay-types';
@@ -52,7 +54,6 @@ export default function LoansAndAgentPage() {
     activeLoan,
     repaidLoans,
     identities,
-    isERC8004Verified,
     auditLogs,
     runAgentCycle,
     acceptLoanProposal,
@@ -62,7 +63,7 @@ export default function LoansAndAgentPage() {
     openReceipt,
   } = useHanumPay();
 
-  const [tab, setTab] = useState<'lifecycle' | 'redteam'>('lifecycle');
+  const [tab, setTab] = useState<'offer' | 'audit'>('offer');
   const [copOpen, setCopOpen] = useState(false);
   const [signing, setSigning] = useState(false);
   const [runningAgent, setRunningAgent] = useState(false);
@@ -95,8 +96,8 @@ export default function LoansAndAgentPage() {
       setStatusBanner({
         type: 'ok',
         text: agentPaused
-          ? 'Resumed AI Guarantor access on AIGuarantor.sol.'
-          : 'Paused AI Guarantor access on AIGuarantor.sol.',
+          ? 'Automatic credit offers resumed for your shop.'
+          : 'Automatic credit offers paused. You will not receive new offers until resumed.',
       });
     }
   }
@@ -125,13 +126,13 @@ export default function LoansAndAgentPage() {
         }
       }
     } catch {
-      // On-chain cron cycle still proceeds even if Gemini text generation fails
+      // Eligibility check proceeds even if explanatory text is unavailable
     }
 
     const result = await runAgentCycle();
     setStatusBanner({
       type: result.ok ? 'ok' : 'err',
-      text: aiSummary ? `${result.message} — Gemini Audit: ${aiSummary}` : result.message,
+      text: aiSummary ? `${result.message} — ${aiSummary}` : result.message,
     });
     setRunningAgent(false);
   }
@@ -143,13 +144,13 @@ export default function LoansAndAgentPage() {
     setSigning(false);
     setCopOpen(false);
     if (!res.ok) {
-      setStatusBanner({ type: 'err', text: res.error ?? 'Failed to accept credit offer.' });
+      setStatusBanner({ type: 'err', text: res.error ?? 'Could not accept credit offer.' });
     } else {
       setStatusBanner({
         type: 'ok',
-        text: `Loan #${proposedLoan.id} accepted on QDay! ${proposedLoan.principalUSD8.toFixed(
+        text: `Credit Plan #${proposedLoan.id} accepted! $${proposedLoan.principalUSD8.toFixed(
           2
-        )} tUSD8 disbursed from LoanPool.`,
+        )} has been added to your shop balance.`,
         receipt: res.receipt,
       });
     }
@@ -171,13 +172,13 @@ export default function LoansAndAgentPage() {
       });
       const data = await res.json();
       if (!res.ok) {
-        setRedTeamError(data.error ?? 'Red-team test request failed.');
+        setRedTeamError(data.error ?? 'Safety test request failed.');
       } else {
         setRedTeamResult(data as RedTeamResult);
       }
     } catch (err) {
       setRedTeamError(
-        err instanceof Error ? err.message : 'Unable to reach Red-Team simulator endpoint.'
+        err instanceof Error ? err.message : 'Unable to reach safety test endpoint.'
       );
     } finally {
       setRedTeamLoading(false);
@@ -192,32 +193,35 @@ export default function LoansAndAgentPage() {
 
   return (
     <AppShell
-      title="Working Capital & AI Guarantor"
-      subtitle="Live AIGuarantor.sol proposals, gasless EIP-712 loan acceptance, on-chain audit logs, and Gemini Red-Team console."
+      group="My Shop"
+      title="Working Capital"
+      headlineLead="Borrow from"
+      headlineAccent="your sales."
+      subtitle="See what you qualify for based on 30-day QR sales. Repay automatically at 10% per sale with one fixed fee."
     >
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="inline-flex items-center gap-1 p-1 bg-white border border-[#E2E7E4] rounded-xl">
           <button
             type="button"
-            onClick={() => setTab('lifecycle')}
+            onClick={() => setTab('offer')}
             className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap min-h-[38px] cursor-pointer ${
-              tab === 'lifecycle'
-                ? 'bg-[#9FE8C3] text-[#151619]'
+              tab === 'offer'
+                ? 'bg-[#151619] text-white'
                 : 'text-[#5C6260] hover:text-[#151619]'
             }`}
           >
-            Loan Lifecycle &amp; Audit Trail
+            My Credit Plan
           </button>
           <button
             type="button"
-            onClick={() => setTab('redteam')}
+            onClick={() => setTab('audit')}
             className={`px-4 py-2 text-xs font-semibold rounded-lg transition-colors whitespace-nowrap min-h-[38px] cursor-pointer ${
-              tab === 'redteam'
-                ? 'bg-[#9FE8C3] text-[#151619]'
+              tab === 'audit'
+                ? 'bg-[#151619] text-white'
                 : 'text-[#5C6260] hover:text-[#151619]'
             }`}
           >
-            AI Red-Team Console
+            Technical &amp; Safety Audit
           </button>
         </div>
 
@@ -229,7 +233,7 @@ export default function LoansAndAgentPage() {
             className={`inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold rounded-xl border transition-colors whitespace-nowrap min-h-[40px] cursor-pointer disabled:opacity-50 ${
               agentPaused
                 ? 'bg-amber-50 border-amber-200 text-[#B45309] hover:bg-amber-100/70'
-                : 'bg-white border-[#E2E7E4] text-[#151619] hover:bg-[#F5F7F5]'
+                : 'bg-white border-[#E2E7E4] text-[#151619] hover:bg-[#F7F8F9]'
             }`}
           >
             {agentPaused ? (
@@ -238,7 +242,11 @@ export default function LoansAndAgentPage() {
               <PauseCircle className="w-4 h-4 text-[#5C6260]" />
             )}
             <span>
-              {togglingPause ? 'Confirming Tx...' : agentPaused ? 'AI Paused · Resume' : 'Pause AI Agent'}
+              {togglingPause
+                ? 'Saving...'
+                : agentPaused
+                  ? 'Offers Paused · Resume'
+                  : 'Pause Offers'}
             </span>
           </button>
 
@@ -249,7 +257,7 @@ export default function LoansAndAgentPage() {
             className="inline-flex items-center gap-2 px-4 py-2.5 text-xs font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors whitespace-nowrap min-h-[40px] disabled:opacity-60 cursor-pointer"
           >
             <Bot className="w-4 h-4 text-[#9FE8C3]" />
-            <span>{runningAgent ? 'Running On-Chain Cycle...' : 'Run AI Guarantor Cycle'}</span>
+            <span>{runningAgent ? 'Checking Eligibility...' : 'Check for Credit Offer'}</span>
           </button>
         </div>
       </div>
@@ -277,98 +285,174 @@ export default function LoansAndAgentPage() {
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white border border-[#E2E7E4] text-xs font-semibold text-[#151619] whitespace-nowrap shrink-0 cursor-pointer"
             >
               <Receipt className="w-3.5 h-3.5 text-[#15803D]" />
-              <span>View QDay Receipt</span>
+              <span>View Receipt</span>
             </button>
           )}
         </div>
       )}
 
-      {tab === 'lifecycle' ? (
-        <div className="grid lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-7 space-y-6">
-            {proposedLoan && (
-              <div className="bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
+      {tab === 'offer' ? (
+        <div className="space-y-6">
+          {/* Scenario 1: Offer Ready */}
+          {proposedLoan && (
+            <div className="grid lg:grid-cols-12 gap-6 items-start">
+              <div className="lg:col-span-7 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
                 <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#E2E7E4] pb-4">
                   <div>
-                    <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#636966]">
-                      Loan #{proposedLoan.id} · On-Chain Proposal
+                    <p className="text-xs font-medium text-[#15803D]">
+                      Offer Ready · Plan #{proposedLoan.id}
                     </p>
-                    <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#151619] mt-1">
-                      Working Capital Offer Ready
+                    <h2 className="text-lg font-semibold tracking-[-0.02em] text-[#151619] mt-0.5">
+                      Review Your Working Capital Offer
                     </h2>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-[#E8FAF0] px-3 py-1 text-xs font-semibold text-[#15803D] whitespace-nowrap">
-                    <ShieldCheck className="w-3.5 h-3.5" />
-                    <span>
-                      {isERC8004Verified(proposedLoan.agentName)
-                        ? `${proposedLoan.agentName} · ERC-8004 Verified`
-                        : 'AIGuarantor.sol'}
-                    </span>
+                  <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-[#15803D]">
+                    <ShieldCheck className="w-4 h-4" />
+                    <span>Verified Lender</span>
                   </span>
                 </div>
 
-                <div className="grid sm:grid-cols-3 gap-4">
-                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4]">
-                    <p className="text-xs text-[#636966]">Principal (Contract-Capped)</p>
-                    <p className="text-xl font-semibold font-mono tabular-nums text-[#151619] mt-1">
-                      {proposedLoan.principalUSD8.toFixed(2)} tUSD8
-                    </p>
+                <div className="divide-y divide-[#E2E7E4] text-sm">
+                  <div className="py-3 flex items-center justify-between gap-4">
+                    <span className="text-[#5C6260]">Cash You Receive Today</span>
+                    <span className="font-mono tabular-nums font-semibold text-[#151619]">
+                      ${proposedLoan.principalUSD8.toFixed(2)}
+                    </span>
                   </div>
-                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4]">
-                    <p className="text-xs text-[#636966]">Flat Fee (5% Max)</p>
-                    <p className="text-xl font-semibold font-mono tabular-nums text-[#151619] mt-1">
-                      {proposedLoan.flatFeeUSD8.toFixed(2)} tUSD8
-                    </p>
+                  <div className="py-3 flex items-center justify-between gap-4">
+                    <span className="text-[#5C6260]">Fixed Fee (5% one-time)</span>
+                    <span className="font-mono tabular-nums font-medium text-[#151619]">
+                      ${proposedLoan.flatFeeUSD8.toFixed(2)}
+                    </span>
                   </div>
-                  <div className="p-4 rounded-xl bg-[#E8FAF0] border border-[#9FE8C3]">
-                    <p className="text-xs text-[#15803D] font-medium">Total Repayment</p>
-                    <p className="text-xl font-semibold font-mono tabular-nums text-[#15803D] mt-1">
-                      {(proposedLoan.principalUSD8 + proposedLoan.flatFeeUSD8).toFixed(2)} tUSD8
-                    </p>
+                  <div className="py-3 flex items-center justify-between gap-4">
+                    <span className="text-[#5C6260]">Repayment Method</span>
+                    <span className="font-medium text-[#151619]">
+                      {(proposedLoan.repayPctBps / 100).toFixed(0)}% per QR sale
+                    </span>
+                  </div>
+                  <div className="py-3 flex items-center justify-between gap-4">
+                    <span className="text-[#5C6260]">Late Penalties</span>
+                    <span className="font-medium text-[#15803D]">$0.00 (None)</span>
                   </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-2">
-                  <div className="text-xs text-[#5C6260]">
-                    {(proposedLoan.repayPctBps / 100).toFixed(0)}% auto-repay per QR sale · Signs
-                    EIP-712 AcceptLoan via MetaMask
+                <button
+                  type="button"
+                  onClick={() => setCopOpen(true)}
+                  className="w-full py-3.5 px-5 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors min-h-[48px] cursor-pointer"
+                >
+                  Review Lender &amp; Accept Funds
+                </button>
+
+                <TechnicalDetailsToggle
+                  label="Technical Details"
+                  items={[
+                    { label: 'Guarantor Agent', value: proposedLoan.agentName },
+                    { label: 'Approval Type', value: 'Gasless EIP-712 AcceptLoan' },
+                    { label: 'Smart Contract Cap', value: 'Max $500 · Max 5% Fee' },
+                  ]}
+                />
+              </div>
+
+              <div className="lg:col-span-5 space-y-5">
+                <div className="bg-[#151619] text-white rounded-2xl p-6 space-y-5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-mono uppercase tracking-[0.08em] text-white/60">
+                      Loan Ticket
+                    </span>
+                    <span className="inline-flex items-center rounded-full bg-[#9FE8C3] px-2.5 py-1 text-[11px] font-semibold text-[#151619]">
+                      Fixed 5% fee
+                    </span>
                   </div>
-                  <button
-                    type="button"
-                    onClick={() => setCopOpen(true)}
-                    className="px-5 py-3 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors whitespace-nowrap min-h-[44px] cursor-pointer"
-                  >
-                    Sign &amp; Accept (Gasless)
-                  </button>
+
+                  <div className="space-y-3">
+                    <div className="p-4 rounded-xl bg-white/[0.06] border border-white/10">
+                      <p className="text-[11px] uppercase tracking-[0.06em] text-white/55">
+                        You Receive Now
+                      </p>
+                      <p className="text-2xl font-semibold font-mono tabular-nums text-[#9FE8C3] mt-1">
+                        ${proposedLoan.principalUSD8.toFixed(2)}
+                      </p>
+                      <p className="text-xs font-mono tabular-nums text-white/60 mt-0.5">
+                        ≈ Rp {Math.round(proposedLoan.principalUSD8 * 15800).toLocaleString('en-US')} IDR
+                      </p>
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-white/[0.06] border border-white/10">
+                      <p className="text-[11px] uppercase tracking-[0.06em] text-white/55">
+                        Total to Repay
+                      </p>
+                      <p className="text-xl font-semibold font-mono tabular-nums text-white mt-1">
+                        ${(proposedLoan.principalUSD8 + proposedLoan.flatFeeUSD8).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <ul className="space-y-1.5 text-xs text-white/75 pt-1">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#9FE8C3] shrink-0" />
+                      <span>Slow sales day? You repay less that day automatically.</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 text-[#9FE8C3] shrink-0" />
+                      <span>No hidden compounding interest or late fees.</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="bg-white border border-[#E2E7E4] rounded-2xl p-5 space-y-3">
+                  <h3 className="text-sm font-semibold text-[#151619]">What happens next</h3>
+                  <div className="divide-y divide-[#E2E7E4] text-xs">
+                    <div className="py-2.5 flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-lg bg-[#F7F8F9] border border-[#E2E7E4] font-mono font-semibold text-[#151619] flex items-center justify-center shrink-0">
+                        1
+                      </span>
+                      <span className="text-[#5C6260]">Verify the lender details in the confirmation popup</span>
+                    </div>
+                    <div className="py-2.5 flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-lg bg-[#F7F8F9] border border-[#E2E7E4] font-mono font-semibold text-[#151619] flex items-center justify-center shrink-0">
+                        2
+                      </span>
+                      <span className="text-[#5C6260]">Sign once free of charge in your wallet</span>
+                    </div>
+                    <div className="pt-2.5 flex items-center gap-3">
+                      <span className="w-6 h-6 rounded-lg bg-[#F7F8F9] border border-[#E2E7E4] font-mono font-semibold text-[#151619] flex items-center justify-center shrink-0">
+                        3
+                      </span>
+                      <span className="text-[#5C6260]">Cash arrives directly in your shop balance</span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
+            </div>
+          )}
 
-            {activeLoan && (
-              <div className="bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
+          {/* Scenario 2: Active Loan */}
+          {activeLoan && (
+            <div className="grid lg:grid-cols-12 gap-6 items-start">
+              <div className="lg:col-span-7 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
                 <div className="flex items-center justify-between border-b border-[#E2E7E4] pb-4">
                   <div>
-                    <p className="font-mono text-[11px] uppercase tracking-[0.06em] text-[#636966]">
-                      Loan #{activeLoan.id} · Active Repayment
+                    <p className="text-xs font-medium text-[#B45309]">
+                      Plan #{activeLoan.id} · Active Repayment
                     </p>
-                    <h2 className="text-lg font-semibold text-[#151619] mt-1">
-                      10% Auto-Repayment on Every QR Sale
+                    <h2 className="text-lg font-semibold text-[#151619] mt-0.5">
+                      Paying Off Automatically from QR Sales
                     </h2>
                   </div>
-                  <span className="inline-flex items-center rounded-full bg-amber-50 px-2.5 py-1 text-xs font-semibold text-[#B45309]">
-                    Active
-                  </span>
+                  <span className="text-xs font-semibold text-[#B45309]">10% per sale</span>
                 </div>
 
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   <div className="flex justify-between text-sm">
-                    <span className="text-[#5C6260]">Repaid to Date</span>
+                    <span className="text-[#5C6260]">Repaid So Far</span>
                     <span className="font-mono tabular-nums font-semibold text-[#151619]">
-                      {activeLoan.totalRepaidUSD8.toFixed(2)} / {activeTotalDue.toFixed(2)} tUSD8 (
+                      ${activeLoan.totalRepaidUSD8.toFixed(2)} / ${activeTotalDue.toFixed(2)} (
                       {activeProgressPct}%)
                     </span>
                   </div>
-                  <div className="h-3 w-full bg-[#F5F7F5] rounded-full overflow-hidden border border-[#E2E7E4]">
+                  <div className="h-3 w-full bg-[#F7F8F9] rounded-full overflow-hidden border border-[#E2E7E4]">
                     <div
                       className="h-full bg-[#15803D] transition-all duration-300"
                       style={{ width: `${activeProgressPct}%` }}
@@ -376,32 +460,54 @@ export default function LoansAndAgentPage() {
                   </div>
                 </div>
 
-                <p className="text-xs text-[#5C6260]">
-                  Open <strong className="text-[#151619]">Record QR Sale</strong> to submit gasless
-                  checkouts; make sure your wallet has approved{' '}
-                  <code className="font-mono text-[#151619]">LoanPool</code> to deduct the 10%
-                  auto-repayment from incoming sales.
+                <p className="text-sm text-[#5C6260] leading-relaxed">
+                  Every time you record a QR sale in <strong className="text-[#151619]">Accept Payment</strong>, 10%
+                  automatically goes toward this balance until it reaches $0.00.
+                </p>
+
+                <Link
+                  href="/app/penjualan"
+                  className="inline-flex items-center justify-center px-5 py-3 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors"
+                >
+                  Record a QR Sale →
+                </Link>
+              </div>
+
+              <div className="lg:col-span-5 bg-[#151619] text-white rounded-2xl p-6 space-y-4">
+                <p className="text-[11px] font-mono uppercase tracking-[0.08em] text-white/60">
+                  Remaining Balance
+                </p>
+                <p className="text-3xl font-semibold font-mono tabular-nums text-[#9FE8C3]">
+                  ${Math.max(0, activeTotalDue - activeLoan.totalRepaidUSD8).toFixed(2)}
+                </p>
+                <p className="text-xs text-white/70 leading-relaxed">
+                  Once paid in full, your completed plan strengthens your shop trust record and
+                  raises your next borrowing limit.
                 </p>
               </div>
-            )}
+            </div>
+          )}
 
-            {!proposedLoan && !activeLoan && (
-              <div className="bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-4">
-                <div className="flex items-center justify-between gap-2">
-                  <h2 className="text-base font-semibold text-[#151619]">
-                    Smart Contract Eligibility Checks
-                  </h2>
+          {/* Scenario 3: No Active or Proposed Loan -> Eligibility Checklist + Ticket Overview */}
+          {!proposedLoan && !activeLoan && (
+            <div className="grid lg:grid-cols-12 gap-6 items-start">
+              <div className="lg:col-span-7 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
+                <div className="flex items-center justify-between gap-2 border-b border-[#E2E7E4] pb-4">
+                  <div>
+                    <h2 className="text-base font-semibold text-[#151619]">
+                      What You Need to Qualify
+                    </h2>
+                    <p className="text-xs text-[#5C6260] mt-0.5">
+                      Checked automatically from your shop activity
+                    </p>
+                  </div>
                   {onChainEligibility?.checked && (
                     <span
-                      className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
-                        onChainEligibility.eligible
-                          ? 'bg-[#E8FAF0] text-[#15803D]'
-                          : 'bg-amber-50 text-[#B45309]'
+                      className={`text-xs font-semibold ${
+                        onChainEligibility.eligible ? 'text-[#15803D]' : 'text-[#B45309]'
                       }`}
                     >
-                      {onChainEligibility.eligible
-                        ? 'AIGuarantor: Eligible'
-                        : onChainEligibility.reason}
+                      {onChainEligibility.eligible ? 'Eligible now' : onChainEligibility.reason}
                     </span>
                   )}
                 </div>
@@ -410,9 +516,9 @@ export default function LoansAndAgentPage() {
                   {eligibility.checks.map((c) => (
                     <div
                       key={c.label}
-                      className="py-2.5 flex items-center justify-between gap-4 text-sm"
+                      className="py-3 flex items-center justify-between gap-4 text-sm"
                     >
-                      <span className="flex items-center gap-2 text-[#151619]">
+                      <span className="flex items-center gap-2.5 text-[#151619]">
                         {c.passed ? (
                           <CheckCircle2 className="w-4 h-4 text-[#15803D] shrink-0" />
                         ) : (
@@ -426,259 +532,312 @@ export default function LoansAndAgentPage() {
                     </div>
                   ))}
                 </div>
-              </div>
-            )}
 
-            {repaidLoans.length > 0 && (
-              <div className="bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-4">
-                <h3 className="text-sm font-semibold text-[#151619]">
-                  Settled History (State D · Repaid)
-                </h3>
-                <div className="divide-y divide-[#E2E7E4]">
-                  {repaidLoans.map((rl) => (
-                    <div key={rl.id} className="py-3 flex items-center justify-between text-sm">
-                      <div>
-                        <p className="font-medium text-[#151619]">
-                          Loan #{rl.id} · {rl.principalUSD8.toFixed(2)} tUSD8 + fee{' '}
-                          {rl.flatFeeUSD8.toFixed(2)} tUSD8
-                        </p>
-                        <p className="text-xs text-[#636966]">
-                          Anchored to Credit Passport · 0 late penalties
-                        </p>
-                      </div>
-                      <span className="text-xs font-semibold text-[#15803D]">100% Repaid</span>
-                    </div>
-                  ))}
+                <div className="pt-2 flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    onClick={handleRunAgentCycle}
+                    disabled={runningAgent}
+                    className="px-5 py-3 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors cursor-pointer disabled:opacity-60"
+                  >
+                    {runningAgent ? 'Checking...' : 'Check for Credit Offer'}
+                  </button>
+                  <Link
+                    href="/app/penjualan"
+                    className="px-4 py-3 text-sm font-medium text-[#151619] bg-[#F7F8F9] hover:bg-[#E8FAF0] border border-[#E2E7E4] rounded-xl transition-colors"
+                  >
+                    Record More Sales
+                  </Link>
                 </div>
               </div>
-            )}
-          </div>
 
-          {/* Structured Agent Audit Trail */}
-          <div className="lg:col-span-5 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-4">
-            <div className="flex items-center justify-between border-b border-[#E2E7E4] pb-3.5">
-              <div className="flex items-center gap-2">
-                <Terminal className="w-4 h-4 text-[#15803D]" />
-                <h2 className="text-sm font-semibold text-[#151619]">
-                  On-Chain AI Guarantor Audit Log
-                </h2>
+              <div className="lg:col-span-5 bg-[#151619] text-white rounded-2xl p-6 space-y-5">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-[11px] font-mono uppercase tracking-[0.08em] text-white/60">
+                    How Working Capital Works
+                  </span>
+                  <span className="inline-flex items-center rounded-full bg-[#9FE8C3] px-2.5 py-1 text-[11px] font-semibold text-[#151619]">
+                    No collateral
+                  </span>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-4 rounded-xl bg-white/[0.06] border border-white/10">
+                    <p className="text-[11px] uppercase tracking-[0.06em] text-white/55">
+                      Your Estimated Limit
+                    </p>
+                    <p className="text-2xl font-semibold font-mono tabular-nums text-[#9FE8C3] mt-1">
+                      ${eligibility.maxLoanUSD8.toFixed(2)}
+                    </p>
+                    <p className="text-xs text-white/60 mt-0.5">
+                      10% of your 30-day sales (up to $500 max)
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-between text-xs">
+                    <span className="text-white/70">Simple Flat Fee</span>
+                    <span className="font-mono font-semibold text-white">5% fixed</span>
+                  </div>
+                  <div className="p-4 rounded-xl bg-white/[0.06] border border-white/10 flex items-center justify-between text-xs">
+                    <span className="text-white/70">Automatic Repayment</span>
+                    <span className="font-mono font-semibold text-white">10% per QR sale</span>
+                  </div>
+                </div>
               </div>
-              <span className="font-mono text-[11px] text-[#636966]">AIGuarantor.sol</span>
             </div>
+          )}
 
-            {auditLogs.length === 0 ? (
-              <div className="py-10 text-center text-xs text-[#5C6260] border border-dashed border-[#E2E7E4] rounded-xl bg-[#F5F7F5]/60">
-                No AIGuarantor events emitted yet in this block window. Click{' '}
-                <strong className="text-[#151619]">Run AI Guarantor Cycle</strong> to execute a
-                live check across registered shops.
-              </div>
-            ) : (
-              <div className="space-y-2.5 max-h-[440px] overflow-y-auto pr-1 font-mono text-xs">
-                {auditLogs.map((log) => (
-                  <div
-                    key={log.id}
-                    className="p-3.5 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1"
-                  >
-                    <div className="flex items-center justify-between text-[11px]">
-                      <span
-                        className={
-                          log.event === 'proposal_submitted'
-                            ? 'text-[#15803D] font-semibold'
-                            : log.event === 'shop_skipped' || log.event === 'proposal_rejected'
-                              ? 'text-[#B45309] font-semibold'
-                              : 'text-[#636966] font-medium'
-                        }
-                      >
-                        {log.event}
-                      </span>
-                      <span className="text-[#636966] tabular-nums">
-                        {new Date(log.timestamp).toLocaleTimeString('en-US', {
-                          hour12: false,
-                        })}
-                      </span>
-                    </div>
-                    {log.shop && <p className="text-[#151619] truncate">shop: {log.shop}</p>}
-                    {log.principal && (
-                      <p className="text-[#15803D] font-medium">
-                        principal: {log.principal} (6-dec) · fee: {log.flatFee}
+          {/* Settled History */}
+          {repaidLoans.length > 0 && (
+            <div className="bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-4">
+              <h3 className="text-sm font-semibold text-[#151619]">Completed Credit Plans</h3>
+              <div className="divide-y divide-[#E2E7E4]">
+                {repaidLoans.map((rl) => (
+                  <div key={rl.id} className="py-3 flex items-center justify-between text-sm">
+                    <div>
+                      <p className="font-medium text-[#151619]">
+                        Plan #{rl.id} · ${rl.principalUSD8.toFixed(2)} + ${rl.flatFeeUSD8.toFixed(2)} fee
                       </p>
-                    )}
-                    {log.reason && <p className="text-[#5C6260]">note: &quot;{log.reason}&quot;</p>}
-                    {log.txHash && (
-                      <a
-                        href={`${QDAY_EXPLORER_URL}/tx/${log.txHash}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="inline-flex items-center gap-1 text-[#15803D] hover:underline pt-0.5"
-                      >
-                        <span>tx: {log.txHash.slice(0, 14)}...</span>
-                        <ExternalLink className="w-3 h-3" />
-                      </a>
-                    )}
+                      <p className="text-xs text-[#636966]">
+                        Paid in full with zero late penalties
+                      </p>
+                    </div>
+                    <span className="text-xs font-semibold text-[#15803D]">100% Paid</span>
                   </div>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       ) : (
-        <div className="grid lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-5 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
-            <div className="flex items-start gap-3">
-              <ShieldAlert className="w-5 h-5 text-[#DC2626] shrink-0 mt-0.5" />
-              <div>
-                <h2 className="text-base font-semibold text-[#151619]">
-                  Live AI Red-Team Stress Test
-                </h2>
-                <p className="text-xs text-[#5C6260] mt-1">
-                  Send adversarial prompts simulating an agent hijack. Verify how deterministic
-                  rules in AIGuarantor &amp; LoanPool revert out-of-bounds parameters.
-                </p>
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-[#636966]">Attack Presets</p>
-              <div className="space-y-2">
-                {RED_TEAM_PRESETS.map((preset) => (
-                  <button
-                    key={preset.id}
-                    type="button"
-                    onClick={() => {
-                      setAttackTitle(preset.title);
-                      setAttackPrompt(preset.prompt);
-                    }}
-                    className={`w-full text-left p-3 rounded-xl border text-xs transition-colors cursor-pointer ${
-                      attackTitle === preset.title
-                        ? 'border-[#151619] bg-[#E8FAF0] font-semibold text-[#151619]'
-                        : 'border-[#E2E7E4] bg-[#F5F7F5]/60 hover:bg-[#F5F7F5] text-[#5C6260]'
-                    }`}
-                  >
-                    {preset.title}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <form onSubmit={handleRunRedTeam} className="space-y-3">
-              <label
-                htmlFor="attacker-prompt"
-                className="block text-xs font-medium text-[#151619]"
-              >
-                Adversarial Prompt Payload
-              </label>
-              <textarea
-                id="attacker-prompt"
-                rows={4}
-                value={attackPrompt}
-                onChange={(e) => setAttackPrompt(e.target.value)}
-                className="w-full p-3 border border-[#E2E7E4] bg-[#F5F7F5]/60 rounded-xl text-xs font-mono text-[#151619] focus:outline-none focus:ring-2 focus:ring-[#151619]"
-              />
-              <button
-                type="submit"
-                disabled={redTeamLoading}
-                className="w-full py-3 px-4 text-sm font-semibold text-white bg-[#DC2626] hover:bg-red-700 rounded-xl transition-colors min-h-[44px] disabled:opacity-60 cursor-pointer"
-              >
-                {redTeamLoading ? 'Executing Attack...' : 'Run Red-Team Attack'}
-              </button>
-            </form>
-          </div>
-
-          <div className="lg:col-span-7 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
-            <h2 className="text-base font-semibold text-[#151619]">
-              Smart Contract Guardrail Verdict
-            </h2>
-
-            {redTeamError && (
-              <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-900">
-                {redTeamError}
-              </div>
-            )}
-
-            {!redTeamResult && !redTeamLoading && (
-              <div className="py-16 text-center border border-dashed border-[#E2E7E4] rounded-xl bg-[#F5F7F5]/50 space-y-2">
-                <AlertTriangle className="w-6 h-6 text-[#636966] mx-auto" />
-                <p className="text-sm text-[#5C6260]">
-                  Pick a preset or enter your own adversarial prompt, then click{' '}
-                  <strong className="text-[#151619]">Run Red-Team Attack</strong>.
-                </p>
-              </div>
-            )}
-
-            {redTeamResult && (
-              <div className="space-y-5">
-                <div
-                  className={`p-4 rounded-xl border flex items-start justify-between gap-4 ${
-                    redTeamResult.contractDecision === 'REJECTED'
-                      ? 'bg-red-50 border-red-200 text-red-950'
-                      : 'bg-[#E8FAF0] border-[#9FE8C3] text-[#151619]'
-                  }`}
-                >
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wide">
-                      Contract Verdict:{' '}
-                      {redTeamResult.contractDecision === 'REJECTED' ? 'REJECTED (SAFE)' : 'PASSED'}
-                    </p>
-                    <p className="text-sm font-mono mt-1 break-all">
-                      Revert: {redTeamResult.revertError}
-                    </p>
-                  </div>
-                  {redTeamResult.contractDecision === 'REJECTED' ? (
-                    <XCircle className="w-5 h-5 text-[#DC2626] shrink-0" />
-                  ) : (
-                    <CheckCircle2 className="w-5 h-5 text-[#15803D] shrink-0" />
-                  )}
-                </div>
-
-                <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-2">
-                  <p className="text-xs font-medium text-[#636966]">
-                    Parameters Attempted by Compromised AI
+        /* Optional Technical & Safety Audit Tab (Preserves AI Audit Log + Red-Team Console) */
+        <div className="space-y-6">
+          <div className="grid lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-5 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
+              <div className="flex items-start gap-3">
+                <ShieldAlert className="w-5 h-5 text-[#DC2626] shrink-0 mt-0.5" />
+                <div>
+                  <h2 className="text-base font-semibold text-[#151619]">
+                    AI Safety Guardrail Stress Test
+                  </h2>
+                  <p className="text-xs text-[#5C6260] mt-1">
+                    Test how smart-contract limits block unsafe loan offers even if an AI prompt
+                    is manipulated.
                   </p>
-                  <div className="grid grid-cols-3 gap-3 text-sm font-mono tabular-nums">
-                    <div>
-                      <span className="text-xs text-[#636966] block">Principal</span>
-                      <span className="font-semibold text-[#151619]">
-                        ${redTeamResult.aiProposedPrincipal.toFixed(2)}
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-xs text-[#636966] block">Flat Fee</span>
-                      <span className="font-semibold text-[#151619]">
-                        {redTeamResult.aiProposedFeePct.toFixed(2)}%
-                      </span>
-                    </div>
-                    <div>
-                      <span className="text-xs text-[#636966] block">Repay Cut</span>
-                      <span className="font-semibold text-[#151619]">
-                        {redTeamResult.aiProposedRepayPct.toFixed(2)}%
-                      </span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-[#5C6260] pt-1">{redTeamResult.aiRationale}</p>
                 </div>
+              </div>
 
-                <div className="divide-y divide-[#E2E7E4] border border-[#E2E7E4] rounded-xl overflow-hidden">
-                  {redTeamResult.invariantChecks.map((chk) => (
-                    <div
-                      key={chk.rule}
-                      className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+              <div className="space-y-2">
+                <p className="text-xs font-medium text-[#636966]">Test Scenarios</p>
+                <div className="space-y-2">
+                  {RED_TEAM_PRESETS.map((preset) => (
+                    <button
+                      key={preset.id}
+                      type="button"
+                      onClick={() => {
+                        setAttackTitle(preset.title);
+                        setAttackPrompt(preset.prompt);
+                      }}
+                      className={`w-full text-left p-3 rounded-xl border text-xs transition-colors cursor-pointer ${
+                        attackTitle === preset.title
+                          ? 'border-[#151619] bg-[#E8FAF0] font-semibold text-[#151619]'
+                          : 'border-[#E2E7E4] bg-[#F7F8F9] hover:bg-[#F5F7F5] text-[#5C6260]'
+                      }`}
                     >
-                      <div className="flex items-center gap-2">
-                        {chk.passed ? (
-                          <CheckCircle2 className="w-4 h-4 text-[#15803D] shrink-0" />
-                        ) : (
-                          <XCircle className="w-4 h-4 text-[#DC2626] shrink-0" />
-                        )}
-                        <span className="font-medium text-[#151619]">{chk.rule}</span>
-                      </div>
-                      <div className="font-mono tabular-nums text-[#5C6260]">
-                        Limit: {chk.limit} · Attempted: {chk.attempted}
-                      </div>
-                    </div>
+                      {preset.title}
+                    </button>
                   ))}
                 </div>
               </div>
-            )}
+
+              <form onSubmit={handleRunRedTeam} className="space-y-3">
+                <label
+                  htmlFor="attacker-prompt"
+                  className="block text-xs font-medium text-[#151619]"
+                >
+                  Simulated Prompt Payload
+                </label>
+                <textarea
+                  id="attacker-prompt"
+                  rows={4}
+                  value={attackPrompt}
+                  onChange={(e) => setAttackPrompt(e.target.value)}
+                  className="w-full p-3 border border-[#E2E7E4] bg-[#F7F8F9] rounded-xl text-xs font-mono text-[#151619] focus:outline-none focus:ring-2 focus:ring-[#151619]"
+                />
+                <button
+                  type="submit"
+                  disabled={redTeamLoading}
+                  className="w-full py-3 px-4 text-sm font-semibold text-white bg-[#DC2626] hover:bg-red-700 rounded-xl transition-colors min-h-[44px] disabled:opacity-60 cursor-pointer"
+                >
+                  {redTeamLoading ? 'Testing Guardrails...' : 'Run Safety Stress Test'}
+                </button>
+              </form>
+            </div>
+
+            <div className="lg:col-span-7 space-y-6">
+              <div className="bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
+                <h2 className="text-base font-semibold text-[#151619]">
+                  Contract Guardrail Verdict
+                </h2>
+
+                {redTeamError && (
+                  <div className="p-4 rounded-xl bg-red-50 border border-red-200 text-xs text-red-900">
+                    {redTeamError}
+                  </div>
+                )}
+
+                {!redTeamResult && !redTeamLoading && (
+                  <div className="py-12 text-center border border-dashed border-[#E2E7E4] rounded-xl bg-[#F7F8F9] space-y-2">
+                    <AlertTriangle className="w-6 h-6 text-[#636966] mx-auto" />
+                    <p className="text-sm text-[#5C6260]">
+                      Pick a scenario on the left and click{' '}
+                      <strong className="text-[#151619]">Run Safety Stress Test</strong>.
+                    </p>
+                  </div>
+                )}
+
+                {redTeamResult && (
+                  <div className="space-y-4">
+                    <div
+                      className={`p-4 rounded-xl border flex items-start justify-between gap-4 ${
+                        redTeamResult.contractDecision === 'REJECTED'
+                          ? 'bg-red-50 border-red-200 text-red-950'
+                          : 'bg-[#E8FAF0] border-[#9FE8C3] text-[#151619]'
+                      }`}
+                    >
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-wide">
+                          Contract Verdict:{' '}
+                          {redTeamResult.contractDecision === 'REJECTED'
+                            ? 'BLOCKED (SAFE)'
+                            : 'ALLOWED'}
+                        </p>
+                        <p className="text-sm font-mono mt-1 break-all">
+                          {redTeamResult.revertError}
+                        </p>
+                      </div>
+                      {redTeamResult.contractDecision === 'REJECTED' ? (
+                        <XCircle className="w-5 h-5 text-[#DC2626] shrink-0" />
+                      ) : (
+                        <CheckCircle2 className="w-5 h-5 text-[#15803D] shrink-0" />
+                      )}
+                    </div>
+
+                    <div className="p-4 rounded-xl bg-[#F7F8F9] border border-[#E2E7E4] space-y-2">
+                      <p className="text-xs font-medium text-[#636966]">
+                        Out-of-Bounds Parameters Attempted
+                      </p>
+                      <div className="grid grid-cols-3 gap-3 text-sm font-mono tabular-nums">
+                        <div>
+                          <span className="text-xs text-[#636966] block">Principal</span>
+                          <span className="font-semibold text-[#151619]">
+                            ${redTeamResult.aiProposedPrincipal.toFixed(2)}
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-[#636966] block">Flat Fee</span>
+                          <span className="font-semibold text-[#151619]">
+                            {redTeamResult.aiProposedFeePct.toFixed(2)}%
+                          </span>
+                        </div>
+                        <div>
+                          <span className="text-xs text-[#636966] block">Repay Cut</span>
+                          <span className="font-semibold text-[#151619]">
+                            {redTeamResult.aiProposedRepayPct.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                      <p className="text-xs text-[#5C6260] pt-1">{redTeamResult.aiRationale}</p>
+                    </div>
+
+                    <div className="divide-y divide-[#E2E7E4] border border-[#E2E7E4] rounded-xl overflow-hidden">
+                      {redTeamResult.invariantChecks.map((chk) => (
+                        <div
+                          key={chk.rule}
+                          className="p-3.5 flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs"
+                        >
+                          <div className="flex items-center gap-2">
+                            {chk.passed ? (
+                              <CheckCircle2 className="w-4 h-4 text-[#15803D] shrink-0" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-[#DC2626] shrink-0" />
+                            )}
+                            <span className="font-medium text-[#151619]">{chk.rule}</span>
+                          </div>
+                          <div className="font-mono tabular-nums text-[#5C6260]">
+                            Limit: {chk.limit} · Attempted: {chk.attempted}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              <div className="bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-4">
+                <div className="flex items-center justify-between border-b border-[#E2E7E4] pb-3.5">
+                  <div className="flex items-center gap-2">
+                    <Terminal className="w-4 h-4 text-[#15803D]" />
+                    <h2 className="text-sm font-semibold text-[#151619]">
+                      Live AI Guarantor On-Chain Activity Log
+                    </h2>
+                  </div>
+                  <span className="font-mono text-[11px] text-[#636966]">AIGuarantor.sol</span>
+                </div>
+
+                {auditLogs.length === 0 ? (
+                  <div className="py-8 text-center text-xs text-[#5C6260] border border-dashed border-[#E2E7E4] rounded-xl bg-[#F7F8F9]">
+                    No automated credit events emitted in recent blocks yet.
+                  </div>
+                ) : (
+                  <div className="space-y-2.5 max-h-[320px] overflow-y-auto pr-1 font-mono text-xs">
+                    {auditLogs.map((log) => (
+                      <div
+                        key={log.id}
+                        className="p-3.5 rounded-xl bg-[#F7F8F9] border border-[#E2E7E4] space-y-1"
+                      >
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span
+                            className={
+                              log.event === 'proposal_submitted'
+                                ? 'text-[#15803D] font-semibold'
+                                : log.event === 'shop_skipped' || log.event === 'proposal_rejected'
+                                  ? 'text-[#B45309] font-semibold'
+                                  : 'text-[#636966] font-medium'
+                            }
+                          >
+                            {log.event}
+                          </span>
+                          <span className="text-[#636966] tabular-nums">
+                            {new Date(log.timestamp).toLocaleTimeString('en-US', {
+                              hour12: false,
+                            })}
+                          </span>
+                        </div>
+                        {log.shop && <p className="text-[#151619] truncate">shop: {log.shop}</p>}
+                        {log.principal && (
+                          <p className="text-[#15803D] font-medium">
+                            principal: {log.principal} · fee: {log.flatFee}
+                          </p>
+                        )}
+                        {log.reason && <p className="text-[#5C6260]">note: &quot;{log.reason}&quot;</p>}
+                        {log.txHash && (
+                          <a
+                            href={`${QDAY_EXPLORER_URL}/tx/${log.txHash}`}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-[#15803D] hover:underline pt-0.5"
+                          >
+                            <span>tx: {log.txHash.slice(0, 14)}...</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           </div>
         </div>
       )}
@@ -686,18 +845,18 @@ export default function LoansAndAgentPage() {
       {proposedLoan && (
         <ConfirmationOfPayeeModal
           open={copOpen}
-          title="Verify AI Agent & Accept Credit"
-          actionLabel="Sign EIP-712 & Disburse Credit"
+          title="Verify Lender & Accept Funds"
+          actionLabel="Confirm & Receive Funds"
           entity={agentIdentity}
           amountUSD8={proposedLoan.principalUSD8}
           isSubmitting={signing}
           summaryRows={[
-            { label: 'Loan ID', value: `#${proposedLoan.id}` },
-            { label: 'Principal', value: `${proposedLoan.principalUSD8.toFixed(2)} tUSD8` },
-            { label: 'Flat Fee (5%)', value: `${proposedLoan.flatFeeUSD8.toFixed(2)} tUSD8` },
+            { label: 'Credit Plan', value: `#${proposedLoan.id}` },
+            { label: 'You Receive Now', value: `$${proposedLoan.principalUSD8.toFixed(2)}` },
+            { label: 'Fixed Fee (5%)', value: `$${proposedLoan.flatFeeUSD8.toFixed(2)}` },
             {
-              label: 'Total Repayment',
-              value: `${(proposedLoan.principalUSD8 + proposedLoan.flatFeeUSD8).toFixed(2)} tUSD8`,
+              label: 'Total to Repay',
+              value: `$${(proposedLoan.principalUSD8 + proposedLoan.flatFeeUSD8).toFixed(2)}`,
             },
             { label: 'Repayment Rule', value: '10% per QR sale' },
           ]}
