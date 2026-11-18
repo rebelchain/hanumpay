@@ -2,9 +2,9 @@
 @import "tw-animate-css";
 
 @theme inline {
-  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-sans: "DM Sans", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-sans: 'DM Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, monospace;
 }
 
 @layer base {
@@ -15,10 +15,7 @@
     -webkit-font-smoothing: antialiased;
   }
 
-  h1,
-  h2,
-  h3,
-  h4 {
+  h1, h2, h3, h4 {
     font-family: var(--font-display);
   }
 }
@@ -28,16 +25,14 @@
 }
 
 .font-landing {
-  font-family:
-    "Manrope", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Manrope', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }
 
 .font-landing h1,
 .font-landing h2,
 .font-landing h3,
 .font-landing h4 {
-  font-family:
-    "Manrope", "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  font-family: 'Manrope', 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
 }
 
 @keyframes hairline-ticker {
@@ -65,3 +60,4 @@
     animation: none;
   }
 }
+

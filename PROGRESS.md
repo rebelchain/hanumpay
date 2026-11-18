@@ -5,7 +5,6 @@ This document serves as the shared source of truth across local development, the
 ---
 
 ## Current Status
-
 - **Active Stage**: Stage 4 — Vercel Production Verification & Final Submission Prep
 - **Live App (Vercel)**: `https://hanumpay.vercel.app`
 - **Official GitBook Docs**: `https://rebelxyz.gitbook.io/hanumpay`
@@ -19,7 +18,6 @@ This document serves as the shared source of truth across local development, the
 ## Milestone Roadmap
 
 ### Stage 1 — App Foundation & Initial Repository Baseline (Complete)
-
 - [x] HanumPay landing page featuring live credit limit calculator, fee comparison ruler, and modular contract cards.
 - [x] Interactive 2-phone live simulator (`/stage`) covering gasless QR sales, AI Guarantor offers, verified supplier payouts, spoofed address defense, and prompt-injection tests.
 - [x] Complete merchant workspace (`/app/dashboard`, `/app/penjualan`, `/app/pinjaman`, `/app/identitas`, `/app/pool`, `/app/docs`).
@@ -28,7 +26,6 @@ This document serves as the shared source of truth across local development, the
 - [x] Ready for Stage 1 GitHub baseline push.
 
 ### Stage 2 — Foundry Tests & QDay Testnet Deployment (Deployed)
-
 - [x] Confirm `contracts/foundry.toml` keeps `evm_version = "shanghai"` (prevents `invalid opcode: MCOPY`).
 - [x] Install Foundry locally and run `Deploy.s.sol` against QDay Aevum Testnet (`44005`) — all 4 contracts deployed & wired in Block `3310882` (`0.003943121 tQDAY` total gas).
 - [x] Claim `tQDAY` & `tUSD8` from `https://faucet.qday.info/en` (`1 tQDAY` and `5 tUSD8` testnet cap per claim).
@@ -39,25 +36,23 @@ This document serves as the shared source of truth across local development, the
 - [x] Run `forge test -vvv` locally inside `contracts/` — **7/7 tests passed** (`0 failed`, `0 skipped`, Solc `0.8.24` / `shanghai`).
 
 ### Stage 3 — End-to-End Integration & AI Verification (Verified Locally)
-
 - [x] Verified EOA wallet connection (`MetaMask` / `Rabby`) on QDay Aevum (`0xABE5`) — `/app/docs` readiness panel confirmed **`5 / 5`**.
 - [x] Verified live **Gasless QR Sale** TX hash on `https://explorer-test.qday.info`.
 - [x] Verified **AI Red-Team Console** & **Gemini Audit** (`GEMINI_API_KEY` active; hardened `lib/gemini.ts` with `ThinkingLevel.LOW` + retry/fallback to `gemini-3.1-flash-lite` on `503` spikes).
 - [ ] Final quick check on **ERC-8004 Payee Verification + Spoofing Attack** (`/app/identitas` & `/stage`) and responsive viewports on the live Vercel domain.
 
 ### Stage 4 — Production Deployment on Vercel & Documentation Parity (Active)
-
 - [x] Connect `https://github.com/rebelchain/hanumpay` to Vercel and deploy live at `https://hanumpay.vercel.app`.
 - [x] Harmonize entire `/app/*` workspace (`AppShell`, `dashboard`, `penjualan`, `pinjaman`, `pool`, `identitas`, `docs`, and modals) to the landing white-and-mint (`#FFFFFF` / `#F5F7F5` / `#9FE8C3`) design system and fix sidebar badge wrap & `CreditScoreGauge` `"Offer Ready"` status bugs.
 - [x] Rebuild `/app/docs` as an interactive 3-pane GitBook-style portal and publish official GitBook Site Sync (`gitbook-docs.yaml` + `docs/`) at `https://rebelxyz.gitbook.io/hanumpay`.
 - [x] Add compact GitBook Docs & GitHub Open-Source CTA strip above the landing Footer + Footer protocol links.
-- [x] Add `GET /api/health` readiness probe, optional `CRON_SECRET` protection on `/api/agent/cron`, MIT `LICENSE`, `app/icon.svg`, and scoped AWS deployment guide (`docs/deployment-guide.md`).
-- [ ] Verify Environment Variable parity in Vercel (`GEMINI_API_KEY`, `QDAY_RPC_URL`, 4 `NEXT_PUBLIC_*` addresses, `RELAYER_PRIVATE_KEY`, `AGENT_PRIVATE_KEY`, optional `CRON_SECRET`).
+- [x] Add `GET /api/health` readiness probe, optional `CRON_SECRET` protection on `/api/agent/cron`, MIT `LICENSE`, `app/icon.svg`, and scoped deployment guide (`docs/deployment-guide.md`).
+- [x] Separate `/app/*` into 100% pure live on-chain QDay Chain `44005` workspace (removing all initial mock/dummy data while isolating the 2-phone simulator strictly inside `/stage`).
+- [x] Add standalone Express 5 + TypeScript backend under `/backend` (`Dockerfile`, PM2 `ecosystem.config.cjs`, `Caddyfile.example`) and `NEXT_PUBLIC_BACKEND_URL` routing (`lib/backend.ts`) for Oracle Cloud VPS hosting.
+- [ ] Deploy `/backend` to Oracle Cloud VPS with Caddy HTTPS and configure `NEXT_PUBLIC_BACKEND_URL` + contract env vars on Vercel (`https://hanumpay.vercel.app`).
 - [ ] Smoke-test all core flows on `https://hanumpay.vercel.app` (`/api/health`, `/app/docs` `5/5`, Gasless QR Sale TX, AI Audit + Red-Team `200 OK`, ERC-8004 Spoofing block).
-- [ ] _(Optional Post-Vercel)_ Connect AWS EventBridge/Lambda cron or AWS Amplify Hosting using scoped AWS access.
 
 ### Stage 5 — Hackathon Submission Packaging (DoraHacks)
-
 - [ ] Record an English product demo video (<= 3 minutes) covering the Landing Page, 2-Phone Simulator, AI Red-Team Console, and live QDay transactions.
 - [ ] Add Demo Video URL into `README.md` and `PROGRESS.md`.
 - [ ] Final commit to `https://github.com/rebelchain/hanumpay` and DoraHacks submission.
@@ -66,22 +61,22 @@ This document serves as the shared source of truth across local development, the
 
 ## Deployed QDay Testnet Addresses & Sample Tx Hashes
 
-| Component                | Contract Address / Tx Hash                                           | Notes                                                                                                                               |
-| ------------------------ | -------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
-| `ERC8004Registry`        | `0x5533628fE8bFa8A6227C69cca8F7E96e578709c9`                         | Block `3310882` · Deploy Tx `0x61225c341f230224c2b8423e0138aaa142962f52e38f67579fd32be311709419`                                    |
-| `SalesLedger`            | `0xbFCe0404F4abbe73Bf4eDB2e0E7F7a0e69d33BE5`                         | Block `3310882` · Deploy Tx `0x1370ba11990eceff2b7a69e83998bf82834a3af0854bf30d4bc066054a6ae921` · `setLoanPool` `0xf4399353...`    |
-| `LoanPool`               | `0x5FcF8175bc41B584322Af65979013AbB6FecA6DB`                         | Block `3310882` · Deploy Tx `0xaa677dff6e1d517aad06eb4ce16258ded2f5128c4e0c0b0a53835a483782dd1b` · `setAIGuarantor` `0x56ee6d89...` |
-| `AIGuarantor`            | `0x35E37e86b7676FEA5fb4704b5ce6C015492c1d64`                         | Block `3310882` · Deploy Tx `0xe7f779da8be0e78be67df7e348faf234891b8c3e44d057274a0168d8a73484fe`                                    |
-| Contract Deploy Batch Tx | `0x61225c341f230224c2b8423e0138aaa142962f52e38f67579fd32be311709419` | Initial contract deployment batch                                                                                                   |
-| Gasless QR Sale Tx       | `0x98731de9e728d4cd43b9eb7eed153d8a90ce526b1fc961f5fae80688784c55c6` | Verified live `SalesLedger.recordSale` TX                                                                                           |
-| LP Deposit (`tUSD8`) Tx  | `0x1fc8460f1eeeede30c03db8793b7119b92039fe1ad2e8644bfbc324ef5413f4e` | Bounded `LoanPool.deposit` within `5 tUSD8` faucet                                                                                  |
+| Component | Contract Address / Tx Hash | Notes |
+| --- | --- | --- |
+| `ERC8004Registry` | `0x5533628fE8bFa8A6227C69cca8F7E96e578709c9` | Block `3310882` · Deploy Tx `0x61225c341f230224c2b8423e0138aaa142962f52e38f67579fd32be311709419` |
+| `SalesLedger` | `0xbFCe0404F4abbe73Bf4eDB2e0E7F7a0e69d33BE5` | Block `3310882` · Deploy Tx `0x1370ba11990eceff2b7a69e83998bf82834a3af0854bf30d4bc066054a6ae921` · `setLoanPool` `0xf4399353...` |
+| `LoanPool` | `0x5FcF8175bc41B584322Af65979013AbB6FecA6DB` | Block `3310882` · Deploy Tx `0xaa677dff6e1d517aad06eb4ce16258ded2f5128c4e0c0b0a53835a483782dd1b` · `setAIGuarantor` `0x56ee6d89...` |
+| `AIGuarantor` | `0x35E37e86b7676FEA5fb4704b5ce6C015492c1d64` | Block `3310882` · Deploy Tx `0xe7f779da8be0e78be67df7e348faf234891b8c3e44d057274a0168d8a73484fe` |
+| Contract Deploy Batch Tx | `0x61225c341f230224c2b8423e0138aaa142962f52e38f67579fd32be311709419` | Initial contract deployment batch |
+| Gasless QR Sale Tx | `0x98731de9e728d4cd43b9eb7eed153d8a90ce526b1fc961f5fae80688784c55c6` | Verified live `SalesLedger.recordSale` TX |
+| LP Deposit (`tUSD8`) Tx | `0x1fc8460f1eeeede30c03db8793b7119b92039fe1ad2e8644bfbc324ef5413f4e` | Bounded `LoanPool.deposit` within `5 tUSD8` faucet |
 
 > **Testnet Faucet & Guardrail Note**: QDay Aevum faucet provides `1 tQDAY` and `5 tUSD8`, and `AIGuarantor.sol` requires `>= 30 days` shop registration age for new on-chain loan proposals—so day-one `/api/agent/cron` connects cleanly (`200 OK`) and skips fresh shops per contract rules while AI underwriting & Red-Team verification run live via Gemini.
 
 ---
 
 ## Changelog
-
+- **2026-11-18 (Stage 4e — Pure Live On-Chain App & Standalone VPS Backend)**: Removed all initial dummy/mock data from `lib/hanumpay-store.tsx` and `/app/*` so every action (`SalesLedger.registerShop`, EIP-712 gasless `recordSale`/`acceptLoan`, `LoanPool.deposit`/`withdraw`, `AIGuarantor.setAgentPaused`, `ERC8004Registry.register`/`revoke`, `tUSD8.transfer`) executes 100% live against QDay Chain `44005`; isolated the 2-phone simulator strictly inside `/stage` (`lib/stage-simulator-store.tsx`); and added a standalone Express 5 backend under `/backend` (`Dockerfile`, PM2, `Caddyfile.example`, `NEXT_PUBLIC_BACKEND_URL`) for Oracle Cloud VPS hosting.
 - **2026-11-17 (Stage 4d — Test Suite, Health Probe & AWS Prep)**: Expanded `contracts/test/HanumPay.t.sol` to 7 tests (`acceptLoan`, `10%` auto-repay, cooldown, `80%` cap, `$500` ceiling, ERC-8004 revoke); added `GET /api/health`, optional `CRON_SECRET` guard on `/api/agent/cron`, MIT `LICENSE`, `app/icon.svg`, and scoped AWS deployment guidance in `docs/deployment-guide.md`.
 - **2026-11-17 (Stage 4c — Documentation & Landing CTA)**: Added GitBook Site Git Sync (`gitbook-docs.yaml`, `docs/.gitbook.yaml`, `docs/*.md`) live at `https://rebelxyz.gitbook.io/hanumpay`, added the compact Open-Source & GitBook CTA strip above the landing page Footer + Footer links (`lib/qday.ts`, `app/page.tsx`), and synchronized `README.md` / `PROGRESS.md`.
 - **2026-11-17 (Stage 4b — Workspace UI Parity & Bug Fixes)**: Unified `AppShell`, all `/app/*` pages, and modals to the landing white-and-mint theme; rebuilt `/app/docs` into a 3-pane GitBook reader; fixed `"1 offer"` badge wrapping, `CreditScoreGauge` `"Offer Ready"` status, dynamic supplier modal shop name, hero calculator elevation, and `types/css.d.ts` (`noUncheckedSideEffectImports`).

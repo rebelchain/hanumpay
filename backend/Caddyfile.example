@@ -1,0 +1,6 @@
+# Example Caddy configuration for automatic HTTPS on Oracle Cloud VPS
+# Tip: Even without purchasing a domain, you can use <YOUR_VPS_PUBLIC_IP>.sslip.io!
+
+<YOUR_DOMAIN_OR_IP>.sslip.io {
+    reverse_proxy 127.0.0.1:4000
+}

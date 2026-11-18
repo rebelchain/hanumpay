@@ -1,31 +1,26 @@
-import { Type } from "@google/genai";
-import { NextRequest, NextResponse } from "next/server";
-import { generateGeminiJson } from "@/lib/gemini";
+import { Type } from '@google/genai';
+import { NextRequest, NextResponse } from 'next/server';
+import { generateGeminiJson } from '@/lib/gemini';
 
 export async function POST(req: NextRequest) {
   try {
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
-        { error: "GEMINI_API_KEY is not configured on the server." },
-        { status: 500 },
+        { error: 'GEMINI_API_KEY is not configured on the server.' },
+        { status: 500 }
       );
     }
 
     const body = await req.json();
-    const {
-      shopName,
-      totalSales30dUSD8,
-      uniqueCustomers30d,
-      proposedPrincipalUSD8,
-      flatFeeUSD8,
-    } = body as {
-      shopName: string;
-      totalSales30dUSD8: number;
-      uniqueCustomers30d: number;
-      proposedPrincipalUSD8: number;
-      flatFeeUSD8: number;
-    };
+    const { shopName, totalSales30dUSD8, uniqueCustomers30d, proposedPrincipalUSD8, flatFeeUSD8 } =
+      body as {
+        shopName: string;
+        totalSales30dUSD8: number;
+        uniqueCustomers30d: number;
+        proposedPrincipalUSD8: number;
+        flatFeeUSD8: number;
+      };
 
     const text = await generateGeminiJson({
       apiKey,
@@ -39,30 +34,27 @@ Auto-repayment: 10% deducted automatically from each incoming QR sale (no fixed 
 
 Provide a concise, plain-English underwriting summary and one risk-control note.`,
       systemInstruction:
-        "You are HanumPay-AI-Guarantor-v1, a transparent working-capital underwriting agent for small merchants. Explain contract-enforced loan terms clearly in 2–3 plain English sentences without inventing new numbers.",
+        'You are HanumPay-AI-Guarantor-v1, a transparent working-capital underwriting agent for small merchants. Explain contract-enforced loan terms clearly in 2–3 plain English sentences without inventing new numbers.',
       responseSchema: {
         type: Type.OBJECT,
         properties: {
           summary: {
             type: Type.STRING,
-            description:
-              "A 2-sentence English underwriting summary explaining eligibility based on sales and unique buyers.",
+            description: 'A 2-sentence English underwriting summary explaining eligibility based on sales and unique buyers.',
           },
           riskNote: {
             type: Type.STRING,
-            description:
-              "One short English note highlighting the smart-contract safety limit.",
+            description: 'One short English note highlighting the smart-contract safety limit.',
           },
         },
-        required: ["summary", "riskNote"],
+        required: ['summary', 'riskNote'],
       },
     });
 
     const parsed = JSON.parse(text);
     return NextResponse.json(parsed);
   } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to run Gemini AI audit.";
+    const message = err instanceof Error ? err.message : 'Failed to run Gemini AI audit.';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

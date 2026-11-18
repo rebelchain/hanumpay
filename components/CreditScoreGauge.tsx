@@ -1,6 +1,6 @@
-"use client";
+'use client';
 
-import React from "react";
+import React from 'react';
 
 export default function CreditScoreGauge({
   score,
@@ -13,29 +13,24 @@ export default function CreditScoreGauge({
   maxLoanUSD8: number;
   eligible: boolean;
   reason?: string;
-  loanStatus?: "offer_ready" | "active_loan" | null;
+  loanStatus?: 'offer_ready' | 'active_loan' | null;
 }) {
   const clamped = Math.max(0, Math.min(100, score));
-  const isPositiveState =
-    eligible || loanStatus === "offer_ready" || loanStatus === "active_loan";
+  const isPositiveState = eligible || loanStatus === 'offer_ready' || loanStatus === 'active_loan';
 
   const strokeColor =
-    clamped >= 70 ? "#15803D" : clamped >= 40 ? "#B45309" : "#DC2626";
+    clamped >= 70 ? '#15803D' : clamped >= 40 ? '#B45309' : '#DC2626';
   const statusText =
-    clamped >= 70
-      ? "Highly Eligible"
-      : clamped >= 40
-        ? "Building History"
-        : "Insufficient Data";
+    clamped >= 70 ? 'Highly Eligible' : clamped >= 40 ? 'Building History' : 'Insufficient Data';
 
   const badgeLabel =
-    loanStatus === "offer_ready"
-      ? "Offer Ready"
-      : loanStatus === "active_loan"
-        ? "Active Credit"
+    loanStatus === 'offer_ready'
+      ? 'Offer Ready'
+      : loanStatus === 'active_loan'
+        ? 'Active Credit'
         : eligible
-          ? "Eligible"
-          : "Not Yet Met";
+          ? 'Eligible'
+          : 'Not Yet Met';
 
   // Semicircle path math (radius 76, arc length = pi * 76 ≈ 238.76)
   const radius = 76;
@@ -56,8 +51,8 @@ export default function CreditScoreGauge({
         <span
           className={`inline-flex items-center rounded-full px-2.5 py-1 text-[11px] font-semibold whitespace-nowrap shrink-0 ${
             isPositiveState
-              ? "bg-[#E8FAF0] text-[#15803D]"
-              : "bg-amber-50 text-[#B45309]"
+              ? 'bg-[#E8FAF0] text-[#15803D]'
+              : 'bg-amber-50 text-[#B45309]'
           }`}
         >
           {badgeLabel}
@@ -108,9 +103,7 @@ export default function CreditScoreGauge({
       </div>
 
       <div className="pt-4 border-t border-[#E2E7E4] flex items-center justify-between gap-4 text-sm">
-        <span className="text-[#5C6260]">
-          Credit Limit Cap (10% of 30d sales)
-        </span>
+        <span className="text-[#5C6260]">Credit Limit Cap (10% of 30d sales)</span>
         <span className="font-mono tabular-nums font-semibold text-[#151619] whitespace-nowrap">
           {maxLoanUSD8.toFixed(2)} tUSD8
         </span>

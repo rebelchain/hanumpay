@@ -1,13 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse } from 'next/server';
 import {
   DEPLOYED_CONTRACTS,
   QDAY_CHAIN_ID,
   QDAY_EVM_VERSION,
   QDAY_RPC_URL,
   qDayPublicClient,
-} from "@/lib/qday";
+} from '@/lib/qday';
 
-export const dynamic = "force-dynamic";
+export const dynamic = 'force-dynamic';
 
 export async function GET() {
   let blockNumber: string | null = null;
@@ -15,12 +15,9 @@ export async function GET() {
 
   try {
     const timeoutPromise = new Promise<never>((_, reject) =>
-      setTimeout(() => reject(new Error("RPC timeout")), 3000),
+      setTimeout(() => reject(new Error('RPC timeout')), 3000)
     );
-    const block = await Promise.race([
-      qDayPublicClient.getBlockNumber(),
-      timeoutPromise,
-    ]);
+    const block = await Promise.race([qDayPublicClient.getBlockNumber(), timeoutPromise]);
     blockNumber = block.toString();
     rpcHealthy = true;
   } catch {
@@ -30,9 +27,9 @@ export async function GET() {
   return NextResponse.json(
     {
       ok: rpcHealthy,
-      service: "hanumpay",
+      service: 'hanumpay',
       network: {
-        name: "QDay Aevum Testnet",
+        name: 'QDay Aevum Testnet',
         chainId: QDAY_CHAIN_ID,
         evmVersion: QDAY_EVM_VERSION,
         rpcUrl: QDAY_RPC_URL,
@@ -48,6 +45,6 @@ export async function GET() {
       },
       timestamp: new Date().toISOString(),
     },
-    { status: rpcHealthy ? 200 : 503 },
+    { status: rpcHealthy ? 200 : 503 }
   );
 }

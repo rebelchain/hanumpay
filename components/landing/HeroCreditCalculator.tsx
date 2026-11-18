@@ -9,9 +9,9 @@ import { useHanumPay } from '@/lib/hanumpay-store';
 const PRESET_SALES = [500, 1250, 2500, 5000] as const;
 
 export function HeroCreditCalculator() {
-  const { shopStats, activeShopName } = useHanumPay();
+  const { shopStats, wallet } = useHanumPay();
   const liveSales = Math.round(shopStats.totalSales30dUSD8);
-  const [salesInput, setSalesInput] = useState<string>(String(liveSales));
+  const [salesInput, setSalesInput] = useState<string>('1250');
 
   const parsedSales = useMemo(() => {
     const num = Number(salesInput);
@@ -35,17 +35,22 @@ export function HeroCreditCalculator() {
 
   return (
     <div className="relative rounded-[20px] bg-white p-2 shadow-[0_30px_80px_rgb(15_90_54/0.16)] ring-1 ring-[#151619]/6">
-      {/* Well 1: 30-Day Shop QR Sales */}
       <div className="rounded-[14px] bg-[#F5F7F5] px-5 pt-4 pb-5">
         <div className="flex items-center justify-between gap-2 text-[13px] text-[#5C6260]">
           <span>Shop QR revenue (30 days)</span>
-          <button
-            type="button"
-            onClick={() => setSalesInput(String(liveSales))}
-            className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#15803D] hover:underline cursor-pointer whitespace-nowrap"
-          >
-            Live: ${liveSales.toLocaleString('en-US')}
-          </button>
+          {wallet.connected && liveSales > 0 ? (
+            <button
+              type="button"
+              onClick={() => setSalesInput(String(liveSales))}
+              className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#15803D] hover:underline cursor-pointer whitespace-nowrap"
+            >
+              My Wallet: ${liveSales.toLocaleString('en-US')}
+            </button>
+          ) : (
+            <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-[#15803D] whitespace-nowrap">
+              Credit Formula
+            </span>
+          )}
         </div>
 
         <div className="mt-2.5 flex items-center justify-between gap-3">
@@ -84,12 +89,11 @@ export function HeroCreditCalculator() {
             );
           })}
           <span className="ml-auto text-[12px] text-[#636966] truncate">
-            {activeShopName.split(' - ')[0]}
+            AIGuarantor.sol
           </span>
         </div>
       </div>
 
-      {/* Cycle sample revenue preset button */}
       <div className="relative z-10 -my-3.5 flex justify-center">
         <button
           type="button"
@@ -102,7 +106,6 @@ export function HeroCreditCalculator() {
         </button>
       </div>
 
-      {/* Well 2: Smart Contract Working Capital Limit */}
       <div className="rounded-[14px] bg-[#F5F7F5] px-5 pt-4 pb-5">
         <div className="flex items-center justify-between gap-2 text-[13px] text-[#5C6260]">
           <span>Working capital credit limit</span>
@@ -127,7 +130,6 @@ export function HeroCreditCalculator() {
         </div>
       </div>
 
-      {/* Fee Summary */}
       <div className="flex flex-wrap items-center justify-between gap-2 px-3 py-3.5 text-[13px]">
         <span className="text-[#5C6260]">Contract flat fee</span>
         <div className="tabular-nums text-right">
@@ -139,7 +141,6 @@ export function HeroCreditCalculator() {
         </div>
       </div>
 
-      {/* Primary CTA */}
       <Link
         href="/stage"
         className="group flex h-14 w-full items-center justify-center gap-2.5 rounded-[14px] bg-[#151619] px-5 text-[15px] font-semibold text-white transition-colors duration-200 hover:bg-[#24282D] whitespace-nowrap"

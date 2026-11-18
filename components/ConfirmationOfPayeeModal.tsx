@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React from "react";
-import { CheckCircle2, ShieldCheck, X } from "lucide-react";
-import { ERC8004Identity } from "@/lib/hanumpay-types";
-import { QDAY_EXPLORER_URL } from "@/lib/qday";
+import React from 'react';
+import { CheckCircle2, ShieldCheck, X } from 'lucide-react';
+import { ERC8004Identity } from '@/lib/hanumpay-types';
+import { QDAY_EXPLORER_URL } from '@/lib/qday-constants';
 
 export default function ConfirmationOfPayeeModal({
   open,
@@ -29,13 +29,13 @@ export default function ConfirmationOfPayeeModal({
   if (!open || !entity) return null;
 
   const categoryLabel =
-    entity.category === "shop"
-      ? "Merchant / Shop"
-      : entity.category === "supplier"
-        ? "Verified Supplier"
-        : entity.category === "lender"
-          ? "Liquidity Provider"
-          : "AI Agent";
+    entity.category === 'shop'
+      ? 'Merchant / Shop'
+      : entity.category === 'supplier'
+        ? 'Verified Supplier'
+        : entity.category === 'lender'
+          ? 'Liquidity Provider'
+          : 'AI Agent';
 
   return (
     <div
@@ -53,10 +53,7 @@ export default function ConfirmationOfPayeeModal({
         <div className="flex items-center justify-between px-6 py-4 border-b border-[#E2E7E4]">
           <div className="flex items-center gap-2.5">
             <ShieldCheck className="w-5 h-5 text-[#15803D]" />
-            <h3
-              id="cop-modal-title"
-              className="text-base font-semibold tracking-[-0.015em] text-[#151619]"
-            >
+            <h3 id="cop-modal-title" className="text-base font-semibold tracking-[-0.015em] text-[#151619]">
               {title}
             </h3>
           </div>
@@ -83,12 +80,8 @@ export default function ConfirmationOfPayeeModal({
             </div>
 
             <div>
-              <p className="text-base font-semibold text-[#151619]">
-                {entity.name}
-              </p>
-              <p className="text-xs font-mono text-[#5C6260] break-all mt-0.5">
-                {entity.wallet}
-              </p>
+              <p className="text-base font-semibold text-[#151619]">{entity.name}</p>
+              <p className="text-xs font-mono text-[#5C6260] break-all mt-0.5">{entity.wallet}</p>
             </div>
 
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-[#5C6260] pt-1">
@@ -118,10 +111,7 @@ export default function ConfirmationOfPayeeModal({
             </div>
 
             {summaryRows.map((row) => (
-              <div
-                key={row.label}
-                className="flex items-center justify-between text-sm py-1"
-              >
+              <div key={row.label} className="flex items-center justify-between text-sm py-1">
                 <span className="text-[#5C6260]">{row.label}</span>
                 <span className="font-mono tabular-nums font-medium text-[#151619]">
                   {row.value}
@@ -131,9 +121,8 @@ export default function ConfirmationOfPayeeModal({
           </div>
 
           <p className="text-xs text-[#636966]">
-            Terms are fetched directly from the smart contract and cannot be
-            altered after approval. EIP-712 signatures require zero tQDAY gas
-            from the merchant.
+            Terms are fetched directly from the smart contract and cannot be altered after approval.
+            EIP-712 signatures require zero tQDAY gas from the merchant.
           </p>
         </div>
 
@@ -151,7 +140,7 @@ export default function ConfirmationOfPayeeModal({
             onClick={onConfirm}
             className="w-full sm:w-auto px-5 py-3 sm:py-2.5 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors min-h-[48px] sm:min-h-[44px] disabled:opacity-60 cursor-pointer"
           >
-            {isSubmitting ? "Submitting EIP-712..." : actionLabel}
+            {isSubmitting ? 'Submitting EIP-712...' : actionLabel}
           </button>
         </div>
       </div>

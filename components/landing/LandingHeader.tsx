@@ -4,7 +4,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { useHanumPay } from '@/lib/hanumpay-store';
-import { shortenAddress } from '@/lib/qday';
+import { shortenAddress } from '@/lib/qday-constants';
 import { CONTAINER } from './section';
 
 const APP_LINKS = [

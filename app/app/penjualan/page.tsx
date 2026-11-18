@@ -1,17 +1,25 @@
-"use client";
+'use client';
 
-import React, { useMemo, useState } from "react";
-import { CheckCircle2, QrCode, Receipt, Zap } from "lucide-react";
-import AppShell from "@/components/AppShell";
-import { useHanumPay } from "@/lib/hanumpay-store";
-import { VerifiableReceipt } from "@/lib/hanumpay-types";
-import { hashCustomerId } from "@/lib/qday";
+import React, { useMemo, useState } from 'react';
+import {
+  CheckCircle2,
+  ExternalLink,
+  QrCode,
+  Receipt,
+  Store,
+  Wallet,
+  Zap,
+} from 'lucide-react';
+import AppShell from '@/components/AppShell';
+import { useHanumPay } from '@/lib/hanumpay-store';
+import { VerifiableReceipt } from '@/lib/hanumpay-types';
+import { hashCustomerId, QDAY_EXPLORER_URL } from '@/lib/qday';
 
 const QUICK_IDR_PRESETS = [
-  { idr: "Rp 25k", tusd8: "1.58" },
-  { idr: "Rp 50k", tusd8: "3.16" },
-  { idr: "Rp 100k", tusd8: "6.33" },
-  { idr: "Rp 250k", tusd8: "15.82" },
+  { idr: 'Rp 25k', tusd8: '1.58' },
+  { idr: 'Rp 50k', tusd8: '3.16' },
+  { idr: 'Rp 100k', tusd8: '6.33' },
+  { idr: 'Rp 250k', tusd8: '15.82' },
 ];
 
 export default function RecordSalePage() {
@@ -21,22 +29,27 @@ export default function RecordSalePage() {
     recordSale,
     shopStats,
     wallet,
+    connectQDayWallet,
+    isRegisteredShop,
+    registerShopOnChain,
     lastRelayMode,
-    receipts,
     openReceipt,
+    activeShopName,
   } = useHanumPay();
-  const [amountInput, setAmountInput] = useState("15.82");
-  const [customerInput, setCustomerInput] = useState("0812-4499");
-  const [useWalletSign, setUseWalletSign] = useState(false);
+
+  const [amountInput, setAmountInput] = useState('15.82');
+  const [customerInput, setCustomerInput] = useState('0812-4499');
+  const [shopNameInput, setShopNameInput] = useState('');
+  const [registering, setRegistering] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{
-    type: "ok" | "err";
+    type: 'ok' | 'err';
     text: string;
     receipt?: VerifiableReceipt;
   } | null>(null);
 
   const previewHash = useMemo(() => {
-    if (customerInput.trim().length < 4) return "Enter at least 4 characters";
+    if (customerInput.trim().length < 4) return 'Enter at least 4 characters';
     return hashCustomerId(customerInput);
   }, [customerInput]);
 
@@ -46,28 +59,42 @@ export default function RecordSalePage() {
       ? Math.round(parsedAmount * (activeLoan.repayPctBps / 10000) * 100) / 100
       : 0;
 
+  async function handleQuickRegister(e: React.FormEvent) {
+    e.preventDefault();
+    setRegistering(true);
+    setFeedback(null);
+    const res = await registerShopOnChain(shopNameInput, true);
+    setRegistering(false);
+    if (!res.ok) {
+      setFeedback({ type: 'err', text: res.error ?? 'Failed to register shop.' });
+    } else {
+      setFeedback({ type: 'ok', text: 'Shop registered on QDay SalesLedger!' });
+      setShopNameInput('');
+    }
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitting(true);
     setFeedback(null);
-    const res = await recordSale(parsedAmount, customerInput, useWalletSign);
+    const res = await recordSale(parsedAmount, customerInput);
     setSubmitting(false);
 
     if (!res.ok) {
-      setFeedback({ type: "err", text: res.error ?? "Failed to record sale." });
+      setFeedback({ type: 'err', text: res.error ?? 'Failed to record sale.' });
       return;
     }
 
     setFeedback({
-      type: "ok",
+      type: 'ok',
       text:
         res.repaidAmount > 0
-          ? `Recorded gaslessly! ${res.repaidAmount.toFixed(2)} tUSD8 auto-deducted for Loan #${activeLoan?.id}.`
-          : `${parsedAmount.toFixed(2)} tUSD8 sale verified by Relayer with zero gas cost.`,
+          ? `Recorded on QDay! ${res.repaidAmount.toFixed(2)} tUSD8 auto-deducted for Loan #${activeLoan?.id}.`
+          : `${parsedAmount.toFixed(2)} tUSD8 sale relayed on-chain to SalesLedger.sol with zero merchant gas cost.`,
       receipt: res.receipt,
     });
     setCustomerInput(
-      `08${Math.floor(10 + Math.random() * 89)}-${Math.floor(1000 + Math.random() * 8999)}`,
+      `08${Math.floor(10 + Math.random() * 89)}-${Math.floor(1000 + Math.random() * 8999)}`
     );
   }
 
@@ -81,12 +108,12 @@ export default function RecordSalePage() {
       }));
   }, [sales]);
 
-  const maxBar = Math.max(100, ...chartBars.map((b) => b.amount));
+  const maxBar = Math.max(20, ...chartBars.map((b) => b.amount));
 
   return (
     <AppShell
       title="Record QR Sale"
-      subtitle="Mobile-ready QR cashier. Gasless EIP-712 signatures via Relayer; active credit lines auto-deduct 10%."
+      subtitle="Live gasless EIP-712 QR cashier relayed to QDay SalesLedger. Active credit lines auto-deduct 10%."
     >
       <div className="grid lg:grid-cols-12 gap-6">
         <div className="lg:col-span-6 bg-white border border-[#E2E7E4] rounded-2xl p-6 space-y-5">
@@ -101,11 +128,55 @@ export default function RecordSalePage() {
             </div>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#E8FAF0] px-2.5 py-1 text-xs font-semibold text-[#15803D] whitespace-nowrap shrink-0">
               <Zap className="w-3.5 h-3.5" />
-              <span>Zero gas fee</span>
+              <span>Gasless EIP-712</span>
             </span>
           </div>
 
-          {/* 1-Tap Mobile Cashier Presets */}
+          {!wallet.connected && (
+            <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <p className="text-xs text-[#5C6260]">
+                Connect MetaMask/Rabby to sign real EIP-712 QR sale payloads for your shop.
+              </p>
+              <button
+                type="button"
+                onClick={connectQDayWallet}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-white bg-[#151619] rounded-xl shrink-0 cursor-pointer"
+              >
+                <Wallet className="w-3.5 h-3.5 text-[#9FE8C3]" />
+                <span>Connect Wallet</span>
+              </button>
+            </div>
+          )}
+
+          {wallet.connected && !isRegisteredShop && (
+            <form
+              onSubmit={handleQuickRegister}
+              className="p-4 rounded-xl bg-amber-50 border border-amber-200 space-y-2.5"
+            >
+              <div className="flex items-center gap-2 text-xs font-semibold text-[#B45309]">
+                <Store className="w-4 h-4 shrink-0" />
+                <span>Register your wallet in SalesLedger before recording QR sales</span>
+              </div>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={shopNameInput}
+                  onChange={(e) => setShopNameInput(e.target.value)}
+                  placeholder="Shop name (e.g. Toko Berkah)"
+                  required
+                  className="flex-1 px-3 py-2 text-xs bg-white border border-amber-200 rounded-lg text-[#151619]"
+                />
+                <button
+                  type="submit"
+                  disabled={registering}
+                  className="px-3.5 py-2 text-xs font-semibold text-white bg-[#151619] rounded-lg whitespace-nowrap cursor-pointer disabled:opacity-60"
+                >
+                  {registering ? 'Registering...' : 'Register Shop'}
+                </button>
+              </div>
+            </form>
+          )}
+
           <div>
             <p className="text-xs font-medium text-[#636966] mb-2">
               Quick Presets (IDR → tUSD8)
@@ -118,13 +189,11 @@ export default function RecordSalePage() {
                   onClick={() => setAmountInput(preset.tusd8)}
                   className={`py-2.5 px-3 rounded-xl border text-left transition-colors min-h-[48px] cursor-pointer ${
                     amountInput === preset.tusd8
-                      ? "border-[#151619] bg-[#9FE8C3] text-[#151619]"
-                      : "border-[#E2E7E4] bg-[#F5F7F5] hover:bg-[#E8FAF0]/60 text-[#151619]"
+                      ? 'border-[#151619] bg-[#9FE8C3] text-[#151619]'
+                      : 'border-[#E2E7E4] bg-[#F5F7F5] hover:bg-[#E8FAF0]/60 text-[#151619]'
                   }`}
                 >
-                  <span className="block text-xs font-semibold">
-                    {preset.idr}
-                  </span>
+                  <span className="block text-xs font-semibold">{preset.idr}</span>
                   <span className="block text-[11px] font-mono tabular-nums text-[#5C6260]">
                     ${preset.tusd8}
                   </span>
@@ -159,8 +228,7 @@ export default function RecordSalePage() {
               </div>
               {!Number.isNaN(parsedAmount) && parsedAmount > 0 && (
                 <p className="text-xs text-[#636966] mt-1 font-mono tabular-nums">
-                  ≈ Rp{" "}
-                  {Math.round(parsedAmount * 15800).toLocaleString("en-US")} IDR
+                  ≈ Rp {Math.round(parsedAmount * 15800).toLocaleString('en-US')} IDR
                 </p>
               )}
             </div>
@@ -192,45 +260,24 @@ export default function RecordSalePage() {
                   Loan #{activeLoan.id} Auto-Repayment Active (10%)
                 </p>
                 <p className="font-mono tabular-nums">
-                  Routed to pool: {autoRepayPreview.toFixed(2)} tUSD8 · Net to
-                  shop:{" "}
-                  {Math.max(0, (parsedAmount || 0) - autoRepayPreview).toFixed(
-                    2,
-                  )}{" "}
-                  tUSD8
+                  Routed to pool: {autoRepayPreview.toFixed(2)} tUSD8 · Net to shop:{' '}
+                  {Math.max(0, (parsedAmount || 0) - autoRepayPreview).toFixed(2)} tUSD8
                 </p>
               </div>
-            )}
-
-            {wallet.connected && (
-              <label className="flex items-center gap-2.5 text-xs text-[#151619] cursor-pointer pt-1 min-h-[40px]">
-                <input
-                  type="checkbox"
-                  checked={useWalletSign}
-                  onChange={(e) => setUseWalletSign(e.target.checked)}
-                  className="rounded border-[#E2E7E4] text-[#151619] focus:ring-[#151619]"
-                />
-                <span>
-                  Sign EIP-712 payload via connected MetaMask wallet (still
-                  gasless)
-                </span>
-              </label>
             )}
 
             {feedback && (
               <div
                 className={`p-3.5 rounded-xl text-xs border flex items-start justify-between gap-3 ${
-                  feedback.type === "ok"
-                    ? "bg-[#E8FAF0] border-[#9FE8C3] text-[#151619]"
-                    : "bg-red-50 border-red-200 text-red-900"
+                  feedback.type === 'ok'
+                    ? 'bg-[#E8FAF0] border-[#9FE8C3] text-[#151619]'
+                    : 'bg-red-50 border-red-200 text-red-900'
                 }`}
               >
                 <div className="flex items-start gap-2">
                   <CheckCircle2
                     className={`w-4 h-4 shrink-0 mt-0.5 ${
-                      feedback.type === "ok"
-                        ? "text-[#15803D]"
-                        : "text-[#DC2626]"
+                      feedback.type === 'ok' ? 'text-[#15803D]' : 'text-[#DC2626]'
                     }`}
                   />
                   <div>
@@ -257,12 +304,12 @@ export default function RecordSalePage() {
 
             <button
               type="submit"
-              disabled={submitting}
-              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors min-h-[48px] disabled:opacity-60 cursor-pointer"
+              disabled={submitting || !wallet.connected || !isRegisteredShop}
+              className="w-full inline-flex items-center justify-center gap-2 px-5 py-3.5 text-sm font-semibold text-white bg-[#151619] hover:bg-[#24282D] rounded-xl transition-colors min-h-[48px] disabled:opacity-50 cursor-pointer"
             >
               <QrCode className="w-4 h-4 text-[#9FE8C3]" />
               <span>
-                {submitting ? "Submitting EIP-712..." : "Record Sale (Gasless)"}
+                {submitting ? 'Sign EIP-712 & Relay...' : 'Sign EIP-712 & Record Sale'}
               </span>
             </button>
           </form>
@@ -277,20 +324,18 @@ export default function RecordSalePage() {
                 {shopStats.totalSales30dUSD8.toFixed(2)} tUSD8
               </p>
               <p className="text-xs text-[#636966] mt-1 font-mono tabular-nums">
-                {sales.length} receipts anchored
+                {sales.length} receipts on-chain
               </p>
             </div>
             <div className="bg-white border border-[#E2E7E4] rounded-2xl p-5">
-              <p className="text-xs text-[#636966]">
-                Unique Buyers (Sybil Gate)
-              </p>
+              <p className="text-xs text-[#636966]">Unique Buyers (Sybil Gate)</p>
               <p className="text-xl sm:text-2xl font-semibold font-mono tabular-nums text-[#151619] mt-1">
                 {shopStats.uniqueCustomers30d} / min 5
               </p>
               <p className="text-xs text-[#15803D] mt-1 font-semibold">
                 {shopStats.uniqueCustomers30d >= 5
-                  ? "Buyer diversity requirement met"
-                  : "Needs more unique buyers"}
+                  ? 'Buyer diversity requirement met'
+                  : 'Needs more unique buyers'}
               </p>
             </div>
           </div>
@@ -301,81 +346,106 @@ export default function RecordSalePage() {
                 <h3 className="text-sm font-semibold text-[#151619]">
                   Recent Verified Sales Volume
                 </h3>
-                <p className="text-xs text-[#5C6260]">
-                  Latest receipts settled in tUSD8
-                </p>
+                <p className="text-xs text-[#5C6260]">Latest receipts settled in tUSD8</p>
               </div>
-              <span className="text-xs font-mono text-[#636966]">
-                SalesLedger.sol
-              </span>
+              <span className="text-xs font-mono text-[#636966]">SalesLedger.sol</span>
             </div>
 
-            <div className="h-44 flex items-end gap-3 pt-4 border-b border-[#E2E7E4] pb-2">
-              {chartBars.map((bar) => {
-                const heightPct = Math.max(
-                  12,
-                  Math.round((bar.amount / maxBar) * 100),
-                );
-                return (
-                  <div
-                    key={bar.label}
-                    className="flex-1 flex flex-col items-center gap-2 h-full justify-end"
-                  >
-                    <span className="text-[10px] font-mono tabular-nums text-[#636966]">
-                      ${bar.amount.toFixed(0)}
-                    </span>
-                    <div
-                      className="w-full max-w-[36px] bg-[#9FE8C3] border border-[#15803D]/25 rounded-t-lg transition-all"
-                      style={{ height: `${heightPct}%` }}
-                    />
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex justify-between text-[11px] font-mono text-[#636966]">
-              <span>Earlier</span>
-              <span>Latest</span>
-            </div>
+            {chartBars.length === 0 ? (
+              <div className="h-44 flex items-center justify-center rounded-xl border border-dashed border-[#E2E7E4] bg-[#F5F7F5]/60 text-xs text-[#5C6260]">
+                {wallet.connected
+                  ? 'No on-chain QR sales recorded for this wallet yet.'
+                  : 'Connect your wallet to chart live SalesLedger volume.'}
+              </div>
+            ) : (
+              <>
+                <div className="h-44 flex items-end gap-3 pt-4 border-b border-[#E2E7E4] pb-2">
+                  {chartBars.map((bar) => {
+                    const heightPct = Math.max(12, Math.round((bar.amount / maxBar) * 100));
+                    return (
+                      <div
+                        key={bar.label}
+                        className="flex-1 flex flex-col items-center gap-2 h-full justify-end"
+                      >
+                        <span className="text-[10px] font-mono tabular-nums text-[#636966]">
+                          ${bar.amount.toFixed(0)}
+                        </span>
+                        <div
+                          className="w-full max-w-[36px] bg-[#9FE8C3] border border-[#15803D]/25 rounded-t-lg transition-all"
+                          style={{ height: `${heightPct}%` }}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="flex justify-between text-[11px] font-mono text-[#636966]">
+                  <span>Earlier</span>
+                  <span>Latest</span>
+                </div>
+              </>
+            )}
           </div>
 
-          {/* Verifiable QDay Receipts History */}
           <div className="bg-white border border-[#E2E7E4] rounded-2xl p-5 space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-sm font-semibold text-[#151619]">
-                Verifiable QDay Receipts
-              </h3>
-              <span className="text-xs text-[#636966]">
-                Tap to copy or share proof
-              </span>
+              <h3 className="text-sm font-semibold text-[#151619]">Verifiable QDay Receipts</h3>
+              <span className="text-xs text-[#636966]">Live Explorer TXs</span>
             </div>
-            <div className="divide-y divide-[#E2E7E4]">
-              {receipts
-                .filter((r) => r.kind === "sale")
-                .slice(0, 3)
-                .map((r) => (
-                  <button
-                    key={r.id}
-                    type="button"
-                    onClick={() => openReceipt(r)}
-                    className="w-full py-2.5 flex items-center justify-between gap-3 text-left hover:bg-[#F5F7F5] px-2 rounded-xl transition-colors min-h-[44px] cursor-pointer"
+            {sales.length === 0 ? (
+              <p className="text-xs text-[#5C6260] py-4">
+                No SaleRecorded events found for this wallet on QDay yet.
+              </p>
+            ) : (
+              <div className="divide-y divide-[#E2E7E4]">
+                {sales.slice(0, 4).map((s) => (
+                  <div
+                    key={s.id}
+                    className="w-full py-2.5 flex items-center justify-between gap-3 px-1"
                   >
-                    <div className="flex items-center gap-2.5 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        openReceipt({
+                          id: `rcpt-${s.id}`,
+                          kind: 'sale',
+                          title: `QR Sale · ${s.customerLabel}`,
+                          amountUSD8: s.amountUSD8,
+                          repaidDeductedUSD8: s.repaidDeductedUSD8,
+                          netAmountUSD8: s.netToShopUSD8,
+                          counterpartyName: activeShopName,
+                          counterpartyWallet: s.shop,
+                          erc8004Verified: true,
+                          proofHash: s.customerIdHash,
+                          txHash: s.txHash,
+                          relayMode: 'qday-onchain-relay',
+                          timestamp: s.timestamp,
+                        })
+                      }
+                      className="flex items-center gap-2.5 min-w-0 text-left cursor-pointer hover:opacity-80"
+                    >
                       <Receipt className="w-4 h-4 text-[#15803D] shrink-0" />
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-[#151619] truncate">
-                          {r.title}
+                          {s.customerLabel}
                         </p>
                         <p className="text-[11px] font-mono text-[#636966] truncate">
-                          {r.txHash.slice(0, 16)}...
+                          {s.amountUSD8.toFixed(2)} tUSD8
                         </p>
                       </div>
-                    </div>
-                    <span className="text-xs font-mono tabular-nums font-semibold text-[#15803D] shrink-0">
-                      {r.amountUSD8.toFixed(2)} tUSD8
-                    </span>
-                  </button>
+                    </button>
+                    <a
+                      href={`${QDAY_EXPLORER_URL}/tx/${s.txHash}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="inline-flex items-center gap-1 text-xs font-mono text-[#15803D] hover:underline shrink-0"
+                    >
+                      <span>{s.txHash.slice(0, 10)}...</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
                 ))}
-            </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

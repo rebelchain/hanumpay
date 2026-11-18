@@ -45,6 +45,7 @@ export interface LoanRecord {
   status: LoanStatus;
   agentName: string;
   aiExplanation?: string;
+  txHash?: string;
 }
 
 export interface PoolEvent {
@@ -98,7 +99,7 @@ export interface AgentAuditLog {
 
 export interface VerifiableReceipt {
   id: string;
-  kind: 'sale' | 'loan' | 'supplier';
+  kind: 'sale' | 'loan' | 'supplier' | 'pool' | 'identity';
   title: string;
   amountUSD8: number;
   repaidDeductedUSD8: number;

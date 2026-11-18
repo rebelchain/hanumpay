@@ -60,13 +60,13 @@ Deploy sequence: `ERC8004Registry -> SalesLedger -> LoanPool -> AIGuarantor`.
 
 ## Security Invariants (Contract-Enforced)
 
-| Invariant                   | Value                                      | Enforced In                        |
-| --------------------------- | ------------------------------------------ | ---------------------------------- |
-| **Max loan principal**      | `10%` of 30d sales, capped at `$500 tUSD8` | `AIGuarantor.sol` / `LoanPool.sol` |
-| **Max AI proposals / day**  | `10` proposals / 24h                       | `AIGuarantor.sol`                  |
-| **Max pool utilization**    | `80%` of TVL                               | `LoanPool.sol`                     |
-| **Post-repayment cooldown** | `30 days`                                  | `LoanPool.sol`                     |
-| **Minimum unique buyers**   | `5` within trailing 30d                    | `AIGuarantor.sol`                  |
-| **Minimum shop history**    | `30 days`                                  | `AIGuarantor.sol`                  |
-| **Loan fee**                | `5%` flat immutable                        | `LoanPool.sol`                     |
-| **EVM Target**              | `shanghai` _(avoids Cancun `MCOPY`)_       | `contracts/foundry.toml`           |
+| Invariant | Value | Enforced In |
+| --- | --- | --- |
+| **Max loan principal** | `10%` of 30d sales, capped at `$500 tUSD8` | `AIGuarantor.sol` / `LoanPool.sol` |
+| **Max AI proposals / day** | `10` proposals / 24h | `AIGuarantor.sol` |
+| **Max pool utilization** | `80%` of TVL | `LoanPool.sol` |
+| **Post-repayment cooldown** | `30 days` | `LoanPool.sol` |
+| **Minimum unique buyers** | `5` within trailing 30d | `AIGuarantor.sol` |
+| **Minimum shop history** | `30 days` | `AIGuarantor.sol` |
+| **Loan fee** | `5%` flat immutable | `LoanPool.sol` |
+| **EVM Target** | `shanghai` *(avoids Cancun `MCOPY`)* | `contracts/foundry.toml` |

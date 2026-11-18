@@ -8,33 +8,62 @@ import {
   parseUnits,
   toHex,
   type Log,
-} from "viem";
+} from 'viem';
+import {
+  ACCEPT_LOAN_TYPES,
+  addOrSwitchQDayNetwork,
+  DEPLOYED_CONTRACTS,
+  DEPLOYMENT_START_BLOCK,
+  formatTusd8,
+  fromTusd8Raw,
+  getInjectedProvider,
+  HANUMPAY_EIP712_DOMAIN,
+  HANUMPAY_GITHUB_URL,
+  HANUMPAY_GITBOOK_URL,
+  QDAY_CHAIN_ID,
+  QDAY_CHAIN_ID_HEX,
+  QDAY_EVM_VERSION,
+  QDAY_EXPLORER_URL,
+  QDAY_FAUCET_URL,
+  QDAY_MAX_LOGS_BLOCK_RANGE,
+  QDAY_RPC_URL,
+  RECORD_SALE_TYPES,
+  shortenAddress,
+  TUSD8_CONTRACT,
+  type EthereumProvider,
+} from './qday-constants';
 
-export const QDAY_CHAIN_ID = 44005;
-export const QDAY_CHAIN_ID_HEX = "0xABE5";
-export const QDAY_RPC_URL = "https://rpc-test.qday.info";
-export const QDAY_EXPLORER_URL = "https://explorer-test.qday.info";
-export const QDAY_FAUCET_URL = "https://faucet.qday.info/en";
-export const QDAY_EVM_VERSION = "shanghai";
-export const QDAY_MAX_LOGS_BLOCK_RANGE = BigInt(1000);
-export const HANUMPAY_GITBOOK_URL = "https://rebelxyz.gitbook.io/hanumpay";
-export const HANUMPAY_GITHUB_URL = "https://github.com/rebelchain/hanumpay";
-
-// Official tUSD8 Stablecoin Contract from Aevum Builder Challenge #1 Starter Kit (6 decimals)
-export const TUSD8_CONTRACT = {
-  address: "0x456569838f1d43009A91ebA4263147Afd7233483" as `0x${string}`,
-  decimals: 6,
-  symbol: "tUSD8",
-  chainId: QDAY_CHAIN_ID,
+export {
+  ACCEPT_LOAN_TYPES,
+  addOrSwitchQDayNetwork,
+  DEPLOYED_CONTRACTS,
+  DEPLOYMENT_START_BLOCK,
+  formatTusd8,
+  fromTusd8Raw,
+  getInjectedProvider,
+  HANUMPAY_EIP712_DOMAIN,
+  HANUMPAY_GITHUB_URL,
+  HANUMPAY_GITBOOK_URL,
+  QDAY_CHAIN_ID,
+  QDAY_CHAIN_ID_HEX,
+  QDAY_EVM_VERSION,
+  QDAY_EXPLORER_URL,
+  QDAY_FAUCET_URL,
+  QDAY_MAX_LOGS_BLOCK_RANGE,
+  QDAY_RPC_URL,
+  RECORD_SALE_TYPES,
+  shortenAddress,
+  TUSD8_CONTRACT,
+  type EthereumProvider,
 };
 
 // Note: QDay Aevum RPC only supports HTTPS polling (No WebSocket RPC).
 export const qDayAevumTestnet = defineChain({
   id: QDAY_CHAIN_ID,
-  name: "QDay Aevum",
+  name: 'QDay Aevum',
   nativeCurrency: {
-    name: "tQDAY",
-    symbol: "tQDAY",
+    name: 'tQDAY',
+    symbol: 'tQDAY',
     decimals: 18,
   },
   rpcUrls: {
@@ -44,7 +73,7 @@ export const qDayAevumTestnet = defineChain({
   },
   blockExplorers: {
     default: {
-      name: "QDay Explorer",
+      name: 'QDay Explorer',
       url: QDAY_EXPLORER_URL,
     },
   },
@@ -53,25 +82,28 @@ export const qDayAevumTestnet = defineChain({
 
 export const qDayPublicClient = createPublicClient({
   chain: qDayAevumTestnet,
-  transport: http(QDAY_RPC_URL, { timeout: 8000 }),
+  transport: http(QDAY_RPC_URL, { timeout: 10000 }),
 });
 
 /**
  * QDay Aevum limits `eth_getLogs` to at most 1,000 blocks per request.
- * Use this helper to paginate block ranges safely over HTTPS.
+ * Paginates block ranges safely over HTTPS in small concurrent batches.
  */
 export async function getLogsChunked(params: {
   address?: `0x${string}` | `0x${string}`[];
   fromBlock: bigint;
   toBlock: bigint;
   chunkSize?: bigint;
+  maxWindows?: number;
 }): Promise<Log[]> {
+  if (params.toBlock < params.fromBlock) return [];
+
   const step =
     params.chunkSize && params.chunkSize <= QDAY_MAX_LOGS_BLOCK_RANGE
       ? params.chunkSize
       : QDAY_MAX_LOGS_BLOCK_RANGE;
 
-  const logs: Log[] = [];
+  const ranges: Array<{ from: bigint; to: bigint }> = [];
   let cursor = params.fromBlock;
 
   while (cursor <= params.toBlock) {
@@ -79,21 +111,42 @@ export async function getLogsChunked(params: {
       cursor + step - BigInt(1) < params.toBlock
         ? cursor + step - BigInt(1)
         : params.toBlock;
-
-    const batch = await qDayPublicClient.getLogs({
-      address: params.address,
-      fromBlock: cursor,
-      toBlock: end,
-    });
-    logs.push(...batch);
+    ranges.push({ from: cursor, to: end });
     cursor = end + BigInt(1);
+  }
+
+  const maxWin = params.maxWindows ?? 45;
+  const boundedRanges = ranges.length > maxWin ? ranges.slice(-maxWin) : ranges;
+
+  const logs: Log[] = [];
+  const batchSize = 5;
+
+  for (let i = 0; i < boundedRanges.length; i += batchSize) {
+    const slice = boundedRanges.slice(i, i + batchSize);
+    const results = await Promise.all(
+      slice.map((r) =>
+        qDayPublicClient
+          .getLogs({
+            address: params.address,
+            fromBlock: r.from,
+            toBlock: r.to,
+          })
+          .catch(() => [] as Log[])
+      )
+    );
+    for (const batch of results) {
+      logs.push(...batch);
+    }
   }
 
   return logs;
 }
 
-const ERC20_BALANCE_ABI = parseAbi([
-  "function balanceOf(address owner) view returns (uint256)",
+export const ERC20_ABI = parseAbi([
+  'function balanceOf(address owner) view returns (uint256)',
+  'function allowance(address owner, address spender) view returns (uint256)',
+  'function approve(address spender, uint256 amount) returns (bool)',
+  'function transfer(address to, uint256 amount) returns (bool)',
 ]);
 
 export function parseTusd8(amount: string): bigint {
@@ -102,141 +155,116 @@ export function parseTusd8(amount: string): bigint {
   return parseUnits(cleaned, TUSD8_CONTRACT.decimals);
 }
 
-export function formatTusd8(raw: bigint, decimals = 2): string {
-  const num = Number(formatUnits(raw, TUSD8_CONTRACT.decimals));
-  return num.toLocaleString("en-US", {
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
-}
-
 export function hashCustomerId(rawId: string): `0x${string}` {
   return keccak256(toHex(rawId.trim().toLowerCase()));
 }
 
-export function shortenAddress(addr: string): string {
-  if (!addr || addr.length < 10) return addr;
-  return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
-}
-
-// EIP-712 typed data definitions matching CONTRACTS_SPEC.md
-export const HANUMPAY_EIP712_DOMAIN = {
-  name: "HanumPaySalesLedger",
-  version: "1",
-  chainId: QDAY_CHAIN_ID,
-  verifyingContract:
-    "0x7A90000000000000000000000000000000008004" as `0x${string}`,
-};
-
-export const RECORD_SALE_TYPES = {
-  RecordSale: [
-    { name: "shop", type: "address" },
-    { name: "amountUSD8", type: "uint256" },
-    { name: "customerId", type: "bytes32" },
-    { name: "deadline", type: "uint256" },
-  ],
-} as const;
-
-export const ACCEPT_LOAN_TYPES = {
-  AcceptLoan: [
-    { name: "loanId", type: "uint256" },
-    { name: "shop", type: "address" },
-    { name: "principalUSD8", type: "uint256" },
-    { name: "flatFeeUSD8", type: "uint256" },
-    { name: "repayPctBps", type: "uint256" },
-    { name: "deadline", type: "uint256" },
-  ],
-} as const;
-
-export const DEPLOYED_CONTRACTS = {
-  erc8004: (process.env.NEXT_PUBLIC_ERC8004_ADDRESS ||
-    "0x5533628fE8bFa8A6227C69cca8F7E96e578709c9") as `0x${string}`,
-  salesLedger: (process.env.NEXT_PUBLIC_SALES_LEDGER_ADDRESS ||
-    "0xbFCe0404F4abbe73Bf4eDB2e0E7F7a0e69d33BE5") as `0x${string}`,
-  loanPool: (process.env.NEXT_PUBLIC_LOAN_POOL_ADDRESS ||
-    "0x5FcF8175bc41B584322Af65979013AbB6FecA6DB") as `0x${string}`,
-  aiGuarantor: (process.env.NEXT_PUBLIC_AI_GUARANTOR_ADDRESS ||
-    "0x35E37e86b7676FEA5fb4704b5ce6C015492c1d64") as `0x${string}`,
-};
-
 export const HANUMPAY_ABIS = {
+  erc8004: parseAbi([
+    'function register(string name, string category, bytes metadata) external',
+    'function revoke(string name) external',
+    'function resolve(string name) external view returns (address)',
+    'function isVerified(string name) external view returns (bool)',
+    'function nameOf(address wallet) external view returns (string)',
+    'function getIdentity(string name) external view returns ((address wallet, string name, string category, bytes metadata, uint256 registeredAt, bool active))',
+    'event IdentityRegistered(bytes32 indexed nameHash, address indexed wallet, string name, string category)',
+    'event IdentityRevoked(bytes32 indexed nameHash)',
+  ]),
   salesLedger: parseAbi([
-    "function recordSale(address shop, uint256 amountUSD8, bytes32 customerId, uint256 deadline, bytes signature) external",
-    "function totalShops() external view returns (uint256)",
-    "function getShops(uint256 offset, uint256 limit) external view returns (address[] memory)",
+    'function registerShop(string name) external',
+    'function recordSale(address shop, uint256 amountUSD8, bytes32 customerId, uint256 deadline, bytes signature) external',
+    'function isRegisteredShop(address shop) external view returns (bool)',
+    'function shopRegisteredAt(address shop) external view returns (uint256)',
+    'function totalShops() external view returns (uint256)',
+    'function getShops(uint256 offset, uint256 limit) external view returns (address[])',
+    'function getShopStats(address shop) external view returns ((uint256 totalSales30d, uint256 uniqueCustomers30d, uint256 totalSalesAllTime, uint256 totalSaleCount, uint256 lastSaleTimestamp, bool hasMinimumHistory))',
+    'event SaleRecorded(address indexed shop, uint256 amount, bytes32 indexed customerId, uint256 timestamp, uint256 saleIndex)',
   ]),
   loanPool: parseAbi([
-    "function acceptLoan(uint256 loanId, uint256 deadline, bytes signature) external",
+    'function deposit(uint256 amount) external',
+    'function withdraw(uint256 shares) external',
+    'function acceptLoan(uint256 loanId, uint256 deadline, bytes signature) external',
+    'function getLoan(uint256 loanId) external view returns ((uint256 id, address shop, uint256 principal, uint256 flatFee, uint256 repayPct, uint256 totalRepaid, uint256 proposedAt, uint256 acceptedAt, uint256 repaidAt, uint8 status))',
+    'function getActiveLoan(address shop) external view returns (uint256)',
+    'function getShopLoans(address shop) external view returns (uint256[])',
+    'function getCooldownEnd(address shop) external view returns (uint256)',
+    'function getPoolStats() external view returns ((uint256 totalDeposited, uint256 totalLoaned, uint256 totalAvailable, uint256 utilizationPct, uint256 totalFeeEarned, uint256 activeLoanCount))',
+    'function getLenderBalance(address lender) external view returns (uint256 shares, uint256 tUSD8Value)',
+    'event LoanProposed(uint256 indexed loanId, address indexed shop, uint256 principal, uint256 flatFee, uint256 repayPct)',
+    'event LoanAccepted(uint256 indexed loanId, address indexed shop, uint256 timestamp)',
+    'event LoanRepayment(uint256 indexed loanId, address indexed shop, uint256 amount, uint256 totalRepaid, uint256 remaining)',
+    'event LoanRepaid(uint256 indexed loanId, address indexed shop, uint256 totalRepaid, uint256 daysToRepay)',
+    'event CreditPassportMinted(uint256 indexed loanId, address indexed shop, uint256 principal, uint256 daysToRepay)',
+    'event LenderDeposited(address indexed lender, uint256 amount, uint256 shares)',
+    'event LenderWithdrew(address indexed lender, uint256 amount, uint256 shares)',
   ]),
   aiGuarantor: parseAbi([
-    "function proposeLoan(address shop) external returns (uint256)",
-    "function checkEligibility(address shop) external view returns (bool eligible, string memory reason)",
-    "function proposalsToday() external view returns (uint256)",
+    'function setAgentPaused(bool paused) external',
+    'function proposeLoan(address shop) external returns (uint256)',
+    'function checkEligibility(address shop) external view returns (bool eligible, string reason)',
+    'function proposalsToday() external view returns (uint256)',
+    'function shopPausedAgent(address shop) external view returns (bool)',
+    'event ProposalSubmitted(address indexed shop, uint256 principal, uint256 flatFee, uint256 loanId, uint256 timestamp)',
+    'event AgentAccessUpdated(address indexed shop, bool paused, uint256 timestamp)',
   ]),
 };
-
-export interface EthereumProvider {
-  request: (args: { method: string; params?: unknown[] }) => Promise<unknown>;
-}
-
-export function getInjectedProvider(): EthereumProvider | null {
-  if (typeof window === "undefined") return null;
-  const win = window as unknown as { ethereum?: EthereumProvider };
-  return win.ethereum ?? null;
-}
-
-// EIP-3085 wallet_addEthereumChain configuration from QDay Wiki
-export async function addOrSwitchQDayNetwork(
-  provider: EthereumProvider,
-): Promise<void> {
-  try {
-    await provider.request({
-      method: "wallet_switchEthereumChain",
-      params: [{ chainId: QDAY_CHAIN_ID_HEX }],
-    });
-  } catch (err) {
-    const code = (err as { code?: number })?.code;
-    if (code === 4001) {
-      throw err;
-    }
-    if (code === 4902 || code === -32603 || code === undefined) {
-      await provider.request({
-        method: "wallet_addEthereumChain",
-        params: [
-          {
-            chainId: QDAY_CHAIN_ID_HEX, // 44005
-            chainName: "QDay Aevum",
-            rpcUrls: [QDAY_RPC_URL],
-            blockExplorerUrls: [QDAY_EXPLORER_URL],
-            nativeCurrency: {
-              name: "tQDAY",
-              symbol: "tQDAY",
-              decimals: 18,
-            },
-          },
-        ],
-      });
-      return;
-    }
-    throw err;
-  }
-}
 
 export async function fetchQDayBalances(address: `0x${string}`): Promise<{
   tqday: string;
   tusd8: string;
+  tusd8Raw: bigint;
 }> {
   const [nativeRaw, tusd8Raw] = await Promise.all([
     qDayPublicClient.getBalance({ address }),
     qDayPublicClient.readContract({
       address: TUSD8_CONTRACT.address,
-      abi: ERC20_BALANCE_ABI,
-      functionName: "balanceOf",
+      abi: ERC20_ABI,
+      functionName: 'balanceOf',
       args: [address],
     }),
   ]);
   return {
     tqday: Number(formatUnits(nativeRaw, 18)).toFixed(4),
     tusd8: formatTusd8(tusd8Raw, 2),
+    tusd8Raw,
   };
+}
+
+export async function sendWalletWriteContract<
+  TAbi extends readonly unknown[],
+  TFunctionName extends string,
+>(params: {
+  account: `0x${string}`;
+  address: `0x${string}`;
+  abi: TAbi;
+  functionName: TFunctionName;
+  args: readonly unknown[];
+}): Promise<`0x${string}`> {
+  const provider = getInjectedProvider();
+  if (!provider) {
+    throw new Error('No browser Web3 wallet detected (install MetaMask or Rabby).');
+  }
+
+  await addOrSwitchQDayNetwork(provider);
+
+  const { encodeFunctionData } = await import('viem');
+  const data = encodeFunctionData({
+    abi: params.abi,
+    functionName: params.functionName,
+    args: params.args,
+  } as Parameters<typeof encodeFunctionData>[0]);
+
+  const txHash = (await provider.request({
+    method: 'eth_sendTransaction',
+    params: [
+      {
+        from: params.account,
+        to: params.address,
+        data,
+      },
+    ],
+  })) as `0x${string}`;
+
+  await qDayPublicClient.waitForTransactionReceipt({ hash: txHash, timeout: 60_000 });
+  return txHash;
 }

@@ -1,357 +1,42 @@
-"use client";
+'use client';
 
 import React, {
   createContext,
-  useContext,
-  useMemo,
-  useState,
   useCallback,
-} from "react";
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
+import { backendUrl } from './backend';
+import {
+  checkShopEligibility,
+  EligibilityCheckResult,
+  ShopStatsSnapshot,
+} from './hanumpay-engine';
 import {
   AgentAuditLog,
   CreditPassportRecord,
   EntityCategory,
   ERC8004Identity,
   LoanRecord,
+  LoanStatus,
   PoolEvent,
   SaleRecord,
   SupplierPayment,
   VerifiableReceipt,
-} from "./hanumpay-types";
-import {
-  checkShopEligibility,
-  CONTRACT_LIMITS,
-  EligibilityCheckResult,
-  ShopStatsSnapshot,
-} from "./hanumpay-engine";
+} from './hanumpay-types';
 import {
   addOrSwitchQDayNetwork,
   DEPLOYED_CONTRACTS,
-  fetchQDayBalances,
+  DEPLOYMENT_START_BLOCK,
+  fromTusd8Raw,
   getInjectedProvider,
-  hashCustomerId,
   QDAY_CHAIN_ID,
-} from "./qday";
-
-const SHOP_ADDRESS = "0x8B3f92A1c04E5d18B0a24f4e71cD919F2a01Bu5R".replace(
-  "Bu5R",
-  "9C42",
-) as `0x${string}`;
-const AGENT_ADDRESS =
-  "0x4E88004a91C2B10eF73291bC8A5D12904410A119" as `0x${string}`;
-const SUPPLIER_1_ADDR =
-  "0x71D029a8C1F4b3992eE40b6C1A82840F9002D51A" as `0x${string}`;
-const SUPPLIER_2_ADDR =
-  "0x39A112c0F8D29301e6b992A7C55210E38B77C910" as `0x${string}`;
-const SUPPLIER_3_ADDR =
-  "0x92F480b1E34C9102A7b881E04C6119D41200E821" as `0x${string}`;
-const LENDER_ADDR =
-  "0x55C901a3B72E8401F9a11023D84410A29910F4B2" as `0x${string}`;
-
-function pseudoTxHash(seed: string): string {
-  let h = 0x811c9dc5;
-  for (let i = 0; i < seed.length; i++) {
-    h ^= seed.charCodeAt(i);
-    h = Math.imul(h, 0x01000193);
-  }
-  const hex = (h >>> 0).toString(16).padStart(8, "0");
-  return `0x${hex}${hex}${hex}${hex}${hex}${hex}${hex}${hex}`.slice(0, 66);
-}
-
-const NOW = 1794600000000; // Deterministic baseline timestamp (Nov 2026)
-
-const INITIAL_IDENTITIES: ERC8004Identity[] = [
-  {
-    name: "Warung Bu Sri - Surabaya",
-    wallet: SHOP_ADDRESS,
-    category: "shop",
-    metadata: {
-      city: "Surabaya, East Java",
-      businessType: "Neighborhood Grocery & Daily Essentials",
-      reputationScore: 96,
-      completedTxCount: 148,
-      validationMethod: "EIP-712 Merchant Sig + 30d QR Ledger",
-    },
-    registeredAt: NOW - 45 * 86400 * 1000,
-    active: true,
-  },
-  {
-    name: "HanumPay-AI-Guarantor-v1",
-    wallet: AGENT_ADDRESS,
-    category: "agent",
-    metadata: {
-      agentModel: "Automated AIGuarantor + Gemini Audit",
-      reputationScore: 99,
-      completedTxCount: 412,
-      validationMethod: "ERC-8004 AgentCard + Contract Guardrails",
-    },
-    registeredAt: NOW - 60 * 86400 * 1000,
-    active: true,
-  },
-  {
-    name: "Pak Joko Distributor",
-    wallet: SUPPLIER_1_ADDR,
-    category: "supplier",
-    metadata: {
-      city: "Surabaya Wholesale Market",
-      businessType: "Wholesale Cooking Oil, Rice & Sugar",
-      reputationScore: 98,
-      completedTxCount: 289,
-      validationMethod: "ERC-8004 Confirmation of Payee Verified",
-    },
-    registeredAt: NOW - 52 * 86400 * 1000,
-    active: true,
-  },
-  {
-    name: "Surya Rice Mill",
-    wallet: SUPPLIER_2_ADDR,
-    category: "supplier",
-    metadata: {
-      city: "Sidoarjo, East Java",
-      businessType: "Direct Mill Rice & Grain Supplier",
-      reputationScore: 95,
-      completedTxCount: 164,
-      validationMethod: "ERC-8004 Confirmation of Payee Verified",
-    },
-    registeredAt: NOW - 40 * 86400 * 1000,
-    active: true,
-  },
-  {
-    name: "Nusantara Beverage Supply",
-    wallet: SUPPLIER_3_ADDR,
-    category: "supplier",
-    metadata: {
-      city: "Gresik, East Java",
-      businessType: "Packaged Beverages & Dairy Distributor",
-      reputationScore: 93,
-      completedTxCount: 97,
-      validationMethod: "ERC-8004 Confirmation of Payee Verified",
-    },
-    registeredAt: NOW - 28 * 86400 * 1000,
-    active: true,
-  },
-  {
-    name: "Aevum UMKM Liquidity Guild",
-    wallet: LENDER_ADDR,
-    category: "lender",
-    metadata: {
-      city: "QDay Testnet Liquidity Pool",
-      businessType: "Community Working-Capital LP Guild",
-      reputationScore: 97,
-      completedTxCount: 61,
-      validationMethod: "Verified LoanPool LP Share",
-    },
-    registeredAt: NOW - 58 * 86400 * 1000,
-    active: true,
-  },
-];
-
-const INITIAL_SALES: SaleRecord[] = [
-  {
-    id: "sale-108",
-    shop: SHOP_ADDRESS,
-    amountUSD8: 24.5,
-    customerIdHash: hashCustomerId("0812-8841"),
-    customerLabel: "Customer #8841",
-    timestamp: NOW - 2 * 3600 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 24.5,
-    eip712Signature: "0x4b12e9...eip712",
-    txHash: pseudoTxHash("sale-108"),
-  },
-  {
-    id: "sale-107",
-    shop: SHOP_ADDRESS,
-    amountUSD8: 18.0,
-    customerIdHash: hashCustomerId("0856-3319"),
-    customerLabel: "Customer #3319",
-    timestamp: NOW - 5 * 3600 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 18.0,
-    eip712Signature: "0x99a4c1...eip712",
-    txHash: pseudoTxHash("sale-107"),
-  },
-  {
-    id: "sale-106",
-    shop: SHOP_ADDRESS,
-    amountUSD8: 42.0,
-    customerIdHash: hashCustomerId("0813-7720"),
-    customerLabel: "Customer #7720",
-    timestamp: NOW - 1 * 86400 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 42.0,
-    eip712Signature: "0x11d0f8...eip712",
-    txHash: pseudoTxHash("sale-106"),
-  },
-  {
-    id: "sale-105",
-    shop: SHOP_ADDRESS,
-    amountUSD8: 68.5,
-    customerIdHash: hashCustomerId("0878-4490"),
-    customerLabel: "Customer #4490",
-    timestamp: NOW - 2 * 86400 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 68.5,
-    eip712Signature: "0x6a22b1...eip712",
-    txHash: pseudoTxHash("sale-105"),
-  },
-  {
-    id: "sale-104",
-    shop: SHOP_ADDRESS,
-    amountUSD8: 112.0,
-    customerIdHash: hashCustomerId("0819-5502"),
-    customerLabel: "Customer #5502",
-    timestamp: NOW - 4 * 86400 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 112.0,
-    eip712Signature: "0x88c1e3...eip712",
-    txHash: pseudoTxHash("sale-104"),
-  },
-  {
-    id: "sale-103",
-    shop: SHOP_ADDRESS,
-    amountUSD8: 295.0,
-    customerIdHash: hashCustomerId("0821-6108"),
-    customerLabel: "Customer #6108",
-    timestamp: NOW - 9 * 86400 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 295.0,
-    eip712Signature: "0x3f71a2...eip712",
-    txHash: pseudoTxHash("sale-103"),
-  },
-  {
-    id: "sale-102",
-    shop: SHOP_ADDRESS,
-    amountUSD8: 340.0,
-    customerIdHash: hashCustomerId("0852-9014"),
-    customerLabel: "Customer #9014",
-    timestamp: NOW - 16 * 86400 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 340.0,
-    eip712Signature: "0x2d09c4...eip712",
-    txHash: pseudoTxHash("sale-102"),
-  },
-  {
-    id: "sale-101",
-    shop: SHOP_ADDRESS,
-    amountUSD8: 350.0,
-    customerIdHash: hashCustomerId("0811-1204"),
-    customerLabel: "Customer #1204",
-    timestamp: NOW - 23 * 86400 * 1000,
-    repaidDeductedUSD8: 0,
-    netToShopUSD8: 350.0,
-    eip712Signature: "0x7e40b9...eip712",
-    txHash: pseudoTxHash("sale-101"),
-  },
-];
-
-// Initial proposal generated by HanumPay-AI-Guarantor-v1 based on $1,250.00 30d sales (10% = $125.00 tUSD8)
-const INITIAL_LOANS: LoanRecord[] = [
-  {
-    id: 42,
-    shop: SHOP_ADDRESS,
-    principalUSD8: 125.0,
-    flatFeeUSD8: 6.25,
-    repayPctBps: 1000,
-    totalRepaidUSD8: 0,
-    proposedAt: NOW - 3 * 3600 * 1000,
-    expiresAt: NOW + 45 * 3600 * 1000,
-    status: "Proposed",
-    agentName: "HanumPay-AI-Guarantor-v1",
-    aiExplanation:
-      "Verified 8 unique buyers over 30 days totaling 1,250.00 tUSD8 in QR sales. 10% contract working-capital limit = 125.00 tUSD8 at an immutable 5% flat fee (6.25 tUSD8).",
-  },
-  {
-    id: 19,
-    shop: SHOP_ADDRESS,
-    principalUSD8: 80.0,
-    flatFeeUSD8: 4.0,
-    repayPctBps: 1000,
-    totalRepaidUSD8: 84.0,
-    proposedAt: NOW - 62 * 86400 * 1000,
-    acceptedAt: NOW - 61 * 86400 * 1000,
-    repaidAt: NOW - 39 * 86400 * 1000,
-    expiresAt: NOW - 60 * 86400 * 1000,
-    status: "Repaid",
-    agentName: "HanumPay-AI-Guarantor-v1",
-  },
-];
-
-const INITIAL_PASSPORTS: CreditPassportRecord[] = [
-  {
-    loanId: 19,
-    shopName: "Warung Bu Sri - Surabaya",
-    shopAddress: SHOP_ADDRESS,
-    principalUSD8: 80.0,
-    flatFeeUSD8: 4.0,
-    daysToRepay: 22,
-    newCreditLimitUSD8: 125.0,
-    txHash: pseudoTxHash("passport-loan-19"),
-    timestamp: NOW - 39 * 86400 * 1000,
-  },
-];
-
-const INITIAL_POOL_EVENTS: PoolEvent[] = [
-  {
-    id: "pe-1",
-    type: "Deposit",
-    actor: "Aevum UMKM Liquidity Guild",
-    amountUSD8: 12400.0,
-    timestamp: NOW - 40 * 86400 * 1000,
-    txHash: pseudoTxHash("pe-1"),
-  },
-  {
-    id: "pe-2",
-    type: "LoanDisbursed",
-    actor: "Warung Bu Sri - Surabaya",
-    amountUSD8: 80.0,
-    timestamp: NOW - 61 * 86400 * 1000,
-    txHash: pseudoTxHash("pe-2"),
-  },
-  {
-    id: "pe-3",
-    type: "RepaymentReceived",
-    actor: "Warung Bu Sri - Surabaya",
-    amountUSD8: 84.0,
-    timestamp: NOW - 39 * 86400 * 1000,
-    txHash: pseudoTxHash("pe-3"),
-  },
-];
-
-const INITIAL_AUDIT_LOGS: AgentAuditLog[] = [
-  {
-    id: "log-1",
-    event: "cycle_start",
-    timestamp: NOW - 3 * 3600 * 1000 - 4000,
-  },
-  {
-    id: "log-2",
-    event: "shops_fetched",
-    reason: "Fetched 3 registered shops from SalesLedger",
-    timestamp: NOW - 3 * 3600 * 1000 - 3000,
-  },
-  {
-    id: "log-3",
-    event: "shop_skipped",
-    shop: "0x2190...7A12 (Kios Kopi Mas Andi)",
-    reason: "Only 3 unique buyers. Minimum 5 required.",
-    timestamp: NOW - 3 * 3600 * 1000 - 2000,
-  },
-  {
-    id: "log-4",
-    event: "proposal_submitted",
-    shop: SHOP_ADDRESS,
-    principal: "125000000",
-    flatFee: "6250000",
-    txHash: pseudoTxHash("proposal-42"),
-    timestamp: NOW - 3 * 3600 * 1000,
-  },
-  {
-    id: "log-5",
-    event: "cycle_end",
-    timestamp: NOW - 3 * 3600 * 1000 + 1200,
-  },
-];
+  shortenAddress,
+  TUSD8_CONTRACT,
+} from './qday-constants';
 
 interface WalletState {
   connected: boolean;
@@ -359,38 +44,55 @@ interface WalletState {
   chainId: number | null;
   tqdayBalance: string;
   tusd8Balance: string;
+  tusd8Raw: bigint;
   isConnecting: boolean;
   error: string | null;
 }
 
+interface OnChainEligibilityState {
+  checked: boolean;
+  eligible: boolean;
+  reason: string;
+}
+
 interface HanumPayContextValue {
-  // Active shop & identities
-  activeShopAddress: `0x${string}`;
+  // Live sync status
+  isSyncing: boolean;
+  lastSyncedBlock: string | null;
+  syncError: string | null;
+  syncOnChain: () => Promise<void>;
+
+  // Active shop & ERC-8004 identities
+  activeShopAddress: `0x${string}` | null;
   activeShopName: string;
+  isRegisteredShop: boolean;
+  registerShopOnChain: (
+    shopName: string,
+    alsoRegisterERC8004?: boolean
+  ) => Promise<{ ok: boolean; txHash?: string; error?: string }>;
   identities: ERC8004Identity[];
   resolveERC8004: (name: string) => `0x${string}` | null;
+  resolveERC8004OnChain: (
+    name: string
+  ) => Promise<{ found: boolean; wallet: `0x${string}` | null; identity?: ERC8004Identity }>;
   isERC8004Verified: (name: string) => boolean;
   registerIdentity: (
     name: string,
     category: EntityCategory,
     city: string,
-    businessType: string,
-  ) => { ok: boolean; error?: string };
+    businessType: string
+  ) => Promise<{ ok: boolean; txHash?: string; error?: string }>;
+  revokeIdentity: (name: string) => Promise<{ ok: boolean; txHash?: string; error?: string }>;
 
   // Sales & Credit
   sales: SaleRecord[];
   shopStats: ShopStatsSnapshot;
   eligibility: EligibilityCheckResult;
+  onChainEligibility: OnChainEligibilityState | null;
   recordSale: (
     amountUSD8: number,
-    customerIdRaw: string,
-    useWalletSign: boolean,
-  ) => Promise<{
-    ok: boolean;
-    repaidAmount: number;
-    receipt?: VerifiableReceipt;
-    error?: string;
-  }>;
+    customerIdRaw: string
+  ) => Promise<{ ok: boolean; repaidAmount: number; receipt?: VerifiableReceipt; error?: string }>;
 
   // Loans & AI Agent
   loans: LoanRecord[];
@@ -399,18 +101,13 @@ interface HanumPayContextValue {
   repaidLoans: LoanRecord[];
   proposalsToday: number;
   agentPaused: boolean;
-  setAgentPausedState: (paused: boolean) => void;
-  toggleAgentPaused: () => void;
+  toggleAgentPaused: () => Promise<{ ok: boolean; error?: string }>;
   auditLogs: AgentAuditLog[];
   lastRelayMode: string | null;
-  runAgentCycle: (
-    aiExplanation?: string,
-  ) => Promise<{ ok: boolean; message: string }>;
+  runAgentCycle: () => Promise<{ ok: boolean; message: string }>;
   acceptLoanProposal: (
-    loanId: number,
-    useWalletSign: boolean,
+    loanId: number
   ) => Promise<{ ok: boolean; receipt?: VerifiableReceipt; error?: string }>;
-  rejectLoanProposal: (loanId: number) => void;
 
   // Lender Pool
   poolDepositedUSD8: number;
@@ -418,27 +115,33 @@ interface HanumPayContextValue {
   poolAvailableUSD8: number;
   poolUtilizationBps: number;
   poolFeesEarnedUSD8: number;
+  poolActiveLoanCount: number;
   userLenderShares: number;
+  userLenderValueUSD8: number;
+  tusd8AllowancePool: number;
   poolEvents: PoolEvent[];
-  depositToPool: (amountUSD8: number) => { ok: boolean; error?: string };
-  withdrawFromPool: (amountUSD8: number) => { ok: boolean; error?: string };
+  depositToPool: (
+    amountUSD8: number
+  ) => Promise<{ ok: boolean; receipt?: VerifiableReceipt; error?: string }>;
+  withdrawFromPool: (
+    amountUSD8: number
+  ) => Promise<{ ok: boolean; receipt?: VerifiableReceipt; error?: string }>;
 
   // Supplier Payments & Credit Passport
   supplierPayments: SupplierPayment[];
   payVerifiedSupplier: (
     supplierName: string,
     amountUSD8: number,
-    itemNote: string,
-  ) => { ok: boolean; receipt?: VerifiableReceipt; error?: string };
+    itemNote: string
+  ) => Promise<{ ok: boolean; receipt?: VerifiableReceipt; error?: string }>;
   creditPassports: CreditPassportRecord[];
   shopAvailableTusd8: number;
 
-  // Verifiable QDay Receipts & Stage Reset
+  // Verifiable QDay Receipts
   receipts: VerifiableReceipt[];
   activeReceipt: VerifiableReceipt | null;
   openReceipt: (receipt: VerifiableReceipt) => void;
   closeReceipt: () => void;
-  resetStageDemo: () => void;
 
   // Real QDay Wallet
   wallet: WalletState;
@@ -447,192 +150,914 @@ interface HanumPayContextValue {
   disconnectWallet: () => void;
 }
 
+const ZERO_ADDRESS = '0x0000000000000000000000000000000000000000';
+const LOAN_STATUS_MAP: LoanStatus[] = ['Proposed', 'Active', 'Repaid', 'Expired'];
+
+function hexToUtf8(rawHex: string): string {
+  const clean = rawHex.startsWith('0x') ? rawHex.slice(2) : rawHex;
+  if (!clean) return '';
+  const pairs = clean.match(/.{1,2}/g);
+  if (!pairs) return '';
+  const bytes = new Uint8Array(pairs.map((b) => parseInt(b, 16)));
+  return new TextDecoder().decode(bytes);
+}
+
+function parseIdentityMetadata(rawHex: `0x${string}`, category: string): ERC8004Identity['metadata'] {
+  const fallback: ERC8004Identity['metadata'] = {
+    city: 'QDay Aevum Network',
+    businessType: category === 'agent' ? 'AI Guarantor Agent' : `Registered ${category}`,
+    reputationScore: 95,
+    completedTxCount: 1,
+    validationMethod: 'ERC-8004 On-Chain Registry',
+  };
+
+  if (!rawHex || rawHex === '0x') return fallback;
+
+  try {
+    const text = hexToUtf8(rawHex).replace(/\0/g, '').trim();
+    if (!text) return fallback;
+    if (text.startsWith('{')) {
+      const parsed = JSON.parse(text) as Partial<ERC8004Identity['metadata']>;
+      return {
+        city: parsed.city ?? fallback.city,
+        businessType: parsed.businessType ?? fallback.businessType,
+        agentModel: parsed.agentModel,
+        reputationScore: typeof parsed.reputationScore === 'number' ? parsed.reputationScore : 95,
+        completedTxCount: typeof parsed.completedTxCount === 'number' ? parsed.completedTxCount : 1,
+        validationMethod: parsed.validationMethod ?? fallback.validationMethod,
+      };
+    }
+    return {
+      ...fallback,
+      businessType: text.slice(0, 64),
+    };
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeCategory(cat: string): EntityCategory {
+  const lower = cat.toLowerCase();
+  if (lower === 'shop' || lower === 'agent' || lower === 'lender' || lower === 'supplier') {
+    return lower;
+  }
+  return 'shop';
+}
+
+const EMPTY_STATS: ShopStatsSnapshot = {
+  totalSales30dUSD8: 0,
+  uniqueCustomers30d: 0,
+  salesHistoryDays: 0,
+  hasActiveOrProposedLoan: false,
+  inCooldown: false,
+  cooldownDaysRemaining: 0,
+  proposalsToday: 0,
+  poolUtilizationBps: 0,
+  poolAvailableUSD8: 0,
+  agentPaused: false,
+};
+
 const HanumPayContext = createContext<HanumPayContextValue | null>(null);
 
 export function HanumPayProvider({ children }: { children: React.ReactNode }) {
-  const [identities, setIdentities] =
-    useState<ERC8004Identity[]>(INITIAL_IDENTITIES);
-  const [sales, setSales] = useState<SaleRecord[]>(INITIAL_SALES);
-  const [loans, setLoans] = useState<LoanRecord[]>(INITIAL_LOANS);
-  const [proposalsToday, setProposalsToday] = useState<number>(1);
-  const [poolDepositedUSD8, setPoolDepositedUSD8] = useState<number>(12400);
-  const [poolLoanedUSD8, setPoolLoanedUSD8] = useState<number>(3640); // includes other SMEs in communal pool
-  const [poolFeesEarnedUSD8, setPoolFeesEarnedUSD8] = useState<number>(482.5);
-  const [userLenderShares, setUserLenderShares] = useState<number>(1500);
-  const [poolEvents, setPoolEvents] =
-    useState<PoolEvent[]>(INITIAL_POOL_EVENTS);
-  const [creditPassports, setCreditPassports] =
-    useState<CreditPassportRecord[]>(INITIAL_PASSPORTS);
-  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>(
-    [],
-  );
-  const [auditLogs, setAuditLogs] =
-    useState<AgentAuditLog[]>(INITIAL_AUDIT_LOGS);
-  const [shopAvailableTusd8, setShopAvailableTusd8] = useState<number>(145.0);
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [lastSyncedBlock, setLastSyncedBlock] = useState<string | null>(null);
+  const [syncError, setSyncError] = useState<string | null>(null);
+
+  const [identities, setIdentities] = useState<ERC8004Identity[]>([]);
+  const [sales, setSales] = useState<SaleRecord[]>([]);
+  const [loans, setLoans] = useState<LoanRecord[]>([]);
+  const [proposalsToday, setProposalsToday] = useState<number>(0);
+
+  const [poolDepositedUSD8, setPoolDepositedUSD8] = useState<number>(0);
+  const [poolLoanedUSD8, setPoolLoanedUSD8] = useState<number>(0);
+  const [poolAvailableUSD8, setPoolAvailableUSD8] = useState<number>(0);
+  const [poolUtilizationBps, setPoolUtilizationBps] = useState<number>(0);
+  const [poolFeesEarnedUSD8, setPoolFeesEarnedUSD8] = useState<number>(0);
+  const [poolActiveLoanCount, setPoolActiveLoanCount] = useState<number>(0);
+
+  const [userLenderSharesRaw, setUserLenderSharesRaw] = useState<bigint>(BigInt(0));
+  const [userLenderValueRaw, setUserLenderValueRaw] = useState<bigint>(BigInt(0));
+  const [tusd8AllowancePoolRaw, setTusd8AllowancePoolRaw] = useState<bigint>(BigInt(0));
+  const [poolEvents, setPoolEvents] = useState<PoolEvent[]>([]);
+
+  const [creditPassports, setCreditPassports] = useState<CreditPassportRecord[]>([]);
+  const [supplierPayments, setSupplierPayments] = useState<SupplierPayment[]>([]);
+  const [auditLogs, setAuditLogs] = useState<AgentAuditLog[]>([]);
   const [lastRelayMode, setLastRelayMode] = useState<string | null>(null);
+
+  const [isRegisteredShop, setIsRegisteredShop] = useState<boolean>(false);
+  const [onChainShopName, setOnChainShopName] = useState<string>('');
+  const [shopStatsRaw, setShopStatsRaw] = useState<{
+    totalSales30dUSD8: number;
+    uniqueCustomers30d: number;
+    salesHistoryDays: number;
+    inCooldown: boolean;
+    cooldownDaysRemaining: number;
+  }>({
+    totalSales30dUSD8: 0,
+    uniqueCustomers30d: 0,
+    salesHistoryDays: 0,
+    inCooldown: false,
+    cooldownDaysRemaining: 0,
+  });
   const [agentPaused, setAgentPaused] = useState<boolean>(false);
-  const [receipts, setReceipts] = useState<VerifiableReceipt[]>(() =>
-    INITIAL_SALES.slice(0, 3).map((s) => ({
-      id: `rcpt-${s.id}`,
-      kind: "sale",
-      title: `QR Sale · ${s.customerLabel}`,
-      amountUSD8: s.amountUSD8,
-      repaidDeductedUSD8: s.repaidDeductedUSD8,
-      netAmountUSD8: s.netToShopUSD8,
-      counterpartyName: "Warung Bu Sri - Surabaya",
-      counterpartyWallet: s.shop,
-      erc8004Verified: true,
-      proofHash: s.customerIdHash,
-      txHash: s.txHash,
-      relayMode: "verified-demo-relay",
-      timestamp: s.timestamp,
-      note: "Gasless QR Sale Receipt (EIP-712)",
-    })),
-  );
-  const [activeReceipt, setActiveReceipt] = useState<VerifiableReceipt | null>(
-    null,
-  );
+  const [onChainEligibility, setOnChainEligibility] = useState<OnChainEligibilityState | null>(null);
+
+  const [receipts, setReceipts] = useState<VerifiableReceipt[]>([]);
+  const [activeReceipt, setActiveReceipt] = useState<VerifiableReceipt | null>(null);
 
   const [wallet, setWallet] = useState<WalletState>({
     connected: false,
     address: null,
     chainId: null,
-    tqdayBalance: "0.0000",
-    tusd8Balance: "0.00",
+    tqdayBalance: '0.0000',
+    tusd8Balance: '0.00',
+    tusd8Raw: BigInt(0),
     isConnecting: false,
     error: null,
   });
 
-  const activeShopName = "Warung Bu Sri - Surabaya";
+  const syncSeqRef = useRef(0);
+
+  const refreshWalletBalances = useCallback(async () => {
+    if (!wallet.address) return;
+    try {
+      const qday = await import('./qday');
+      const [bal, allowanceRaw] = await Promise.all([
+        qday.fetchQDayBalances(wallet.address),
+        qday.qDayPublicClient.readContract({
+          address: TUSD8_CONTRACT.address,
+          abi: qday.ERC20_ABI,
+          functionName: 'allowance',
+          args: [wallet.address, DEPLOYED_CONTRACTS.loanPool],
+        }),
+      ]);
+      setWallet((prev) => ({
+        ...prev,
+        tqdayBalance: bal.tqday,
+        tusd8Balance: bal.tusd8,
+        tusd8Raw: bal.tusd8Raw,
+        error: null,
+      }));
+      setTusd8AllowancePoolRaw(allowanceRaw);
+    } catch {
+      setWallet((prev) => ({
+        ...prev,
+        error: 'Unable to fetch live QDay balances. Try refreshing shortly.',
+      }));
+    }
+  }, [wallet.address]);
+
+  const syncOnChain = useCallback(async () => {
+    const seq = ++syncSeqRef.current;
+    setIsSyncing(true);
+    setSyncError(null);
+
+    try {
+      const [{ decodeEventLog }, qday] = await Promise.all([
+        import('viem'),
+        import('./qday'),
+      ]);
+
+      const latestBlock = await qday.qDayPublicClient.getBlockNumber();
+      if (seq !== syncSeqRef.current) return;
+
+      const scanFrom =
+        latestBlock > DEPLOYMENT_START_BLOCK + BigInt(40_000)
+          ? latestBlock - BigInt(40_000)
+          : DEPLOYMENT_START_BLOCK;
+
+      // 1. Read PoolStats, ProposalsToday, and Recent Protocol Logs
+      const [poolStatsRes, todayProposalsRes, regLogs, poolLogs, agentLogs] = await Promise.all([
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.loanPool,
+          abi: qday.HANUMPAY_ABIS.loanPool,
+          functionName: 'getPoolStats',
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.aiGuarantor,
+          abi: qday.HANUMPAY_ABIS.aiGuarantor,
+          functionName: 'proposalsToday',
+        }),
+        qday.getLogsChunked({
+          address: DEPLOYED_CONTRACTS.erc8004,
+          fromBlock: scanFrom,
+          toBlock: latestBlock,
+          maxWindows: 40,
+        }),
+        qday.getLogsChunked({
+          address: DEPLOYED_CONTRACTS.loanPool,
+          fromBlock: scanFrom,
+          toBlock: latestBlock,
+          maxWindows: 40,
+        }),
+        qday.getLogsChunked({
+          address: DEPLOYED_CONTRACTS.aiGuarantor,
+          fromBlock: scanFrom,
+          toBlock: latestBlock,
+          maxWindows: 40,
+        }),
+      ]);
+
+      if (seq !== syncSeqRef.current) return;
+
+      setLastSyncedBlock(latestBlock.toString());
+      setPoolDepositedUSD8(fromTusd8Raw(poolStatsRes.totalDeposited));
+      setPoolLoanedUSD8(fromTusd8Raw(poolStatsRes.totalLoaned));
+      setPoolAvailableUSD8(fromTusd8Raw(poolStatsRes.totalAvailable));
+      setPoolUtilizationBps(Number(poolStatsRes.utilizationPct));
+      setPoolFeesEarnedUSD8(fromTusd8Raw(poolStatsRes.totalFeeEarned));
+      setPoolActiveLoanCount(Number(poolStatsRes.activeLoanCount));
+      setProposalsToday(Number(todayProposalsRes));
+
+      // 2. Build live ERC-8004 Directory from IdentityRegistered logs verified via getIdentity()
+      const registeredNames = new Set<string>();
+      for (const log of regLogs) {
+        try {
+          const decoded = decodeEventLog({
+            abi: qday.HANUMPAY_ABIS.erc8004,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === 'IdentityRegistered') {
+            registeredNames.add(decoded.args.name);
+          }
+        } catch {
+          // ignore unknown log
+        }
+      }
+
+      const identityResults = await Promise.all(
+        Array.from(registeredNames)
+          .slice(-40)
+          .map(async (name) => {
+            try {
+              const idData = await qday.qDayPublicClient.readContract({
+                address: DEPLOYED_CONTRACTS.erc8004,
+                abi: qday.HANUMPAY_ABIS.erc8004,
+                functionName: 'getIdentity',
+                args: [name],
+              });
+              if (!idData.wallet || idData.wallet === ZERO_ADDRESS) return null;
+              const cat = normalizeCategory(idData.category);
+              return {
+                name: idData.name,
+                wallet: idData.wallet,
+                category: cat,
+                metadata: parseIdentityMetadata(idData.metadata, cat),
+                registeredAt: Number(idData.registeredAt) * 1000,
+                active: idData.active,
+              } as ERC8004Identity;
+            } catch {
+              return null;
+            }
+          })
+      );
+
+      if (seq !== syncSeqRef.current) return;
+      const liveIdentities = identityResults
+        .filter((x): x is ERC8004Identity => x !== null)
+        .sort((a, b) => b.registeredAt - a.registeredAt);
+      setIdentities(liveIdentities);
+
+      // 3. Parse Pool Events & Credit Passports
+      const parsedPoolEvents: PoolEvent[] = [];
+      const parsedPassports: CreditPassportRecord[] = [];
+      const repaymentMap = new Map<string, number>();
+
+      for (const log of poolLogs) {
+        const txHash = log.transactionHash ?? '0x';
+        try {
+          const decoded = decodeEventLog({
+            abi: qday.HANUMPAY_ABIS.loanPool,
+            data: log.data,
+            topics: log.topics,
+          });
+          const blockNum = Number(log.blockNumber ?? 0);
+          const approxTs = Date.now() - Math.max(0, Number(latestBlock) - blockNum) * 3000;
+
+          if (decoded.eventName === 'LenderDeposited') {
+            parsedPoolEvents.push({
+              id: `pe-dep-${txHash}-${log.logIndex}`,
+              type: 'Deposit',
+              actor: shortenAddress(decoded.args.lender),
+              amountUSD8: fromTusd8Raw(decoded.args.amount),
+              timestamp: approxTs,
+              txHash,
+            });
+          } else if (decoded.eventName === 'LenderWithdrew') {
+            parsedPoolEvents.push({
+              id: `pe-wd-${txHash}-${log.logIndex}`,
+              type: 'Withdraw',
+              actor: shortenAddress(decoded.args.lender),
+              amountUSD8: fromTusd8Raw(decoded.args.amount),
+              timestamp: approxTs,
+              txHash,
+            });
+          } else if (decoded.eventName === 'LoanAccepted') {
+            parsedPoolEvents.push({
+              id: `pe-acc-${txHash}-${log.logIndex}`,
+              type: 'LoanDisbursed',
+              actor: shortenAddress(decoded.args.shop),
+              amountUSD8: 0,
+              timestamp: Number(decoded.args.timestamp) * 1000 || approxTs,
+              txHash,
+            });
+          } else if (decoded.eventName === 'LoanRepayment') {
+            const amt = fromTusd8Raw(decoded.args.amount);
+            repaymentMap.set(txHash.toLowerCase(), (repaymentMap.get(txHash.toLowerCase()) ?? 0) + amt);
+            if (amt > 0) {
+              parsedPoolEvents.push({
+                id: `pe-rep-${txHash}-${log.logIndex}`,
+                type: 'RepaymentReceived',
+                actor: shortenAddress(decoded.args.shop),
+                amountUSD8: amt,
+                timestamp: approxTs,
+                txHash,
+              });
+            }
+          } else if (decoded.eventName === 'CreditPassportMinted') {
+            const p = fromTusd8Raw(decoded.args.principal);
+            parsedPassports.push({
+              loanId: Number(decoded.args.loanId),
+              shopName: shortenAddress(decoded.args.shop),
+              shopAddress: decoded.args.shop,
+              principalUSD8: p,
+              flatFeeUSD8: Math.round(p * 0.05 * 100) / 100,
+              daysToRepay: Number(decoded.args.daysToRepay),
+              newCreditLimitUSD8: Math.min(500, Math.round(p * 1.1 * 100) / 100),
+              txHash,
+              timestamp: approxTs,
+            });
+          }
+        } catch {
+          // skip
+        }
+      }
+
+      setPoolEvents(parsedPoolEvents.reverse());
+
+      // 4. Parse AI Guarantor Audit Logs
+      const parsedAgentLogs: AgentAuditLog[] = [];
+      for (const log of agentLogs) {
+        const txHash = log.transactionHash ?? undefined;
+        try {
+          const decoded = decodeEventLog({
+            abi: qday.HANUMPAY_ABIS.aiGuarantor,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (decoded.eventName === 'ProposalSubmitted') {
+            parsedAgentLogs.push({
+              id: `agl-prop-${txHash}-${log.logIndex}`,
+              event: 'proposal_submitted',
+              shop: decoded.args.shop,
+              principal: decoded.args.principal.toString(),
+              flatFee: decoded.args.flatFee.toString(),
+              txHash,
+              timestamp: Number(decoded.args.timestamp) * 1000,
+            });
+          } else if (decoded.eventName === 'AgentAccessUpdated') {
+            parsedAgentLogs.push({
+              id: `agl-pause-${txHash}-${log.logIndex}`,
+              event: decoded.args.paused ? 'shop_skipped' : 'cycle_start',
+              shop: decoded.args.shop,
+              reason: decoded.args.paused
+                ? 'Merchant paused AI Guarantor access on-chain'
+                : 'Merchant resumed AI Guarantor access on-chain',
+              txHash,
+              timestamp: Number(decoded.args.timestamp) * 1000,
+            });
+          }
+        } catch {
+          // skip
+        }
+      }
+      setAuditLogs(parsedAgentLogs.sort((a, b) => b.timestamp - a.timestamp));
+
+      // 5. Wallet-scoped reads (only when a wallet is connected!)
+      const activeWallet = wallet.connected ? wallet.address : null;
+      if (!activeWallet) {
+        setIsRegisteredShop(false);
+        setOnChainShopName('');
+        setSales([]);
+        setLoans([]);
+        setCreditPassports(parsedPassports.reverse());
+        setUserLenderSharesRaw(BigInt(0));
+        setUserLenderValueRaw(BigInt(0));
+        setTusd8AllowancePoolRaw(BigInt(0));
+        setShopStatsRaw({
+          totalSales30dUSD8: 0,
+          uniqueCustomers30d: 0,
+          salesHistoryDays: 0,
+          inCooldown: false,
+          cooldownDaysRemaining: 0,
+        });
+        setAgentPaused(false);
+        setOnChainEligibility(null);
+        return;
+      }
+
+      const [
+        registeredFlag,
+        shopRegTimestamp,
+        ercName,
+        shopStatsContract,
+        pausedFlag,
+        eligTuple,
+        cooldownEndSec,
+        shopLoanIds,
+        lenderBal,
+        bal,
+        allowancePool,
+        saleLogs,
+      ] = await Promise.all([
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.salesLedger,
+          abi: qday.HANUMPAY_ABIS.salesLedger,
+          functionName: 'isRegisteredShop',
+          args: [activeWallet],
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.salesLedger,
+          abi: qday.HANUMPAY_ABIS.salesLedger,
+          functionName: 'shopRegisteredAt',
+          args: [activeWallet],
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.erc8004,
+          abi: qday.HANUMPAY_ABIS.erc8004,
+          functionName: 'nameOf',
+          args: [activeWallet],
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.salesLedger,
+          abi: qday.HANUMPAY_ABIS.salesLedger,
+          functionName: 'getShopStats',
+          args: [activeWallet],
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.aiGuarantor,
+          abi: qday.HANUMPAY_ABIS.aiGuarantor,
+          functionName: 'shopPausedAgent',
+          args: [activeWallet],
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.aiGuarantor,
+          abi: qday.HANUMPAY_ABIS.aiGuarantor,
+          functionName: 'checkEligibility',
+          args: [activeWallet],
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.loanPool,
+          abi: qday.HANUMPAY_ABIS.loanPool,
+          functionName: 'getCooldownEnd',
+          args: [activeWallet],
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.loanPool,
+          abi: qday.HANUMPAY_ABIS.loanPool,
+          functionName: 'getShopLoans',
+          args: [activeWallet],
+        }),
+        qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.loanPool,
+          abi: qday.HANUMPAY_ABIS.loanPool,
+          functionName: 'getLenderBalance',
+          args: [activeWallet],
+        }),
+        qday.fetchQDayBalances(activeWallet),
+        qday.qDayPublicClient.readContract({
+          address: TUSD8_CONTRACT.address,
+          abi: qday.ERC20_ABI,
+          functionName: 'allowance',
+          args: [activeWallet, DEPLOYED_CONTRACTS.loanPool],
+        }),
+        qday.getLogsChunked({
+          address: DEPLOYED_CONTRACTS.salesLedger,
+          fromBlock: scanFrom,
+          toBlock: latestBlock,
+          maxWindows: 40,
+        }),
+      ]);
+
+      if (seq !== syncSeqRef.current) return;
+
+      setWallet((prev) => ({
+        ...prev,
+        tqdayBalance: bal.tqday,
+        tusd8Balance: bal.tusd8,
+        tusd8Raw: bal.tusd8Raw,
+        error: null,
+      }));
+      setIsRegisteredShop(Boolean(registeredFlag));
+      setOnChainShopName(ercName || '');
+      setAgentPaused(Boolean(pausedFlag));
+      setOnChainEligibility({
+        checked: true,
+        eligible: Boolean(eligTuple[0]),
+        reason: eligTuple[1] || '',
+      });
+      setUserLenderSharesRaw(lenderBal[0]);
+      setUserLenderValueRaw(lenderBal[1]);
+      setTusd8AllowancePoolRaw(allowancePool);
+
+      const nowSec = Math.floor(Date.now() / 1000);
+      const regSec = Number(shopRegTimestamp);
+      const historyDays = regSec > 0 ? Math.max(0, Math.floor((nowSec - regSec) / 86400)) : 0;
+      const cooldownSec = Number(cooldownEndSec);
+      const inCooldown = cooldownSec > nowSec;
+      const cooldownDaysRemaining = inCooldown ? Math.ceil((cooldownSec - nowSec) / 86400) : 0;
+
+      setShopStatsRaw({
+        totalSales30dUSD8: fromTusd8Raw(shopStatsContract.totalSales30d),
+        uniqueCustomers30d: Number(shopStatsContract.uniqueCustomers30d),
+        salesHistoryDays: historyDays,
+        inCooldown,
+        cooldownDaysRemaining,
+      });
+
+      // Fetch full Loan structs for connected shop
+      const loanStructs = await Promise.all(
+        shopLoanIds.map((id) =>
+          qday.qDayPublicClient.readContract({
+            address: DEPLOYED_CONTRACTS.loanPool,
+            abi: qday.HANUMPAY_ABIS.loanPool,
+            functionName: 'getLoan',
+            args: [id],
+          })
+        )
+      );
+
+      if (seq !== syncSeqRef.current) return;
+
+      const parsedLoans: LoanRecord[] = loanStructs
+        .map((l) => {
+          const proposedMs = Number(l.proposedAt) * 1000;
+          const status = LOAN_STATUS_MAP[Number(l.status)] ?? 'Proposed';
+          return {
+            id: Number(l.id),
+            shop: l.shop,
+            principalUSD8: fromTusd8Raw(l.principal),
+            flatFeeUSD8: fromTusd8Raw(l.flatFee),
+            repayPctBps: Number(l.repayPct),
+            totalRepaidUSD8: fromTusd8Raw(l.totalRepaid),
+            proposedAt: proposedMs,
+            acceptedAt: Number(l.acceptedAt) > 0 ? Number(l.acceptedAt) * 1000 : undefined,
+            repaidAt: Number(l.repaidAt) > 0 ? Number(l.repaidAt) * 1000 : undefined,
+            expiresAt: proposedMs + 48 * 3600 * 1000,
+            status,
+            agentName: 'HanumPay-AI-Guarantor-v1',
+          };
+        })
+        .sort((a, b) => b.id - a.id);
+
+      setLoans(parsedLoans);
+      setCreditPassports(
+        parsedPassports
+          .filter((cp) => cp.shopAddress.toLowerCase() === activeWallet.toLowerCase())
+          .reverse()
+      );
+
+      // Parse SaleRecorded logs for this shop
+      const parsedSales: SaleRecord[] = [];
+      for (const log of saleLogs) {
+        try {
+          const decoded = decodeEventLog({
+            abi: qday.HANUMPAY_ABIS.salesLedger,
+            data: log.data,
+            topics: log.topics,
+          });
+          if (
+            decoded.eventName === 'SaleRecorded' &&
+            decoded.args.shop.toLowerCase() === activeWallet.toLowerCase()
+          ) {
+            const txHash = log.transactionHash ?? '0x';
+            const gross = fromTusd8Raw(decoded.args.amount);
+            const repaid = repaymentMap.get(txHash.toLowerCase()) ?? 0;
+            parsedSales.push({
+              id: `sale-${decoded.args.saleIndex.toString()}-${txHash.slice(2, 10)}`,
+              shop: decoded.args.shop,
+              amountUSD8: gross,
+              customerIdHash: decoded.args.customerId,
+              customerLabel: `Customer ${decoded.args.customerId.slice(0, 8)}...`,
+              timestamp: Number(decoded.args.timestamp) * 1000,
+              repaidDeductedUSD8: repaid,
+              netToShopUSD8: Math.max(0, Math.round((gross - repaid) * 100) / 100),
+              eip712Signature: 'Verified on QDay SalesLedger',
+              txHash,
+            });
+          }
+        } catch {
+          // skip
+        }
+      }
+      setSales(parsedSales.sort((a, b) => b.timestamp - a.timestamp));
+    } catch (err) {
+      if (seq === syncSeqRef.current) {
+        setSyncError(err instanceof Error ? err.message : 'Unable to sync QDay Aevum state.');
+      }
+    } finally {
+      if (seq === syncSeqRef.current) {
+        setIsSyncing(false);
+      }
+    }
+  }, [wallet.address, wallet.connected]);
+
+  useEffect(() => {
+    void syncOnChain();
+  }, [syncOnChain]);
+
+  // Listen to MetaMask / Rabby account or chain switches
+  useEffect(() => {
+    const provider = getInjectedProvider();
+    if (!provider?.on || !provider?.removeListener) return;
+
+    const handleAccountsChanged = (accounts: unknown) => {
+      const list = Array.isArray(accounts) ? (accounts as string[]) : [];
+      if (list.length === 0) {
+        setWallet({
+          connected: false,
+          address: null,
+          chainId: null,
+          tqdayBalance: '0.0000',
+          tusd8Balance: '0.00',
+          tusd8Raw: BigInt(0),
+          isConnecting: false,
+          error: null,
+        });
+      } else {
+        setWallet((prev) => ({
+          ...prev,
+          connected: true,
+          address: list[0] as `0x${string}`,
+          error: null,
+        }));
+      }
+    };
+
+    const handleChainChanged = (chainHex: unknown) => {
+      const parsed = typeof chainHex === 'string' ? parseInt(chainHex, 16) : null;
+      setWallet((prev) => ({ ...prev, chainId: parsed }));
+    };
+
+    provider.on('accountsChanged', handleAccountsChanged);
+    provider.on('chainChanged', handleChainChanged);
+    return () => {
+      provider.removeListener?.('accountsChanged', handleAccountsChanged);
+      provider.removeListener?.('chainChanged', handleChainChanged);
+    };
+  }, []);
+
+  const activeShopAddress = wallet.connected ? wallet.address : null;
+  const activeShopName = !wallet.connected
+    ? 'No Wallet Connected'
+    : onChainShopName || (wallet.address ? shortenAddress(wallet.address) : 'Merchant Wallet');
 
   const resolveERC8004 = useCallback(
     (name: string): `0x${string}` | null => {
       const match = identities.find(
-        (i) => i.name.toLowerCase() === name.trim().toLowerCase() && i.active,
+        (i) => i.name.toLowerCase() === name.trim().toLowerCase() && i.active
       );
       return match ? match.wallet : null;
     },
-    [identities],
+    [identities]
   );
+
+  const resolveERC8004OnChain = useCallback(async (name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return { found: false, wallet: null };
+
+    const qday = await import('./qday');
+    const idData = await qday.qDayPublicClient.readContract({
+      address: DEPLOYED_CONTRACTS.erc8004,
+      abi: qday.HANUMPAY_ABIS.erc8004,
+      functionName: 'getIdentity',
+      args: [trimmed],
+    });
+
+    if (!idData.wallet || idData.wallet === ZERO_ADDRESS || !idData.active) {
+      return { found: false, wallet: null };
+    }
+
+    const cat = normalizeCategory(idData.category);
+    const identity: ERC8004Identity = {
+      name: idData.name,
+      wallet: idData.wallet,
+      category: cat,
+      metadata: parseIdentityMetadata(idData.metadata, cat),
+      registeredAt: Number(idData.registeredAt) * 1000,
+      active: idData.active,
+    };
+
+    setIdentities((prev) => {
+      const exists = prev.some((i) => i.name.toLowerCase() === identity.name.toLowerCase());
+      return exists
+        ? prev.map((i) => (i.name.toLowerCase() === identity.name.toLowerCase() ? identity : i))
+        : [identity, ...prev];
+    });
+
+    return { found: true, wallet: idData.wallet, identity };
+  }, []);
 
   const isERC8004Verified = useCallback(
     (name: string): boolean => {
       return identities.some(
-        (i) => i.name.toLowerCase() === name.trim().toLowerCase() && i.active,
+        (i) => i.name.toLowerCase() === name.trim().toLowerCase() && i.active
       );
     },
-    [identities],
+    [identities]
+  );
+
+  const registerShopOnChain = useCallback(
+    async (shopName: string, alsoRegisterERC8004 = true) => {
+      if (!wallet.connected || !wallet.address) {
+        return { ok: false, error: 'Connect your QDay MetaMask wallet first.' };
+      }
+      const trimmed = shopName.trim();
+      if (!trimmed || trimmed.length > 64) {
+        return { ok: false, error: 'Shop name must be 1–64 characters.' };
+      }
+
+      try {
+        const [{ toHex }, qday] = await Promise.all([import('viem'), import('./qday')]);
+        const txHash = await qday.sendWalletWriteContract({
+          account: wallet.address,
+          address: DEPLOYED_CONTRACTS.salesLedger,
+          abi: qday.HANUMPAY_ABIS.salesLedger,
+          functionName: 'registerShop',
+          args: [trimmed],
+        });
+
+        if (alsoRegisterERC8004 && !onChainShopName) {
+          const alreadyTaken = await qday.qDayPublicClient.readContract({
+            address: DEPLOYED_CONTRACTS.erc8004,
+            abi: qday.HANUMPAY_ABIS.erc8004,
+            functionName: 'isVerified',
+            args: [trimmed],
+          });
+          if (!alreadyTaken) {
+            const metaHex = toHex(
+              JSON.stringify({
+                city: 'QDay Aevum Network',
+                businessType: 'MSME Merchant Shop',
+                validationMethod: 'SalesLedger + ERC-8004 Registered',
+              })
+            );
+            await qday.sendWalletWriteContract({
+              account: wallet.address,
+              address: DEPLOYED_CONTRACTS.erc8004,
+              abi: qday.HANUMPAY_ABIS.erc8004,
+              functionName: 'register',
+              args: [trimmed, 'shop', metaHex],
+            });
+          }
+        }
+
+        await syncOnChain();
+        return { ok: true, txHash };
+      } catch (err) {
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : 'Failed to register shop on-chain.',
+        };
+      }
+    },
+    [onChainShopName, syncOnChain, wallet.address, wallet.connected]
   );
 
   const registerIdentity = useCallback(
-    (
-      name: string,
-      category: EntityCategory,
-      city: string,
-      businessType: string,
-    ) => {
+    async (name: string, category: EntityCategory, city: string, businessType: string) => {
+      if (!wallet.connected || !wallet.address) {
+        return { ok: false, error: 'Connect your QDay MetaMask wallet to register on-chain.' };
+      }
       const trimmed = name.trim();
       if (!trimmed || trimmed.length > 64) {
-        return { ok: false, error: "Identity name must be 1–64 characters." };
+        return { ok: false, error: 'Identity name must be 1–64 characters.' };
       }
-      if (
-        identities.some((i) => i.name.toLowerCase() === trimmed.toLowerCase())
-      ) {
+
+      try {
+        const [{ toHex }, qday] = await Promise.all([import('viem'), import('./qday')]);
+        const metaHex = toHex(
+          JSON.stringify({
+            city: city.trim() || 'QDay Aevum Network',
+            businessType: businessType.trim() || `Registered ${category}`,
+            reputationScore: 95,
+            completedTxCount: 1,
+            validationMethod: 'ERC-8004 On-Chain Registry',
+          })
+        );
+
+        const txHash = await qday.sendWalletWriteContract({
+          account: wallet.address,
+          address: DEPLOYED_CONTRACTS.erc8004,
+          abi: qday.HANUMPAY_ABIS.erc8004,
+          functionName: 'register',
+          args: [trimmed, category, metaHex],
+        });
+
+        await syncOnChain();
+        return { ok: true, txHash };
+      } catch (err) {
         return {
           ok: false,
-          error: `"${trimmed}" is already registered in ERC8004Registry.`,
+          error: err instanceof Error ? err.message : 'ERC8004Registry.register failed.',
         };
       }
-      const newWallet = (wallet.address ??
-        `0x${pseudoTxHash(trimmed).slice(2, 42)}`) as `0x${string}`;
-      const newIdentity: ERC8004Identity = {
-        name: trimmed,
-        wallet: newWallet,
-        category,
-        metadata: {
-          city: city || "QDay Aevum Network",
-          businessType: businessType || "Registered Entity",
-          reputationScore: 90,
-          completedTxCount: 1,
-          validationMethod: "ERC-8004 On-Chain Registered",
-        },
-        registeredAt: Date.now(),
-        active: true,
-      };
-      setIdentities((prev) => [newIdentity, ...prev]);
-      return { ok: true };
     },
-    [identities, wallet.address],
+    [syncOnChain, wallet.address, wallet.connected]
+  );
+
+  const revokeIdentity = useCallback(
+    async (name: string) => {
+      if (!wallet.connected || !wallet.address) {
+        return { ok: false, error: 'Connect your QDay wallet first.' };
+      }
+      try {
+        const qday = await import('./qday');
+        const txHash = await qday.sendWalletWriteContract({
+          account: wallet.address,
+          address: DEPLOYED_CONTRACTS.erc8004,
+          abi: qday.HANUMPAY_ABIS.erc8004,
+          functionName: 'revoke',
+          args: [name],
+        });
+        await syncOnChain();
+        return { ok: true, txHash };
+      } catch (err) {
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : 'ERC8004Registry.revoke failed.',
+        };
+      }
+    },
+    [syncOnChain, wallet.address, wallet.connected]
   );
 
   const proposedLoan = useMemo(
-    () => loans.find((l) => l.status === "Proposed") ?? null,
-    [loans],
+    () => loans.find((l) => l.status === 'Proposed') ?? null,
+    [loans]
   );
   const activeLoan = useMemo(
-    () => loans.find((l) => l.status === "Active") ?? null,
-    [loans],
+    () => loans.find((l) => l.status === 'Active') ?? null,
+    [loans]
   );
   const repaidLoans = useMemo(
-    () => loans.filter((l) => l.status === "Repaid"),
-    [loans],
+    () => loans.filter((l) => l.status === 'Repaid'),
+    [loans]
   );
 
-  const poolAvailableUSD8 = Math.max(0, poolDepositedUSD8 - poolLoanedUSD8);
-  const poolUtilizationBps =
-    poolDepositedUSD8 > 0
-      ? Math.round((poolLoanedUSD8 / poolDepositedUSD8) * 10000)
-      : 0;
-
   const shopStats = useMemo<ShopStatsSnapshot>(() => {
-    const totalSales30dUSD8 = sales.reduce((acc, s) => acc + s.amountUSD8, 0);
-    const uniqueSet = new Set(sales.map((s) => s.customerIdHash));
+    if (!wallet.connected) return EMPTY_STATS;
     return {
-      totalSales30dUSD8,
-      uniqueCustomers30d: uniqueSet.size,
-      salesHistoryDays: 34, // Warung Bu Sri has 34 days of history
+      totalSales30dUSD8: shopStatsRaw.totalSales30dUSD8,
+      uniqueCustomers30d: shopStatsRaw.uniqueCustomers30d,
+      salesHistoryDays: shopStatsRaw.salesHistoryDays,
       hasActiveOrProposedLoan: Boolean(proposedLoan || activeLoan),
-      inCooldown: false,
-      cooldownDaysRemaining: 0,
+      inCooldown: shopStatsRaw.inCooldown,
+      cooldownDaysRemaining: shopStatsRaw.cooldownDaysRemaining,
       proposalsToday,
       poolUtilizationBps,
       poolAvailableUSD8,
       agentPaused,
     };
   }, [
-    sales,
-    proposedLoan,
     activeLoan,
-    proposalsToday,
-    poolUtilizationBps,
-    poolAvailableUSD8,
     agentPaused,
+    poolAvailableUSD8,
+    poolUtilizationBps,
+    proposalsToday,
+    proposedLoan,
+    shopStatsRaw,
+    wallet.connected,
   ]);
 
-  const eligibility = useMemo(
-    () => checkShopEligibility(shopStats),
-    [shopStats],
-  );
+  const eligibility = useMemo(() => checkShopEligibility(shopStats), [shopStats]);
 
-  const setAgentPausedState = useCallback((paused: boolean) => {
-    setAgentPaused(paused);
-    setAuditLogs((prev) => [
-      {
-        id: `log-pause-${Date.now()}`,
-        event: paused ? "shop_skipped" : "cycle_start",
-        shop: SHOP_ADDRESS,
-        reason: paused
-          ? "Merchant paused AI Guarantor access (AIGuarantor.setAgentPaused(true))"
-          : "Merchant resumed AI Guarantor access (AIGuarantor.setAgentPaused(false))",
-        timestamp: Date.now(),
-      },
-      ...prev,
-    ]);
-  }, []);
-
-  const toggleAgentPaused = useCallback(() => {
-    setAgentPausedState(!agentPaused);
-  }, [agentPaused, setAgentPausedState]);
+  const toggleAgentPaused = useCallback(async () => {
+    if (!wallet.connected || !wallet.address) {
+      return { ok: false, error: 'Connect your QDay wallet first.' };
+    }
+    try {
+      const qday = await import('./qday');
+      const nextPaused = !agentPaused;
+      await qday.sendWalletWriteContract({
+        account: wallet.address,
+        address: DEPLOYED_CONTRACTS.aiGuarantor,
+        abi: qday.HANUMPAY_ABIS.aiGuarantor,
+        functionName: 'setAgentPaused',
+        args: [nextPaused],
+      });
+      await syncOnChain();
+      return { ok: true };
+    } catch (err) {
+      return {
+        ok: false,
+        error: err instanceof Error ? err.message : 'AIGuarantor.setAgentPaused transaction failed.',
+      };
+    }
+  }, [agentPaused, syncOnChain, wallet.address, wallet.connected]);
 
   const openReceipt = useCallback((receipt: VerifiableReceipt) => {
     setActiveReceipt(receipt);
@@ -643,91 +1068,98 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const recordSale = useCallback(
-    async (
-      amountUSD8: number,
-      customerIdRaw: string,
-      useWalletSign: boolean,
-    ) => {
+    async (amountUSD8: number, customerIdRaw: string) => {
+      if (!wallet.connected || !wallet.address) {
+        return {
+          ok: false,
+          repaidAmount: 0,
+          error: 'Connect your QDay MetaMask wallet before recording a QR sale.',
+        };
+      }
+      if (!isRegisteredShop) {
+        return {
+          ok: false,
+          repaidAmount: 0,
+          error: 'Register your wallet as a shop in SalesLedger first.',
+        };
+      }
       if (Number.isNaN(amountUSD8) || amountUSD8 < 0.1 || amountUSD8 > 500) {
         return {
           ok: false,
           repaidAmount: 0,
-          error: "Sale amount must be between 0.10 tUSD8 and 500.00 tUSD8.",
+          error: 'Sale amount must be between 0.10 tUSD8 and 500.00 tUSD8.',
         };
       }
       if (!customerIdRaw || customerIdRaw.trim().length < 4) {
         return {
           ok: false,
           repaidAmount: 0,
-          error:
-            "Customer phone / ID must be at least 4 characters (hashed locally on-device).",
+          error: 'Customer phone / ID must be at least 4 characters.',
         };
       }
 
-      const deadline = Math.floor(Date.now() / 1000) + 3600;
-      const shopSigner =
-        useWalletSign && wallet.connected && wallet.address
-          ? wallet.address
-          : SHOP_ADDRESS;
-      let sig = `0x${pseudoTxHash(`eip712-${Date.now()}-${amountUSD8}`).slice(2, 20)}...eip712`;
-      if (useWalletSign && wallet.connected && wallet.address) {
-        const provider = getInjectedProvider();
-        if (provider) {
-          try {
-            const typedData = {
-              types: {
-                EIP712Domain: [
-                  { name: "name", type: "string" },
-                  { name: "version", type: "string" },
-                  { name: "chainId", type: "uint256" },
-                  { name: "verifyingContract", type: "address" },
-                ],
-                RecordSale: [
-                  { name: "shop", type: "address" },
-                  { name: "amountUSD8", type: "uint256" },
-                  { name: "customerId", type: "bytes32" },
-                  { name: "deadline", type: "uint256" },
-                ],
-              },
-              primaryType: "RecordSale",
-              domain: {
-                name: "HanumPaySalesLedger",
-                version: "1",
-                chainId: QDAY_CHAIN_ID,
-                verifyingContract: DEPLOYED_CONTRACTS.salesLedger,
-              },
-              message: {
-                shop: wallet.address,
-                amountUSD8: Math.round(amountUSD8 * 1_000_000).toString(),
-                customerId: hashCustomerId(customerIdRaw),
-                deadline,
-              },
-            };
-            const result = await provider.request({
-              method: "eth_signTypedData_v4",
-              params: [wallet.address, JSON.stringify(typedData)],
-            });
-            sig = String(result);
-          } catch {
-            return {
-              ok: false,
-              repaidAmount: 0,
-              error: "EIP-712 signature was cancelled in wallet.",
-            };
-          }
-        }
+      const provider = getInjectedProvider();
+      if (!provider) {
+        return { ok: false, repaidAmount: 0, error: 'No browser Web3 wallet detected.' };
       }
 
-      const customerIdHash = hashCustomerId(customerIdRaw);
-
-      // Call Next.js Relayer API (/api/relay/record-sale)
-      let relayedTxHash: string | null = null;
       try {
-        const relayRes = await fetch("/api/relay/record-sale", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        await addOrSwitchQDayNetwork(provider);
+      } catch {
+        return { ok: false, repaidAmount: 0, error: 'Please switch wallet to QDay Aevum (44005).' };
+      }
+
+      const [{ parseUnits }, qday] = await Promise.all([import('viem'), import('./qday')]);
+      const deadline = Math.floor(Date.now() / 1000) + 3600;
+      const customerIdHash = qday.hashCustomerId(customerIdRaw);
+      const amountRaw = parseUnits(amountUSD8.toFixed(6), TUSD8_CONTRACT.decimals);
+
+      let sig = '';
+      try {
+        const typedData = {
+          types: {
+            EIP712Domain: [
+              { name: 'name', type: 'string' },
+              { name: 'version', type: 'string' },
+              { name: 'chainId', type: 'uint256' },
+              { name: 'verifyingContract', type: 'address' },
+            ],
+            RecordSale: [
+              { name: 'shop', type: 'address' },
+              { name: 'amountUSD8', type: 'uint256' },
+              { name: 'customerId', type: 'bytes32' },
+              { name: 'deadline', type: 'uint256' },
+            ],
+          },
+          primaryType: 'RecordSale',
+          domain: {
+            name: 'HanumPaySalesLedger',
+            version: '1',
+            chainId: QDAY_CHAIN_ID,
+            verifyingContract: DEPLOYED_CONTRACTS.salesLedger,
+          },
+          message: {
+            shop: wallet.address,
+            amountUSD8: amountRaw.toString(),
+            customerId: customerIdHash,
+            deadline: String(deadline),
+          },
+        };
+        const result = await provider.request({
+          method: 'eth_signTypedData_v4',
+          params: [wallet.address, JSON.stringify(typedData)],
+        });
+        sig = String(result);
+      } catch {
+        return { ok: false, repaidAmount: 0, error: 'EIP-712 signature was cancelled in wallet.' };
+      }
+
+      try {
+        const relayRes = await fetch(backendUrl('/api/relay/record-sale'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            shop: shopSigner,
+            shop: wallet.address,
             amountUSD8,
             customerIdHash,
             deadline,
@@ -735,317 +1167,210 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
           }),
         });
         const relayData = (await relayRes.json()) as {
+          ok?: boolean;
           mode?: string;
-          txHash?: string;
+          txHash?: string | null;
           error?: string;
         };
-        if (!relayRes.ok) {
+        if (!relayRes.ok || !relayData.txHash) {
           return {
             ok: false,
             repaidAmount: 0,
-            error: relayData.error ?? "Relayer verification failed.",
+            error:
+              relayData.error ??
+              'Relayer did not return an on-chain QDay TX hash. Check RELAYER_PRIVATE_KEY on backend.',
           };
         }
+
         if (relayData.mode) setLastRelayMode(relayData.mode);
-        if (relayData.txHash) relayedTxHash = relayData.txHash;
-      } catch {
-        setLastRelayMode("verified-demo-relay");
-      }
 
-      let repaidDeducted = 0;
-
-      if (activeLoan) {
-        const totalDue = activeLoan.principalUSD8 + activeLoan.flatFeeUSD8;
-        const remaining = Math.max(0, totalDue - activeLoan.totalRepaidUSD8);
-        const rawCut =
-          Math.round(amountUSD8 * (activeLoan.repayPctBps / 10000) * 100) / 100;
-        repaidDeducted = Math.min(remaining, rawCut);
-
-        const nextTotalRepaid =
-          Math.round((activeLoan.totalRepaidUSD8 + repaidDeducted) * 100) / 100;
-        const isNowRepaid = nextTotalRepaid >= totalDue - 0.001;
-
-        setLoans((prev) =>
-          prev.map((l) => {
-            if (l.id !== activeLoan.id) return l;
-            return {
-              ...l,
-              totalRepaidUSD8: isNowRepaid ? totalDue : nextTotalRepaid,
-              status: isNowRepaid ? "Repaid" : "Active",
-              repaidAt: isNowRepaid ? Date.now() : undefined,
-            };
-          }),
-        );
-
-        if (repaidDeducted > 0) {
-          setPoolLoanedUSD8((prev) => Math.max(0, prev - repaidDeducted));
-          setPoolFeesEarnedUSD8((prev) => prev + repaidDeducted * 0.05);
-          setPoolEvents((prev) => [
-            {
-              id: `pe-${Date.now()}`,
-              type: "RepaymentReceived",
-              actor: activeShopName,
-              amountUSD8: repaidDeducted,
-              timestamp: Date.now(),
-              txHash: pseudoTxHash(`repay-${Date.now()}`),
-            },
-            ...prev,
-          ]);
-        }
-
-        if (isNowRepaid) {
-          const nextLimit = Math.min(
-            CONTRACT_LIMITS.MAX_LOAN_USD8,
-            Math.round((shopStats.totalSales30dUSD8 + amountUSD8) * 0.1 * 100) /
-              100,
+        let estimatedRepaid = 0;
+        if (activeLoan) {
+          const totalDue = activeLoan.principalUSD8 + activeLoan.flatFeeUSD8;
+          const remaining = Math.max(0, totalDue - activeLoan.totalRepaidUSD8);
+          estimatedRepaid = Math.min(
+            remaining,
+            Math.round(amountUSD8 * (activeLoan.repayPctBps / 10000) * 100) / 100
           );
-          setCreditPassports((prev) => [
-            {
-              loanId: activeLoan.id,
-              shopName: activeShopName,
-              shopAddress: SHOP_ADDRESS,
-              principalUSD8: activeLoan.principalUSD8,
-              flatFeeUSD8: activeLoan.flatFeeUSD8,
-              daysToRepay: Math.max(
-                1,
-                Math.round(
-                  (Date.now() -
-                    (activeLoan.acceptedAt ?? Date.now() - 86400000)) /
-                    86400000,
-                ),
-              ),
-              newCreditLimitUSD8: nextLimit,
-              txHash: pseudoTxHash(`passport-${activeLoan.id}`),
-              timestamp: Date.now(),
-            },
-            ...prev,
-          ]);
         }
+
+        const newReceipt: VerifiableReceipt = {
+          id: `rcpt-sale-${Date.now()}`,
+          kind: 'sale',
+          title: `QR Sale · Customer #${customerIdRaw.trim().slice(-4)}`,
+          amountUSD8,
+          repaidDeductedUSD8: estimatedRepaid,
+          netAmountUSD8: Math.max(0, Math.round((amountUSD8 - estimatedRepaid) * 100) / 100),
+          counterpartyName: activeShopName,
+          counterpartyWallet: wallet.address,
+          erc8004Verified: Boolean(onChainShopName),
+          proofHash: customerIdHash,
+          txHash: relayData.txHash,
+          relayMode: relayData.mode ?? 'qday-onchain-relay',
+          timestamp: Date.now(),
+          note: 'Settled live on QDay SalesLedger via gasless EIP-712 relayer',
+        };
+        setReceipts((prev) => [newReceipt, ...prev]);
+
+        await syncOnChain();
+        return { ok: true, repaidAmount: estimatedRepaid, receipt: newReceipt };
+      } catch (err) {
+        return {
+          ok: false,
+          repaidAmount: 0,
+          error:
+            err instanceof Error
+              ? err.message
+              : 'Unable to reach Relayer backend.',
+        };
       }
-
-      const netToShop = Math.round((amountUSD8 - repaidDeducted) * 100) / 100;
-      const resolvedTx =
-        relayedTxHash ?? pseudoTxHash(`sale-${Date.now()}-${amountUSD8}`);
-      const newSale: SaleRecord = {
-        id: `sale-${Date.now()}`,
-        shop: SHOP_ADDRESS,
-        amountUSD8,
-        customerIdHash,
-        customerLabel: `Customer #${customerIdRaw.trim().slice(-4)}`,
-        timestamp: Date.now(),
-        repaidDeductedUSD8: repaidDeducted,
-        netToShopUSD8: netToShop,
-        eip712Signature: sig,
-        txHash: resolvedTx,
-      };
-
-      const newReceipt: VerifiableReceipt = {
-        id: `rcpt-${newSale.id}`,
-        kind: "sale",
-        title: `QR Sale · ${newSale.customerLabel}`,
-        amountUSD8,
-        repaidDeductedUSD8: repaidDeducted,
-        netAmountUSD8: netToShop,
-        counterpartyName: activeShopName,
-        counterpartyWallet: shopSigner,
-        erc8004Verified: true,
-        proofHash: customerIdHash,
-        txHash: resolvedTx,
-        relayMode: relayedTxHash ? "qday-onchain-relay" : "verified-demo-relay",
-        timestamp: newSale.timestamp,
-        note:
-          repaidDeducted > 0
-            ? `10% auto-repayment deducted (${repaidDeducted.toFixed(2)} tUSD8) to LoanPool`
-            : "Gasless customer QR receipt verified",
-      };
-
-      setSales((prev) => [newSale, ...prev]);
-      setReceipts((prev) => [newReceipt, ...prev]);
-      setShopAvailableTusd8(
-        (prev) => Math.round((prev + netToShop) * 100) / 100,
-      );
-      return { ok: true, repaidAmount: repaidDeducted, receipt: newReceipt };
     },
     [
       activeLoan,
       activeShopName,
-      shopStats.totalSales30dUSD8,
+      isRegisteredShop,
+      onChainShopName,
+      syncOnChain,
       wallet.address,
       wallet.connected,
-    ],
+    ]
   );
 
-  const runAgentCycle = useCallback(
-    async (aiExplanation?: string) => {
-      const now = Date.now();
-      await fetch("/api/agent/cron", { method: "POST" }).catch(() => null);
+  const runAgentCycle = useCallback(async () => {
+    try {
+      const res = await fetch(backendUrl('/api/agent/cron'), { method: 'POST' });
+      const data = (await res.json()) as {
+        ok?: boolean;
+        mode?: string;
+        error?: string;
+        logs?: Array<{
+          event?: AgentAuditLog['event'];
+          shop?: string;
+          reason?: string;
+          txHash?: string;
+          timestamp?: number;
+        }>;
+      };
 
-      if (!eligibility.eligible) {
-        const skipLog: AgentAuditLog = {
-          id: `log-${now}`,
-          event: "shop_skipped",
-          shop: SHOP_ADDRESS,
-          reason: eligibility.reason,
-          timestamp: now,
-        };
-        setAuditLogs((prev) => [skipLog, ...prev]);
+      if (!res.ok) {
         return {
           ok: false,
-          message: `AI Agent skipped Warung Bu Sri: ${eligibility.reason}`,
+          message: data.error ?? 'AI Guarantor backend cron returned an error.',
         };
       }
 
-      const nextId = Math.max(42, ...loans.map((l) => l.id)) + 1;
-      const newProposal: LoanRecord = {
-        id: nextId,
-        shop: SHOP_ADDRESS,
-        principalUSD8: eligibility.proposedPrincipalUSD8,
-        flatFeeUSD8: eligibility.proposedFlatFeeUSD8,
-        repayPctBps: eligibility.proposedRepayPctBps,
-        totalRepaidUSD8: 0,
-        proposedAt: now,
-        expiresAt: now + 48 * 3600 * 1000,
-        status: "Proposed",
-        agentName: "HanumPay-AI-Guarantor-v1",
-        aiExplanation:
-          aiExplanation ||
-          `On-chain check passed (${shopStats.uniqueCustomers30d} unique buyers, 30d sales $${shopStats.totalSales30dUSD8.toFixed(2)}). Smart contract sized working-capital limit at $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
-      };
+      if (Array.isArray(data.logs) && data.logs.length > 0) {
+        const mapped: AgentAuditLog[] = data.logs.map((entry, idx) => ({
+          id: `cron-${Date.now()}-${idx}`,
+          event: entry.event ?? 'cycle_start',
+          shop: entry.shop,
+          reason: entry.reason,
+          txHash: entry.txHash,
+          timestamp: entry.timestamp ?? Date.now(),
+        }));
+        setAuditLogs((prev) => [...mapped.reverse(), ...prev]);
+      }
 
-      const txHash = pseudoTxHash(`prop-${nextId}`);
-      setLoans((prev) => [newProposal, ...prev]);
-      setProposalsToday((p) => p + 1);
-      setAuditLogs((prev) => [
-        {
-          id: `log-end-${now}`,
-          event: "cycle_end",
-          timestamp: now + 500,
-        },
-        {
-          id: `log-sub-${now}`,
-          event: "proposal_submitted",
-          shop: SHOP_ADDRESS,
-          principal: String(
-            Math.round(eligibility.proposedPrincipalUSD8 * 1_000_000),
-          ),
-          flatFee: String(
-            Math.round(eligibility.proposedFlatFeeUSD8 * 1_000_000),
-          ),
-          txHash,
-          timestamp: now,
-        },
-        ...prev,
-      ]);
+      await syncOnChain();
+
+      const submitted = data.logs?.filter((l) => l.event === 'proposal_submitted') ?? [];
+      const skipped = data.logs?.filter((l) => l.event === 'shop_skipped') ?? [];
 
       return {
         ok: true,
-        message: `Proposal #${nextId} submitted on-chain for $${eligibility.proposedPrincipalUSD8.toFixed(2)} tUSD8.`,
+        message:
+          submitted.length > 0
+            ? `AI Guarantor submitted ${submitted.length} live on-chain loan proposal(s).`
+            : `Live cycle completed (${skipped.length} shop(s) skipped by Solidity eligibility rules).`,
       };
-    },
-    [
-      eligibility,
-      loans,
-      shopStats.totalSales30dUSD8,
-      shopStats.uniqueCustomers30d,
-    ],
-  );
+    } catch (err) {
+      return {
+        ok: false,
+        message:
+          err instanceof Error
+            ? err.message
+            : 'Unable to reach AI Guarantor cron endpoint.',
+      };
+    }
+  }, [syncOnChain]);
 
   const acceptLoanProposal = useCallback(
-    async (loanId: number, useWalletSign: boolean) => {
-      const target = loans.find(
-        (l) => l.id === loanId && l.status === "Proposed",
-      );
+    async (loanId: number) => {
+      if (!wallet.connected || !wallet.address) {
+        return { ok: false, error: 'Connect your QDay MetaMask wallet first.' };
+      }
+      const target = loans.find((l) => l.id === loanId && l.status === 'Proposed');
       if (!target) {
-        return {
-          ok: false,
-          error: "Loan proposal not found or already claimed.",
-        };
-      }
-      if (!isERC8004Verified(target.agentName)) {
-        return {
-          ok: false,
-          error:
-            "ERC-8004 verification failed: AI Guarantor identity is inactive.",
-        };
-      }
-      if (target.principalUSD8 > poolAvailableUSD8) {
-        return {
-          ok: false,
-          error: "Insufficient available liquidity in LoanPool.",
-        };
+        return { ok: false, error: 'Loan proposal not found or no longer in Proposed status.' };
       }
 
-      const deadline = Math.floor(Date.now() / 1000) + 3600;
-      const shopSigner =
-        useWalletSign && wallet.connected && wallet.address
-          ? wallet.address
-          : SHOP_ADDRESS;
-      let sig = `0x${pseudoTxHash(`accept-${loanId}`).slice(2, 20)}...eip712`;
-
-      if (useWalletSign && wallet.connected && wallet.address) {
-        const provider = getInjectedProvider();
-        if (provider) {
-          try {
-            const typedData = {
-              types: {
-                EIP712Domain: [
-                  { name: "name", type: "string" },
-                  { name: "version", type: "string" },
-                  { name: "chainId", type: "uint256" },
-                  { name: "verifyingContract", type: "address" },
-                ],
-                AcceptLoan: [
-                  { name: "loanId", type: "uint256" },
-                  { name: "shop", type: "address" },
-                  { name: "principalUSD8", type: "uint256" },
-                  { name: "flatFeeUSD8", type: "uint256" },
-                  { name: "repayPctBps", type: "uint256" },
-                  { name: "deadline", type: "uint256" },
-                ],
-              },
-              primaryType: "AcceptLoan",
-              domain: {
-                name: "HanumPayLoanPool",
-                version: "1",
-                chainId: QDAY_CHAIN_ID,
-                verifyingContract: DEPLOYED_CONTRACTS.loanPool,
-              },
-              message: {
-                loanId: String(target.id),
-                shop: wallet.address,
-                principalUSD8: String(
-                  Math.round(target.principalUSD8 * 1_000_000),
-                ),
-                flatFeeUSD8: String(Math.round(target.flatFeeUSD8 * 1_000_000)),
-                repayPctBps: String(target.repayPctBps),
-                deadline: String(deadline),
-              },
-            };
-            const result = await provider.request({
-              method: "eth_signTypedData_v4",
-              params: [wallet.address, JSON.stringify(typedData)],
-            });
-            sig = String(result);
-          } catch {
-            return {
-              ok: false,
-              error:
-                "EIP-712 loan acceptance signature was cancelled in wallet.",
-            };
-          }
-        }
+      const provider = getInjectedProvider();
+      if (!provider) {
+        return { ok: false, error: 'No browser Web3 wallet detected.' };
       }
 
-      let relayedTxHash: string | null = null;
-      let relayedMode: "qday-onchain-relay" | "verified-demo-relay" =
-        "verified-demo-relay";
       try {
-        const relayRes = await fetch("/api/relay/accept-loan", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
+        await addOrSwitchQDayNetwork(provider);
+      } catch {
+        return { ok: false, error: 'Please switch wallet to QDay Aevum (44005).' };
+      }
+
+      const { parseUnits } = await import('viem');
+      const deadline = Math.floor(Date.now() / 1000) + 3600;
+      const principalRaw = parseUnits(target.principalUSD8.toFixed(6), TUSD8_CONTRACT.decimals);
+      const flatFeeRaw = parseUnits(target.flatFeeUSD8.toFixed(6), TUSD8_CONTRACT.decimals);
+
+      let sig = '';
+      try {
+        const typedData = {
+          types: {
+            EIP712Domain: [
+              { name: 'name', type: 'string' },
+              { name: 'version', type: 'string' },
+              { name: 'chainId', type: 'uint256' },
+              { name: 'verifyingContract', type: 'address' },
+            ],
+            AcceptLoan: [
+              { name: 'loanId', type: 'uint256' },
+              { name: 'shop', type: 'address' },
+              { name: 'principalUSD8', type: 'uint256' },
+              { name: 'flatFeeUSD8', type: 'uint256' },
+              { name: 'repayPctBps', type: 'uint256' },
+              { name: 'deadline', type: 'uint256' },
+            ],
+          },
+          primaryType: 'AcceptLoan',
+          domain: {
+            name: 'HanumPayLoanPool',
+            version: '1',
+            chainId: QDAY_CHAIN_ID,
+            verifyingContract: DEPLOYED_CONTRACTS.loanPool,
+          },
+          message: {
+            loanId: String(target.id),
+            shop: wallet.address,
+            principalUSD8: principalRaw.toString(),
+            flatFeeUSD8: flatFeeRaw.toString(),
+            repayPctBps: String(target.repayPctBps),
+            deadline: String(deadline),
+          },
+        };
+        const result = await provider.request({
+          method: 'eth_signTypedData_v4',
+          params: [wallet.address, JSON.stringify(typedData)],
+        });
+        sig = String(result);
+      } catch {
+        return { ok: false, error: 'EIP-712 loan acceptance signature was cancelled in wallet.' };
+      }
+
+      try {
+        const relayRes = await fetch(backendUrl('/api/relay/accept-loan'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             loanId: target.id,
-            shop: shopSigner,
+            shop: wallet.address,
             principalUSD8: target.principalUSD8,
             flatFeeUSD8: target.flatFeeUSD8,
             repayPctBps: target.repayPctBps,
@@ -1054,275 +1379,300 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
           }),
         });
         const relayData = (await relayRes.json()) as {
+          ok?: boolean;
           mode?: string;
           txHash?: string | null;
           error?: string;
         };
-        if (!relayRes.ok) {
+        if (!relayRes.ok || !relayData.txHash) {
           return {
             ok: false,
-            error: relayData.error ?? "Loan relayer verification failed.",
+            error: relayData.error ?? 'Loan acceptance relayer did not broadcast transaction.',
           };
         }
-        if (relayData.mode) {
-          setLastRelayMode(relayData.mode);
-          if (relayData.mode === "qday-onchain-relay") {
-            relayedMode = "qday-onchain-relay";
-          }
-        }
-        if (relayData.txHash) relayedTxHash = relayData.txHash;
-      } catch {
-        setLastRelayMode("verified-demo-relay");
-      }
+        if (relayData.mode) setLastRelayMode(relayData.mode);
 
-      const disbursedTx = relayedTxHash ?? pseudoTxHash(`accept-${loanId}`);
-      setLoans((prev) =>
-        prev.map((l) =>
-          l.id === loanId
-            ? { ...l, status: "Active", acceptedAt: Date.now() }
-            : l,
-        ),
-      );
-      setPoolLoanedUSD8((prev) => prev + target.principalUSD8);
-      setShopAvailableTusd8(
-        (prev) => Math.round((prev + target.principalUSD8) * 100) / 100,
-      );
-      setPoolEvents((prev) => [
-        {
-          id: `pe-${Date.now()}`,
-          type: "LoanDisbursed",
-          actor: activeShopName,
+        const loanReceipt: VerifiableReceipt = {
+          id: `rcpt-loan-${loanId}-${Date.now()}`,
+          kind: 'loan',
+          title: `Working Capital #${loanId} Disbursed`,
           amountUSD8: target.principalUSD8,
+          repaidDeductedUSD8: 0,
+          netAmountUSD8: target.principalUSD8,
+          counterpartyName: target.agentName,
+          counterpartyWallet: DEPLOYED_CONTRACTS.aiGuarantor,
+          erc8004Verified: true,
+          proofHash: sig,
+          txHash: relayData.txHash,
+          relayMode: relayData.mode ?? 'qday-onchain-relay',
           timestamp: Date.now(),
-          txHash: disbursedTx,
-        },
-        ...prev,
-      ]);
+          note: `5% flat fee (${target.flatFeeUSD8.toFixed(2)} tUSD8) · 10% auto-deducted per QR sale`,
+        };
+        setReceipts((prev) => [loanReceipt, ...prev]);
 
-      const loanReceipt: VerifiableReceipt = {
-        id: `rcpt-loan-${loanId}-${Date.now()}`,
-        kind: "loan",
-        title: `Working Capital #${loanId} Disbursed`,
-        amountUSD8: target.principalUSD8,
-        repaidDeductedUSD8: 0,
-        netAmountUSD8: target.principalUSD8,
-        counterpartyName: target.agentName,
-        counterpartyWallet: AGENT_ADDRESS,
-        erc8004Verified: true,
-        proofHash: sig,
-        txHash: disbursedTx,
-        relayMode: relayedMode,
-        timestamp: Date.now(),
-        note: `5% flat fee (${target.flatFeeUSD8.toFixed(2)} tUSD8) · 10% auto-deducted per QR sale`,
-      };
-      setReceipts((prev) => [loanReceipt, ...prev]);
-
-      return { ok: true, receipt: loanReceipt };
+        await syncOnChain();
+        return { ok: true, receipt: loanReceipt };
+      } catch (err) {
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : 'Unable to reach LoanPool relayer.',
+        };
+      }
     },
-    [
-      activeShopName,
-      isERC8004Verified,
-      loans,
-      poolAvailableUSD8,
-      wallet.address,
-      wallet.connected,
-    ],
+    [loans, syncOnChain, wallet.address, wallet.connected]
   );
 
-  const rejectLoanProposal = useCallback((loanId: number) => {
-    setLoans((prev) =>
-      prev.map((l) =>
-        l.id === loanId && l.status === "Proposed"
-          ? { ...l, status: "Expired" }
-          : l,
-      ),
-    );
-    setAuditLogs((prev) => [
-      {
-        id: `log-rej-${Date.now()}`,
-        event: "proposal_rejected",
-        shop: SHOP_ADDRESS,
-        reason: `Merchant rejected Loan Proposal #${loanId} during Confirmation of Payee`,
-        timestamp: Date.now(),
-      },
-      ...prev,
-    ]);
-  }, []);
-
   const depositToPool = useCallback(
-    (amountUSD8: number) => {
-      if (Number.isNaN(amountUSD8) || amountUSD8 < 1) {
-        return { ok: false, error: "Minimum deposit is 1.00 tUSD8." };
+    async (amountUSD8: number) => {
+      if (!wallet.connected || !wallet.address) {
+        return { ok: false, error: 'Connect your QDay MetaMask wallet first.' };
       }
-      setPoolDepositedUSD8((prev) => prev + amountUSD8);
-      setUserLenderShares((prev) => prev + amountUSD8);
-      setPoolEvents((prev) => [
-        {
-          id: `pe-dep-${Date.now()}`,
-          type: "Deposit",
-          actor: wallet.address
-            ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
-            : "Connected LP",
+      if (Number.isNaN(amountUSD8) || amountUSD8 <= 0) {
+        return { ok: false, error: 'Enter a valid tUSD8 deposit amount.' };
+      }
+
+      try {
+        const [{ parseUnits }, qday] = await Promise.all([import('viem'), import('./qday')]);
+        const rawAmount = parseUnits(amountUSD8.toFixed(6), TUSD8_CONTRACT.decimals);
+        if (rawAmount > wallet.tusd8Raw) {
+          return {
+            ok: false,
+            error: `Insufficient wallet tUSD8 balance (${wallet.tusd8Balance} tUSD8).`,
+          };
+        }
+
+        const currentAllowance = await qday.qDayPublicClient.readContract({
+          address: TUSD8_CONTRACT.address,
+          abi: qday.ERC20_ABI,
+          functionName: 'allowance',
+          args: [wallet.address, DEPLOYED_CONTRACTS.loanPool],
+        });
+
+        if (currentAllowance < rawAmount) {
+          await qday.sendWalletWriteContract({
+            account: wallet.address,
+            address: TUSD8_CONTRACT.address,
+            abi: qday.ERC20_ABI,
+            functionName: 'approve',
+            args: [DEPLOYED_CONTRACTS.loanPool, rawAmount],
+          });
+        }
+
+        const txHash = await qday.sendWalletWriteContract({
+          account: wallet.address,
+          address: DEPLOYED_CONTRACTS.loanPool,
+          abi: qday.HANUMPAY_ABIS.loanPool,
+          functionName: 'deposit',
+          args: [rawAmount],
+        });
+
+        const receipt: VerifiableReceipt = {
+          id: `rcpt-pool-dep-${Date.now()}`,
+          kind: 'pool',
+          title: 'LoanPool Liquidity Deposit',
           amountUSD8,
+          repaidDeductedUSD8: 0,
+          netAmountUSD8: amountUSD8,
+          counterpartyName: 'HanumPay LoanPool',
+          counterpartyWallet: DEPLOYED_CONTRACTS.loanPool,
+          erc8004Verified: true,
+          proofHash: txHash,
+          txHash,
+          relayMode: 'qday-onchain-direct',
           timestamp: Date.now(),
-          txHash: pseudoTxHash(`dep-${Date.now()}`),
-        },
-        ...prev,
-      ]);
-      return { ok: true };
+          note: 'tUSD8 deposited directly into LoanPool.sol',
+        };
+        setReceipts((prev) => [receipt, ...prev]);
+
+        await syncOnChain();
+        return { ok: true, receipt };
+      } catch (err) {
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : 'LoanPool deposit transaction failed.',
+        };
+      }
     },
-    [wallet.address],
+    [syncOnChain, wallet.address, wallet.connected, wallet.tusd8Balance, wallet.tusd8Raw]
   );
 
   const withdrawFromPool = useCallback(
-    (amountUSD8: number) => {
+    async (amountUSD8: number) => {
+      if (!wallet.connected || !wallet.address) {
+        return { ok: false, error: 'Connect your QDay MetaMask wallet first.' };
+      }
       if (Number.isNaN(amountUSD8) || amountUSD8 <= 0) {
-        return { ok: false, error: "Enter a valid withdrawal amount." };
+        return { ok: false, error: 'Enter a valid tUSD8 withdrawal amount.' };
       }
-      if (amountUSD8 > userLenderShares) {
-        return {
-          ok: false,
-          error: "Withdrawal exceeds your pool share balance.",
-        };
+      if (userLenderSharesRaw === BigInt(0) || userLenderValueRaw === BigInt(0)) {
+        return { ok: false, error: 'You do not have active LP shares in LoanPool.' };
       }
-      if (amountUSD8 > poolAvailableUSD8) {
-        return {
-          ok: false,
-          error: `Only $${poolAvailableUSD8.toFixed(2)} tUSD8 idle liquidity is currently available.`,
-        };
-      }
-      setPoolDepositedUSD8((prev) => prev - amountUSD8);
-      setUserLenderShares((prev) => prev - amountUSD8);
-      setPoolEvents((prev) => [
-        {
-          id: `pe-wd-${Date.now()}`,
-          type: "Withdraw",
-          actor: wallet.address
-            ? `${wallet.address.slice(0, 6)}...${wallet.address.slice(-4)}`
-            : "Connected LP",
+
+      try {
+        const [{ parseUnits }, qday] = await Promise.all([import('viem'), import('./qday')]);
+        const rawAmount = parseUnits(amountUSD8.toFixed(6), TUSD8_CONTRACT.decimals);
+        if (rawAmount > userLenderValueRaw) {
+          return {
+            ok: false,
+            error: `Requested withdrawal exceeds your LP balance (${fromTusd8Raw(userLenderValueRaw).toFixed(2)} tUSD8).`,
+          };
+        }
+        if (amountUSD8 > poolAvailableUSD8) {
+          return {
+            ok: false,
+            error: `Only ${poolAvailableUSD8.toFixed(2)} tUSD8 idle liquidity is currently available.`,
+          };
+        }
+
+        let sharesToBurn = (rawAmount * userLenderSharesRaw) / userLenderValueRaw;
+        if (sharesToBurn > userLenderSharesRaw || rawAmount === userLenderValueRaw) {
+          sharesToBurn = userLenderSharesRaw;
+        }
+        if (sharesToBurn === BigInt(0)) {
+          return { ok: false, error: 'Withdrawal amount rounds to zero shares.' };
+        }
+
+        const txHash = await qday.sendWalletWriteContract({
+          account: wallet.address,
+          address: DEPLOYED_CONTRACTS.loanPool,
+          abi: qday.HANUMPAY_ABIS.loanPool,
+          functionName: 'withdraw',
+          args: [sharesToBurn],
+        });
+
+        const receipt: VerifiableReceipt = {
+          id: `rcpt-pool-wd-${Date.now()}`,
+          kind: 'pool',
+          title: 'LoanPool Liquidity Withdrawal',
           amountUSD8,
+          repaidDeductedUSD8: 0,
+          netAmountUSD8: amountUSD8,
+          counterpartyName: 'HanumPay LoanPool',
+          counterpartyWallet: DEPLOYED_CONTRACTS.loanPool,
+          erc8004Verified: true,
+          proofHash: txHash,
+          txHash,
+          relayMode: 'qday-onchain-direct',
           timestamp: Date.now(),
-          txHash: pseudoTxHash(`wd-${Date.now()}`),
-        },
-        ...prev,
-      ]);
-      return { ok: true };
+          note: 'LP shares redeemed from LoanPool.sol',
+        };
+        setReceipts((prev) => [receipt, ...prev]);
+
+        await syncOnChain();
+        return { ok: true, receipt };
+      } catch (err) {
+        return {
+          ok: false,
+          error: err instanceof Error ? err.message : 'LoanPool withdrawal failed.',
+        };
+      }
     },
-    [poolAvailableUSD8, userLenderShares, wallet.address],
+    [
+      poolAvailableUSD8,
+      syncOnChain,
+      userLenderSharesRaw,
+      userLenderValueRaw,
+      wallet.address,
+      wallet.connected,
+    ]
   );
 
   const payVerifiedSupplier = useCallback(
-    (supplierName: string, amountUSD8: number, itemNote: string) => {
-      const resolvedWallet = resolveERC8004(supplierName);
-      if (!resolvedWallet) {
-        return {
-          ok: false,
-          error:
-            "Confirmation of Payee blocked: supplier is not registered in ERC8004Registry.",
-        };
+    async (supplierName: string, amountUSD8: number, itemNote: string) => {
+      if (!wallet.connected || !wallet.address) {
+        return { ok: false, error: 'Connect your QDay MetaMask wallet first.' };
       }
       if (Number.isNaN(amountUSD8) || amountUSD8 <= 0) {
-        return { ok: false, error: "Enter a valid payment amount in tUSD8." };
+        return { ok: false, error: 'Enter a valid payment amount in tUSD8.' };
       }
-      if (amountUSD8 > shopAvailableTusd8) {
+
+      try {
+        const [{ parseUnits }, qday] = await Promise.all([import('viem'), import('./qday')]);
+        const rawAmount = parseUnits(amountUSD8.toFixed(6), TUSD8_CONTRACT.decimals);
+        if (rawAmount > wallet.tusd8Raw) {
+          return {
+            ok: false,
+            error: `Insufficient wallet tUSD8 balance (${wallet.tusd8Balance} tUSD8).`,
+          };
+        }
+
+        // Live on-chain Confirmation of Payee check before signing token transfer
+        const resolvedWallet = await qday.qDayPublicClient.readContract({
+          address: DEPLOYED_CONTRACTS.erc8004,
+          abi: qday.HANUMPAY_ABIS.erc8004,
+          functionName: 'resolve',
+          args: [supplierName.trim()],
+        });
+
+        if (!resolvedWallet || resolvedWallet === ZERO_ADDRESS) {
+          return {
+            ok: false,
+            error: `ERC-8004 blocked transfer: "${supplierName}" is not active in ERC8004Registry.`,
+          };
+        }
+
+        const txHash = await qday.sendWalletWriteContract({
+          account: wallet.address,
+          address: TUSD8_CONTRACT.address,
+          abi: qday.ERC20_ABI,
+          functionName: 'transfer',
+          args: [resolvedWallet, rawAmount],
+        });
+
+        const payment: SupplierPayment = {
+          id: `sup-${Date.now()}`,
+          supplierName: supplierName.trim(),
+          supplierWallet: resolvedWallet,
+          amountUSD8,
+          itemNote: itemNote.trim() || 'Wholesale inventory restock',
+          copVerified: true,
+          timestamp: Date.now(),
+          txHash,
+        };
+        setSupplierPayments((prev) => [payment, ...prev]);
+
+        const receipt: VerifiableReceipt = {
+          id: `rcpt-${payment.id}`,
+          kind: 'supplier',
+          title: `Supplier Paid · ${payment.supplierName}`,
+          amountUSD8,
+          repaidDeductedUSD8: 0,
+          netAmountUSD8: amountUSD8,
+          counterpartyName: payment.supplierName,
+          counterpartyWallet: resolvedWallet,
+          erc8004Verified: true,
+          proofHash: txHash,
+          txHash,
+          relayMode: 'qday-onchain-direct',
+          timestamp: payment.timestamp,
+          note: payment.itemNote,
+        };
+        setReceipts((prev) => [receipt, ...prev]);
+
+        await refreshWalletBalances();
+        return { ok: true, receipt };
+      } catch (err) {
         return {
           ok: false,
-          error: `Insufficient shop tUSD8 balance (available $${shopAvailableTusd8.toFixed(2)} tUSD8). Accept a loan or record sales first.`,
+          error: err instanceof Error ? err.message : 'Supplier tUSD8 transfer failed.',
         };
       }
-
-      const payment: SupplierPayment = {
-        id: `sup-${Date.now()}`,
-        supplierName,
-        supplierWallet: resolvedWallet,
-        amountUSD8,
-        itemNote: itemNote.trim() || "Wholesale inventory restock",
-        copVerified: true,
-        timestamp: Date.now(),
-        txHash: pseudoTxHash(`sup-${supplierName}-${Date.now()}`),
-      };
-
-      setShopAvailableTusd8(
-        (prev) => Math.round((prev - amountUSD8) * 100) / 100,
-      );
-      setSupplierPayments((prev) => [payment, ...prev]);
-      setPoolEvents((prev) => [
-        {
-          id: `pe-sup-${Date.now()}`,
-          type: "SupplierPaid",
-          actor: `${activeShopName} -> ${supplierName}`,
-          amountUSD8,
-          timestamp: Date.now(),
-          txHash: payment.txHash,
-        },
-        ...prev,
-      ]);
-
-      const supReceipt: VerifiableReceipt = {
-        id: `rcpt-${payment.id}`,
-        kind: "supplier",
-        title: `Supplier Paid · ${supplierName}`,
-        amountUSD8,
-        repaidDeductedUSD8: 0,
-        netAmountUSD8: amountUSD8,
-        counterpartyName: supplierName,
-        counterpartyWallet: resolvedWallet,
-        erc8004Verified: true,
-        proofHash: pseudoTxHash(`cop-${supplierName}-${amountUSD8}`),
-        txHash: payment.txHash,
-        relayMode: "erc8004-cop-settlement",
-        timestamp: payment.timestamp,
-        note: payment.itemNote,
-      };
-      setReceipts((prev) => [supReceipt, ...prev]);
-      return { ok: true, receipt: supReceipt };
     },
-    [activeShopName, resolveERC8004, shopAvailableTusd8],
+    [
+      refreshWalletBalances,
+      wallet.address,
+      wallet.connected,
+      wallet.tusd8Balance,
+      wallet.tusd8Raw,
+    ]
   );
-
-  const resetStageDemo = useCallback(() => {
-    setIdentities(INITIAL_IDENTITIES);
-    setSales(INITIAL_SALES);
-    setLoans(INITIAL_LOANS);
-    setProposalsToday(1);
-    setPoolDepositedUSD8(12400);
-    setPoolLoanedUSD8(3640);
-    setPoolFeesEarnedUSD8(482.5);
-    setUserLenderShares(1500);
-    setPoolEvents(INITIAL_POOL_EVENTS);
-    setCreditPassports(INITIAL_PASSPORTS);
-    setSupplierPayments([]);
-    setAuditLogs(INITIAL_AUDIT_LOGS);
-    setShopAvailableTusd8(145.0);
-    setAgentPaused(false);
-    setActiveReceipt(null);
-  }, []);
-
-  const refreshWalletBalances = useCallback(async () => {
-    if (!wallet.address) return;
-    try {
-      const bal = await fetchQDayBalances(wallet.address);
-      setWallet((prev) => ({
-        ...prev,
-        tqdayBalance: bal.tqday,
-        tusd8Balance: bal.tusd8,
-        error: null,
-      }));
-    } catch {
-      setWallet((prev) => ({
-        ...prev,
-        error: "QDay RPC is busy. Please refresh balances again shortly.",
-      }));
-    }
-  }, [wallet.address]);
 
   const connectQDayWallet = useCallback(async () => {
     const provider = getInjectedProvider();
     if (!provider) {
       setWallet((prev) => ({
         ...prev,
-        error:
-          "No Web3 wallet detected (install MetaMask or Rabby). Demo mode remains fully active.",
+        error: 'No Web3 wallet detected (install MetaMask or Rabby). Use /stage for interactive simulation.',
       }));
       return;
     }
@@ -1330,20 +1680,20 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     setWallet((prev) => ({ ...prev, isConnecting: true, error: null }));
     try {
       const accounts = (await provider.request({
-        method: "eth_requestAccounts",
+        method: 'eth_requestAccounts',
       })) as string[];
       if (!accounts || accounts.length === 0) {
-        throw new Error("No account selected");
+        throw new Error('No account selected.');
       }
       await addOrSwitchQDayNetwork(provider);
-      const chainHex = (await provider.request({
-        method: "eth_chainId",
-      })) as string;
+      const chainHex = (await provider.request({ method: 'eth_chainId' })) as string;
       const chainId = parseInt(chainHex, 16);
       const addr = accounts[0] as `0x${string}`;
-      const bal = await fetchQDayBalances(addr).catch(() => ({
-        tqday: "0.0000",
-        tusd8: "0.00",
+      const qday = await import('./qday');
+      const bal = await qday.fetchQDayBalances(addr).catch(() => ({
+        tqday: '0.0000',
+        tusd8: '0.00',
+        tusd8Raw: BigInt(0),
       }));
 
       setWallet({
@@ -1352,6 +1702,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         chainId,
         tqdayBalance: bal.tqday,
         tusd8Balance: bal.tusd8,
+        tusd8Raw: bal.tusd8Raw,
         isConnecting: false,
         error: null,
       });
@@ -1362,7 +1713,7 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
         error:
           err instanceof Error
             ? err.message
-            : "Failed to connect MetaMask to QDay Aevum Testnet.",
+            : 'Failed to connect MetaMask to QDay Aevum Testnet.',
       }));
     }
   }, []);
@@ -1372,23 +1723,33 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
       connected: false,
       address: null,
       chainId: null,
-      tqdayBalance: "0.0000",
-      tusd8Balance: "0.00",
+      tqdayBalance: '0.0000',
+      tusd8Balance: '0.00',
+      tusd8Raw: BigInt(0),
       isConnecting: false,
       error: null,
     });
   }, []);
 
   const value: HanumPayContextValue = {
-    activeShopAddress: SHOP_ADDRESS,
+    isSyncing,
+    lastSyncedBlock,
+    syncError,
+    syncOnChain,
+    activeShopAddress,
     activeShopName,
+    isRegisteredShop,
+    registerShopOnChain,
     identities,
     resolveERC8004,
+    resolveERC8004OnChain,
     isERC8004Verified,
     registerIdentity,
+    revokeIdentity,
     sales,
     shopStats,
     eligibility,
+    onChainEligibility,
     recordSale,
     loans,
     proposedLoan,
@@ -1396,48 +1757,44 @@ export function HanumPayProvider({ children }: { children: React.ReactNode }) {
     repaidLoans,
     proposalsToday,
     agentPaused,
-    setAgentPausedState,
     toggleAgentPaused,
     auditLogs,
     lastRelayMode,
     runAgentCycle,
     acceptLoanProposal,
-    rejectLoanProposal,
     poolDepositedUSD8,
     poolLoanedUSD8,
     poolAvailableUSD8,
     poolUtilizationBps,
     poolFeesEarnedUSD8,
-    userLenderShares,
+    poolActiveLoanCount,
+    userLenderShares: fromTusd8Raw(userLenderSharesRaw),
+    userLenderValueUSD8: fromTusd8Raw(userLenderValueRaw),
+    tusd8AllowancePool: fromTusd8Raw(tusd8AllowancePoolRaw),
     poolEvents,
     depositToPool,
     withdrawFromPool,
     supplierPayments,
     payVerifiedSupplier,
     creditPassports,
-    shopAvailableTusd8,
+    shopAvailableTusd8: wallet.connected ? fromTusd8Raw(wallet.tusd8Raw) : 0,
     receipts,
     activeReceipt,
     openReceipt,
     closeReceipt,
-    resetStageDemo,
     wallet,
     connectQDayWallet,
     refreshWalletBalances,
     disconnectWallet,
   };
 
-  return (
-    <HanumPayContext.Provider value={value}>
-      {children}
-    </HanumPayContext.Provider>
-  );
+  return <HanumPayContext.Provider value={value}>{children}</HanumPayContext.Provider>;
 }
 
 export function useHanumPay() {
   const ctx = useContext(HanumPayContext);
   if (!ctx) {
-    throw new Error("useHanumPay must be used within HanumPayProvider");
+    throw new Error('useHanumPay must be used within HanumPayProvider');
   }
   return ctx;
 }

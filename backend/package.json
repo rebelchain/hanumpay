@@ -1,0 +1,26 @@
+{
+  "name": "hanumpay-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Standalone Express 5 Relayer & Gemini AI Guarantor backend for HanumPay on QDay Aevum Testnet (Chain ID 44005)",
+  "scripts": {
+    "dev": "tsx watch src/server.ts",
+    "build": "tsc",
+    "start": "node dist/server.js"
+  },
+  "dependencies": {
+    "@google/genai": "^1.44.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^5.1.0",
+    "viem": "^2.23.15"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.17",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.10.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "solidity.packageDefaultDependenciesContractsDirectory": "contracts/src",
+  "solidity.packageDefaultDependenciesDirectory": "contracts/lib",
+  "solidity.remappings": [
+    "src/=contracts/src/",
+    "../src/=contracts/src/"
+  ],
+  "solidity.remappingsWindows": [
+    "src/=contracts/src/",
+    "../src/=contracts/src/"
+  ]
+}
