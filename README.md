@@ -1,10 +1,14 @@
 # HanumPay
 
+![Meet HanumPay — Working capital for cashflow-rich, collateral-poor micro-merchants on QDay Aevum Testnet](docs/media/meet-hanumpay.png)
+
 **Revenue-backed working capital and ERC-8004 Confirmation of Payee for micro-merchants on QDay Aevum Testnet.**
 
 HanumPay turns daily QR cashier sales (`tUSD8`, 6 decimals) into verifiable on-chain cashflow history with zero merchant gas fees (*gasless EIP-712*), unlocks contract-bounded working capital (**max 10% of 30-day revenue, $500 tUSD8 cap, 5% flat fee, 0% late penalties**), and protects wholesale supplier payouts using **ERC-8004 Confirmation of Payee**.
 
 [Live App](https://hanumpay.vercel.app) · [GitBook Docs](https://rebelxyz.gitbook.io/hanumpay) · [2-Phone Simulator](https://hanumpay.vercel.app/stage) · [QDay Explorer](https://explorer-test.qday.info)
+
+### Merchant Dashboard Preview
 
 ![HanumPay Merchant Overview: 145.00 tUSD8 shop balance, Proposal #42 offering 125.00 tUSD8 working capital with a 6.25 tUSD8 flat fee, ERC-8004 Verified Shop](docs/media/dashboard.png)
 

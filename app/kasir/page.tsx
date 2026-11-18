@@ -15,6 +15,7 @@ import {
   Sparkles,
   Wallet,
 } from 'lucide-react';
+import { HanumPayBrand } from '@/components/HanumPayBrand';
 import ShopOnboardingChecklist from '@/components/ShopOnboardingChecklist';
 import TechnicalDetailsToggle from '@/components/TechnicalDetailsToggle';
 import VerifiableReceiptModal from '@/components/VerifiableReceiptModal';
@@ -206,12 +207,7 @@ export default function MobileCashierPage() {
       <header className="sticky top-0 z-30 h-14 bg-white/95 backdrop-blur-md border-b border-[#E2E7E4] px-4 sm:px-6 flex items-center">
         <div className="w-full max-w-5xl mx-auto flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5 min-w-0">
-            <Link
-              href="/"
-              className="text-lg font-semibold tracking-[-0.04em] text-[#151619] whitespace-nowrap"
-            >
-              hanumpay
-            </Link>
+            <HanumPayBrand href="/" variant="light" size={28} />
             <span className="text-xs text-[#636966] hidden sm:inline">·</span>
             <span className="text-xs font-medium text-[#15803D] truncate">Mobile Cashier</span>
           </div>

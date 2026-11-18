@@ -9,6 +9,7 @@ import {
   TUSD8_CONTRACT,
 } from '@/lib/qday-constants';
 import { LandingHeader } from '@/components/landing/LandingHeader';
+import { HanumPayBrand } from '@/components/HanumPayBrand';
 import { HeroCreditCalculator } from '@/components/landing/HeroCreditCalculator';
 import { LiveTicker } from '@/components/landing/LiveTicker';
 import { CreditRuler } from '@/components/landing/CreditRuler';
@@ -535,12 +536,7 @@ export default function LandingPage() {
           className={`${CONTAINER} grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_1fr_1fr_1fr]`}
         >
           <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-            <Link
-              href="/"
-              className="text-[19px] font-semibold tracking-[-0.04em] text-[#151619]"
-            >
-              hanumpay
-            </Link>
+            <HanumPayBrand href="/" variant="light" size={30} alwaysShowText />
             <p className="mt-3 max-w-[30ch] text-[14px] leading-[1.6] text-[#5C6260]">
               Contract-bounded working capital and ERC-8004 supplier rails for MSMEs on QDay Aevum Testnet.
             </p>

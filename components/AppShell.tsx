@@ -18,6 +18,7 @@ import {
   Wallet,
   X,
 } from 'lucide-react';
+import { HanumPayBrand } from '@/components/HanumPayBrand';
 import VerifiableReceiptModal from '@/components/VerifiableReceiptModal';
 import { useHanumPay } from '@/lib/hanumpay-store';
 import { QDAY_EXPLORER_URL, QDAY_FAUCET_URL, shortenAddress } from '@/lib/qday-constants';
@@ -104,12 +105,7 @@ export default function AppShell({
     <div className="flex h-full flex-col justify-between bg-[#151619] text-white px-4 py-5">
       <div className="min-h-0 overflow-y-auto pr-0.5">
         <div className="flex items-center justify-between px-2 pb-5 border-b border-white/10">
-          <Link
-            href="/"
-            className="text-[20px] font-semibold tracking-[-0.04em] text-white whitespace-nowrap shrink-0"
-          >
-            hanumpay
-          </Link>
+          <HanumPayBrand href="/" variant="dark" size={30} alwaysShowText />
           <button
             type="button"
             onClick={() => setMobileOpen(false)}
@@ -280,9 +276,12 @@ export default function AppShell({
               >
                 <Menu className="w-5 h-5" />
               </button>
+              <div className="lg:hidden shrink-0">
+                <HanumPayBrand href="/" variant="light" size={26} />
+              </div>
               <div className="flex items-center gap-2 text-xs text-[#636966] min-w-0">
-                <span className="whitespace-nowrap">{group}</span>
-                <span aria-hidden="true">/</span>
+                <span className="hidden sm:inline whitespace-nowrap">{group}</span>
+                <span className="hidden sm:inline" aria-hidden="true">/</span>
                 <span className="truncate font-semibold text-[#151619]">{title}</span>
               </div>
             </div>

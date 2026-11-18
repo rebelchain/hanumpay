@@ -18,6 +18,7 @@ import {
   Truck,
   XCircle,
 } from 'lucide-react';
+import { HanumPayBrand } from '@/components/HanumPayBrand';
 import VerifiableReceiptModal from '@/components/VerifiableReceiptModal';
 import { backendUrl } from '@/lib/backend';
 import { validateProposalAgainstContract } from '@/lib/hanumpay-engine';
@@ -190,13 +191,8 @@ function InteractiveStageContent() {
     <div className="min-h-screen bg-[#F5F6F7] text-slate-900">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-4 sm:pt-6">
         <header className="bg-white border border-slate-200/90 rounded-full px-5 py-2.5 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-4 min-w-0">
-            <Link
-              href="/"
-              className="text-base sm:text-lg font-bold tracking-tight text-slate-900 whitespace-nowrap shrink-0"
-            >
-              HanumPay
-            </Link>
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0">
+            <HanumPayBrand href="/" variant="light" size={28} />
             <span className="text-xs text-slate-500 whitespace-nowrap hidden sm:inline">
               Interactive Sandbox · 2-Device Simulator
             </span>

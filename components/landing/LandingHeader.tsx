@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { ChevronDown, Menu, X } from 'lucide-react';
 import { useHanumPay } from '@/lib/hanumpay-store';
 import { shortenAddress } from '@/lib/qday-constants';
+import { HanumPayBrand } from '@/components/HanumPayBrand';
 import { CONTAINER } from './section';
 
 const APP_LINKS = [
@@ -66,13 +67,8 @@ export function LandingHeader() {
               : 'bg-transparent'
           }`}
         >
-          {/* Wordmark */}
-          <Link
-            href="/"
-            className="text-[19px] font-semibold tracking-[-0.04em] text-[#151619] whitespace-nowrap"
-          >
-            hanumpay
-          </Link>
+          {/* Brand lockup (icon only on mobile, icon + wordmark on desktop) */}
+          <HanumPayBrand href="/" variant={scrolled ? 'light' : 'mint'} size={30} />
 
           {/* Desktop nav links */}
           <nav className="hidden items-center gap-7 md:flex">

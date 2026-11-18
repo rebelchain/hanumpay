@@ -6,17 +6,33 @@ export const metadata: Metadata = {
   title: 'HanumPay — Working Capital Credit & Verified Payee Layer for MSMEs',
   description:
     'On-chain working capital credit, ERC-8004 Confirmation of Payee, and verified QR sales ledger for small merchants on QDay Aevum Testnet.',
+  icons: {
+    icon: [
+      { url: '/icon.png', type: 'image/png' },
+      { url: '/hanumpay-logo.png', type: 'image/png' },
+    ],
+    apple: [{ url: '/apple-icon.png', type: 'image/png' }],
+  },
   openGraph: {
     title: 'HanumPay — Working Capital Credit & Verified Payee Layer for MSMEs',
     description:
       'Turn daily QR sales into fair tUSD8 working capital limits guarded by smart-contract AI constraints and ERC-8004 payee verification.',
     type: 'website',
+    images: [
+      {
+        url: '/og-meet-hanumpay.png',
+        width: 1600,
+        height: 900,
+        alt: 'Meet HanumPay — Gasless QR sales, contract-bounded working capital, and ERC-8004 Confirmation of Payee',
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: 'HanumPay — Working Capital Credit & Verified Payee Layer for MSMEs',
     description:
       'Turn daily QR sales into fair tUSD8 working capital limits guarded by smart-contract AI constraints and ERC-8004 payee verification.',
+    images: ['/og-meet-hanumpay.png'],
   },
 };
 
