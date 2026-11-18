@@ -617,7 +617,23 @@ export default function DocsAndContractsPage() {
                 <div className="space-y-3">
                   <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1">
                     <p className="text-xs font-semibold text-[#151619]">
-                      1. QRIS Fiat Gateway Is Simulated by the Relayer
+                      1. Testnet Uses tUSD8 Today (IDRX Migration for Indonesia Compliance)
+                    </p>
+                    <p className="text-xs text-[#5C6260] leading-relaxed">
+                      Under Indonesian payment regulations, domestic commerce must settle in
+                      Rupiah (<code className="font-mono">IDR</code>), not USD. Because QDay
+                      Aevum Testnet currently provides <code className="font-mono">tUSD8</code> in
+                      its starter kit and faucet (with no native <code className="font-mono">IDRX</code>{' '}
+                      deployed yet), this MVP settles in <code className="font-mono">tUSD8</code>{' '}
+                      while displaying <code className="font-mono">Rp</code> amounts. The smart
+                      contracts accept an ERC-20 constructor token, making migration to{' '}
+                      <strong className="text-[#151619]">IDRX</strong> straightforward in v2.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1">
+                    <p className="text-xs font-semibold text-[#151619]">
+                      2. QRIS Fiat Gateway Is Simulated by the Relayer
                     </p>
                     <p className="text-xs text-[#5C6260] leading-relaxed">
                       Live BI-SNAP / Xendit / Midtrans QRIS webhooks and licensed IDR bank
@@ -631,7 +647,7 @@ export default function DocsAndContractsPage() {
 
                   <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1">
                     <p className="text-xs font-semibold text-[#151619]">
-                      2. One-Time Onboarding Needs Test Gas (Daily Sales Are Gasless)
+                      3. One-Time Onboarding Needs Test Gas (Daily Sales Are Gasless)
                     </p>
                     <p className="text-xs text-[#5C6260] leading-relaxed">
                       Recording daily QR sales (<code className="font-mono">recordSale</code>) and
@@ -646,7 +662,7 @@ export default function DocsAndContractsPage() {
 
                   <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1">
                     <p className="text-xs font-semibold text-[#151619]">
-                      3. Two-Step Repayment Split &amp; Faucet Testnet Caps
+                      4. Two-Step Repayment Split &amp; Faucet Testnet Caps
                     </p>
                     <p className="text-xs text-[#5C6260] leading-relaxed">
                       Settlement currently runs as two sequential calls (gateway{' '}
@@ -689,15 +705,15 @@ export default function DocsAndContractsPage() {
                   <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-2">
                     <div className="flex items-center justify-between gap-2">
                       <span className="text-xs font-semibold text-[#15803D]">Phase 2 · v2 Upgrade</span>
-                      <span className="text-[11px] font-mono text-[#636966]">QRIS &amp; Risk</span>
+                      <span className="text-[11px] font-mono text-[#636966]">IDRX &amp; QRIS</span>
                     </div>
                     <p className="text-sm font-semibold text-[#151619]">
-                      Real IDR QRIS Rails &amp; Supplier Escrow
+                      IDRX Settlement, Real QRIS Rails &amp; Escrow
                     </p>
                     <ul className="space-y-1 text-xs text-[#5C6260] leading-relaxed">
-                      <li>· Live BI-SNAP / QRIS acquiring webhooks with atomic 90% shop / 10% pool split.</li>
-                      <li>· Direct IDR bank off-ramp for merchants + closed-loop ERC-8004 supplier escrow.</li>
-                      <li>· Progressive Day-30 e-KYC/KYB and tiered credit limits ($25 → $500).</li>
+                      <li>· Swap <code className="font-mono">tUSD8</code> to Rupiah-backed <code className="font-mono">IDRX</code> (1:1 IDR) for full Indonesian compliance &amp; zero USD FX spread.</li>
+                      <li>· Live BI-SNAP / QRIS webhooks (GoPay, Dana, banks) settling 90% shop / 10% pool in IDRX.</li>
+                      <li>· Closed-loop ERC-8004 supplier escrow, IDR bank off-ramp &amp; Day-30 KYB tiers.</li>
                     </ul>
                   </div>
 
