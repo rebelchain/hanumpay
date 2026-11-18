@@ -136,16 +136,23 @@ In the web app, open [`/app/docs`](https://hanumpay.vercel.app/app/docs) and con
 
 ---
 
-## What Is Real Today
+## What Is Real Today & Honest Limits
 
 | Piece | Current Status on QDay Aevum Testnet |
 | --- | --- |
 | **4 Core Smart Contracts** | Deployed and live on Chain `44005` at Block `3310882` (`ERC8004Registry`, `SalesLedger`, `LoanPool`, `AIGuarantor`) |
-| **Stablecoin & Gas** | Real `tUSD8` (`6 decimals`) and `tQDAY` test tokens distributed via `https://faucet.qday.info/en` (`5 tUSD8` / `1 tQDAY` claim limit) |
-| **Gasless EIP-712 Relayers** | Live MetaMask/Rabby EIP-712 signing verified server-side and relayed to `SalesLedger.sol` / `LoanPool.sol` (`txHash` returned) |
+| **Mobile Cashier (`/kasir`) & Guided Setup** | Distraction-free phone POS in Rupiah (`Rp`) + automatic 3-step Shop Onboarding Checklist across `/kasir` and Home |
+| **Automated QRIS Relayer Simulation** | `/api/relay/record-sale` checks relayer `tUSD8` reserve, transfers `100%` `tUSD8` to the shop wallet before `recordSale` (leaving `90%` net after `10%` loan auto-repay), and falls back safely if reserve is empty |
+| **Gasless Sales & Loans (`tQDAY`)** | Daily QR sales (`recordSale`) and loan acceptance (`acceptLoan`) are **100% gasless** for merchants via EIP-712 signatures relayed by the backend |
 | **AI Guarantor & Red-Team** | Live Gemini underwriting (`/api/agent/audit`) & adversarial tests (`/api/agent/red-team`); on-chain cron (`/api/agent/cron`) enforces the strict `30-day` shop history contract gate |
 | **2-Phone Interactive Simulator** | Interactive sandbox at `/stage` replicating full 30-day sales accrual, loan issuance, 10% auto-repayment, and spoofed supplier attacks |
-| **Testnet Limitations (Honest Scope)** | Explorer ABI source verification is not yet enabled on QDay Testnet; QDay `@qday-io/sdk` ships Q1 2027 (EOA + EIP-712 active today); `LoanPool` testnet TVL is bounded by the `5 tUSD8` faucet cap; audit status: unaudited hackathon MVP |
+
+### Honest Testnet Limits (MVP Scope)
+
+1. **QRIS Gateway Is Simulated by the Relayer**: Real-world IDR QRIS acquiring (GoPay/Dana/OVO/Bank webhook + licensed IDR↔stablecoin on/off-ramp) is not wired to live Indonesian bank rails in this testnet MVP. Today, the backend relayer simulates gateway settlement using its `tUSD8` test reserve (and falls back cleanly to recording sales without a token top-up when reserves run low).
+2. **One-Time Onboarding Uses Test Gas (`tQDAY`)**: While daily QR checkout and loan acceptance are gasless via EIP-712 relayers, a new shop's initial one-time `registerShop` and `tUSD8.approve(LoanPool)` calls still execute from `msg.sender` and require a small amount of `tQDAY` test gas (claimable from the QDay Faucet).
+3. **2-Step Split vs. Atomic Router**: Active loan auto-repayment currently settles in two sequential steps (`tUSD8` transferred to shop wallet → `SalesLedger.recordSale` calls `LoanPool.repayFromSale` to pull `10%`, leaving `+90%` net). Direct IDR bank off-ramp for the merchant's `90%` share is a Phase 2 integration.
+4. **Faucet Caps, Explorer Verification & Audits**: Public faucet caps (`5 tUSD8` / `1 tQDAY` per claim) bound live testnet pool TVL; QDay Explorer source verification and `@qday-io/sdk` (Q1 2027) are not yet enabled; contracts are unaudited hackathon MVP code.
 
 ---
 
@@ -203,20 +210,21 @@ In the web app, open [`/app/docs`](https://hanumpay.vercel.app/app/docs) and con
 ```text
 ├── app/
 │   ├── page.tsx                  # Landing page + credit limit calculator, fee ruler & GitBook/GitHub CTA
+│   ├── kasir/page.tsx            # Distraction-free mobile Cashier POS (Rupiah keypad, QRIS & settlement)
 │   ├── stage/page.tsx            # 2-phone live simulator & scenario director
 │   ├── app/
-│   │   ├── dashboard/page.tsx    # Merchant dashboard & Credit Passport
+│   │   ├── dashboard/page.tsx    # Merchant/Judge dashboard, onboarding checklist & Credit Passport
 │   │   ├── penjualan/page.tsx    # QR cashier & verifiable receipt history
 │   │   ├── pinjaman/page.tsx     # Loan lifecycle, AI audit logs & Red-Team console
 │   │   ├── identitas/page.tsx    # ERC-8004 directory & verified supplier payouts
 │   │   ├── pool/page.tsx         # Community LP liquidity pool
-│   │   └── docs/page.tsx         # 3-pane GitBook docs, Aevum readiness checker & blueprints
+│   │   └── docs/page.tsx         # 3-pane GitBook docs, Aevum readiness checker & honest limits/roadmap
 │   └── api/
 │       ├── agent/audit/          # Gemini credit eligibility explanation endpoint
 │       ├── agent/red-team/       # Prompt-injection vs contract invariant verifier
 │       ├── agent/cron/           # AI Guarantor check cycle
-│       └── relay/                # Gasless EIP-712 relayers (record-sale & accept-loan)
-├── components/                   # App, landing, and GitBook UI components
+│       └── relay/                # Gasless EIP-712 relayers (record-sale + QRIS settlement & accept-loan)
+├── components/                   # App, onboarding checklist, landing, and GitBook UI components
 ├── docs/                         # Official GitBook Markdown chapters, SUMMARY.md & media/
 ├── gitbook-docs.yaml             # GitBook Site Git Sync root manifest
 ├── lib/                          # Deterministic contract rules engine, Gemini helper, state store, viem QDay client
@@ -232,7 +240,7 @@ In the web app, open [`/app/docs`](https://hanumpay.vercel.app/app/docs) and con
 
 | Endpoint | Method | Purpose | Request Body / Behavior |
 | --- | --- | --- | --- |
-| `/api/relay/record-sale` | `POST` | Verifies merchant EIP-712 QR sale signature and relays `SalesLedger.recordSale` gaslessly | `{ shop, amountUSD8, customerIdHash, deadline, signature }` → `{ ok, mode, txHash, signatureVerified }` |
+| `/api/relay/record-sale` | `POST` | Verifies EIP-712 sale signature, simulates QRIS `tUSD8` settlement to shop when relayer reserve suffices (safe fallback if empty), and relays `SalesLedger.recordSale` | `{ shop, amountUSD8, customerIdHash, deadline, signature }` → `{ ok, mode, txHash, signatureVerified, qrisSettlement }` |
 | `/api/relay/accept-loan` | `POST` | Verifies merchant EIP-712 loan terms signature and relays `LoanPool.acceptLoan` | `{ loanId, shop, principalUSD8, flatFeeUSD8, repayPctBps, deadline, signature }` → `{ ok, mode, txHash, signatureVerified }` |
 | `/api/agent/cron` | `POST` | Scans `SalesLedger.getShops`, checks `AIGuarantor.checkEligibility`, and submits proposals | No body required → `{ ok, mode, agentWallet, logs }` |
 | `/api/agent/audit` | `POST` | Generates plain-English underwriting summary & risk note via Gemini (`ThinkingLevel.LOW` + fallback) | `{ shopName, totalSales30dUSD8, uniqueCustomers30d, proposedPrincipalUSD8, flatFeeUSD8 }` → `{ summary, riskNote }` |
@@ -292,22 +300,23 @@ Ensure all Environment Variables in Vercel match `.env.local` (`GEMINI_API_KEY`,
 
 ---
 
-## Roadmap (Testnet v1 → Mainnet v2 & Risk Hardening)
+## Roadmap (Testnet v1 → Real QRIS & Mainnet v2)
 
 ### Phase 1 — QDay Aevum Testnet MVP *(Current — Live)*
 - Four Foundry-tested contracts (`ERC8004Registry`, `SalesLedger`, `LoanPool`, `AIGuarantor`) deployed at Block `3310882` on Chain `44005`.
-- Gasless EIP-712 QR sales & loan acceptance relayers, community LP pool shares, and ERC-8004 Confirmation of Payee.
+- Standalone Rupiah **Mobile Cashier (`/kasir`)**, automatic 3-step Shop Onboarding Checklist, and gasless EIP-712 relayers with **simulated QRIS `tUSD8` settlement** (and safe fallback when test reserves are depleted).
 - Contract-bounded Gemini AI underwriting (`/api/agent/audit`) and adversarial prompt-injection Red-Team console (`/api/agent/red-team`).
 - Economic guardrails active today: `30-day` shop history gate, `>= 5` unique buyers, `10%` of 30d revenue cap (`$500` ceiling), `80%` pool exposure cap, and merchant AI Kill Switch.
 
-### Phase 2 — Closed-Loop Risk Hardening & Progressive KYB *(v2 Upgrade)*
+### Phase 2 — Real QRIS Payment Acquiring, Off-Ramp & Risk Hardening *(v2 Upgrade)*
+- **Live Indonesian QRIS Gateway & Atomic Split**: Connect BI-SNAP / QRIS payment acquiring webhooks and licensed IDR on/off-ramp partners so customer Rupiah payments (GoPay, Dana, OVO, banks) settle atomically—routing **10%** directly to `LoanPool` when a loan is active and **90%** (or **100%** loan-free) to the merchant's wallet or linked IDR bank account.
 - **ERC-8004 Closed-Loop Supplier Escrow**: Upgrade `LoanPool.sol` so approved credit stays escrowed in the pool and settles `tUSD8` **exclusively to whitelisted wholesale suppliers** (`category == "supplier"`) verified in `ERC8004Registry`—eliminating cash-out and off-app transfer risk.
 - **Progressive / Tiered e-KYC & KYB**: Keep zero-KYC QR cashier onboarding during Days 1–30, then require a privacy-preserving e-KYC / distributor endorsement hash on `ERC8004Registry` to unlock live working capital at Day 30+.
 - **Graduated Credit Tiers & Default Hygiene**: Replace flat day-30 limits with tiered underwriting (`Tier 1: $25–$50` → `Tier 2: $150` → `Tier 3: $500` after on-time repayments) and automated inactivity/overdue flags recorded on the merchant's Credit Passport.
 
-### Phase 3 — QDay Mainnet, Gas Abstraction & Treasury Sustainability *(Q1 2027)*
-- **Native Account Abstraction**: Migrate EOA relayers to `@qday-io/sdk` ERC-4337 Smart Accounts and native `USD8` Paymasters upon QDay's Q1 2027 SDK release.
-- **Sustainable Protocol Revenue**: Activate on-chain fee split on the `5%` flat credit fee (`4.0%` distributed to Community LPs, `1.0%` routed to the HanumPay Protocol Treasury & relayer reserve) alongside optional `0.1%–0.25%` B2B wholesale supplier settlement fees.
+### Phase 3 — QDay Mainnet, Zero-Gas Onboarding & Treasury Sustainability *(Q1 2027)*
+- **Zero-Gas Onboarding via Account Abstraction**: Migrate EOA wallets and relayers to `@qday-io/sdk` ERC-4337 Smart Accounts and `USD8` Paymasters upon QDay's Q1 2027 SDK release so even initial `registerShop` and `approve` setup require **0 tQDAY / 0 QDAY** from merchants.
+- **Sustainable Protocol Revenue**: Activate on-chain fee split on the `5%` flat credit fee (`4.0%` distributed to Community LPs, `1.0%` routed to the HanumPay Protocol Treasury to cover relayer gas & gateway rails) alongside optional `0.1%–0.25%` B2B wholesale supplier settlement fees.
 - **Real-Time Event Indexing**: Replace `1,000`-block chunked `eth_getLogs` polling with dedicated subgraph/Envio indexing for sub-second dashboard & Credit Passport queries.
 
 ### Phase 4 — Distributor Network & Credit Passport Ecosystem

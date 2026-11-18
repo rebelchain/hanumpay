@@ -60,6 +60,7 @@ forge script script/Deploy.s.sol --rpc-url https://rpc-test.qday.info --broadcas
 
 type DocPageId =
   | 'readiness'
+  | 'limits'
   | 'deployments'
   | 'roadmap'
   | (typeof HANUMPAY_BLUEPRINTS)[number]['id'];
@@ -78,6 +79,13 @@ const GUIDE_PAGES: GitBookNavEntry[] = [
     group: 'Getting Started',
     label: 'Aevum Readiness & Setup',
     subtitle: 'Wallet, network, tQDAY/tUSD8 checks & QDay gotchas',
+    kind: 'interactive',
+  },
+  {
+    id: 'limits',
+    group: 'Getting Started',
+    label: 'Honest Limits & Roadmap',
+    subtitle: 'What is live on Testnet today vs. real QRIS gateway production',
     kind: 'interactive',
   },
   {
@@ -234,6 +242,13 @@ export default function DocsAndContractsPage() {
         { id: 'wallet-status', text: 'Wallet & Relayer Status', level: 2 },
         { id: 'readiness-check', text: 'Aevum Readiness Check (5/5)', level: 2 },
         { id: 'gotchas', text: 'Known Gotchas & Wallet SDK', level: 2 },
+      ];
+    }
+    if (selectedId === 'limits') {
+      return [
+        { id: 'qris-money-flow', text: 'How QRIS Money Moves', level: 2 },
+        { id: 'honest-testnet-limits', text: 'Honest Testnet Limits', level: 2 },
+        { id: 'product-roadmap', text: 'Production Roadmap (v1 → v4)', level: 2 },
       ];
     }
     if (selectedId === 'deployments') {
@@ -542,6 +557,178 @@ export default function DocsAndContractsPage() {
                       <code className="font-mono">lib/qday.ts</code>.
                     </li>
                   </ul>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* Interactive Page 1b: Honest Limits & Production Roadmap */}
+          {selectedId === 'limits' && (
+            <div className="space-y-8">
+              <section id="qris-money-flow" className="scroll-mt-20 space-y-4">
+                <div>
+                  <h3 className="text-base font-semibold text-[#151619]">
+                    How Customer Rupiah QRIS Payments Work with On-Chain Loans
+                  </h3>
+                  <p className="text-xs text-[#5C6260] mt-1 leading-relaxed">
+                    Buyers pay in ordinary Indonesian Rupiah (<code className="font-mono">Rp</code>) via any QRIS e-wallet or bank
+                    app—they never touch MetaMask or pay crypto gas fees.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1.5">
+                    <p className="text-xs font-semibold text-[#15803D]">1. Customer Pays IDR</p>
+                    <p className="text-xs text-[#5C6260] leading-relaxed">
+                      Customer scans QR at <code className="font-mono text-[#151619]">/kasir</code>{' '}
+                      using GoPay, Dana, OVO, or bank app in Rupiah. Zero blockchain steps for buyers.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1.5">
+                    <p className="text-xs font-semibold text-[#15803D]">2. Gateway Settled + Relayed</p>
+                    <p className="text-xs text-[#5C6260] leading-relaxed">
+                      The testnet relayer simulates gateway settlement by transferring{' '}
+                      <code className="font-mono">tUSD8</code> to the shop wallet and paying all{' '}
+                      <code className="font-mono">tQDAY</code> gas.
+                    </p>
+                  </div>
+                  <div className="p-4 rounded-xl bg-[#E8FAF0] border border-[#9FE8C3] space-y-1.5">
+                    <p className="text-xs font-semibold text-[#15803D]">3. 90% Shop / 10% Pool</p>
+                    <p className="text-xs text-[#151619] leading-relaxed">
+                      If a loan is active, <code className="font-mono">LoanPool</code> pulls{' '}
+                      <strong>10%</strong> automatically and <strong>90%</strong> stays in the shop
+                      wallet (<strong>100%</strong> if no loan).
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <section id="honest-testnet-limits" className="scroll-mt-20 space-y-4">
+                <div className="border-b border-[#E2E7E4] pb-3">
+                  <h3 className="text-base font-semibold text-[#151619]">
+                    Honest Limits (QDay Aevum Testnet MVP)
+                  </h3>
+                  <p className="text-xs text-[#5C6260] mt-0.5">
+                    Clear engineering boundaries between what runs live on-chain today and what is
+                    simulated for testnet evaluation.
+                  </p>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1">
+                    <p className="text-xs font-semibold text-[#151619]">
+                      1. QRIS Fiat Gateway Is Simulated by the Relayer
+                    </p>
+                    <p className="text-xs text-[#5C6260] leading-relaxed">
+                      Live BI-SNAP / Xendit / Midtrans QRIS webhooks and licensed IDR bank
+                      settlement rails are not connected on Testnet. Instead,{' '}
+                      <code className="font-mono text-[#151619]">/api/relay/record-sale</code> checks
+                      the relayer&apos;s <code className="font-mono">tUSD8</code> reserve and
+                      transfers 100% <code className="font-mono">tUSD8</code> to the merchant before
+                      recording the sale, falling back safely if reserves are empty.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1">
+                    <p className="text-xs font-semibold text-[#151619]">
+                      2. One-Time Onboarding Needs Test Gas (Daily Sales Are Gasless)
+                    </p>
+                    <p className="text-xs text-[#5C6260] leading-relaxed">
+                      Recording daily QR sales (<code className="font-mono">recordSale</code>) and
+                      accepting credit (<code className="font-mono">acceptLoan</code>) cost{' '}
+                      <strong className="text-[#151619]">0 tQDAY</strong> for the shop via EIP-712
+                      relayers. However, one-time onboarding calls (
+                      <code className="font-mono">registerShop</code> and{' '}
+                      <code className="font-mono">tUSD8.approve</code>) still execute from the
+                      merchant wallet and require tiny <code className="font-mono">tQDAY</code> gas.
+                    </p>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-1">
+                    <p className="text-xs font-semibold text-[#151619]">
+                      3. Two-Step Repayment Split &amp; Faucet Testnet Caps
+                    </p>
+                    <p className="text-xs text-[#5C6260] leading-relaxed">
+                      Settlement currently runs as two sequential calls (gateway{' '}
+                      <code className="font-mono">tUSD8</code> transfer →{' '}
+                      <code className="font-mono">SalesLedger.recordSale</code> →{' '}
+                      <code className="font-mono">LoanPool.repayFromSale</code>). Testnet pool
+                      liquidity is bounded by the <code className="font-mono">5 tUSD8</code> faucet
+                      cap, and smart contracts are unaudited hackathon MVP deployments.
+                    </p>
+                  </div>
+                </div>
+              </section>
+
+              <section id="product-roadmap" className="scroll-mt-20 space-y-4">
+                <div className="border-b border-[#E2E7E4] pb-3">
+                  <h3 className="text-base font-semibold text-[#151619]">
+                    Production Roadmap (Testnet v1 → Real QRIS &amp; Mainnet)
+                  </h3>
+                  <p className="text-xs text-[#5C6260] mt-0.5">
+                    Phased path from today&apos;s QDay Aevum MVP to full Indonesian MSME scale.
+                  </p>
+                </div>
+
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="p-4 rounded-xl bg-[#E8FAF0] border border-[#9FE8C3] space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-[#15803D]">Phase 1 · Live Now</span>
+                      <span className="text-[11px] font-mono text-[#636966]">Testnet v1</span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#151619]">
+                      QDay Aevum MVP &amp; Mobile Cashier
+                    </p>
+                    <ul className="space-y-1 text-xs text-[#5C6260] leading-relaxed">
+                      <li>· 4 Foundry-tested contracts live on Chain 44005 (Block 3310882).</li>
+                      <li>· Mobile Cashier (<code className="font-mono">/kasir</code>) in Rupiah + 3-step Shop Onboarding Checklist.</li>
+                      <li>· Gasless EIP-712 relayers with simulated QRIS <code className="font-mono">tUSD8</code> settlement &amp; safe fallback.</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-[#15803D]">Phase 2 · v2 Upgrade</span>
+                      <span className="text-[11px] font-mono text-[#636966]">QRIS &amp; Risk</span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#151619]">
+                      Real IDR QRIS Rails &amp; Supplier Escrow
+                    </p>
+                    <ul className="space-y-1 text-xs text-[#5C6260] leading-relaxed">
+                      <li>· Live BI-SNAP / QRIS acquiring webhooks with atomic 90% shop / 10% pool split.</li>
+                      <li>· Direct IDR bank off-ramp for merchants + closed-loop ERC-8004 supplier escrow.</li>
+                      <li>· Progressive Day-30 e-KYC/KYB and tiered credit limits ($25 → $500).</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-[#15803D]">Phase 3 · Q1 2027</span>
+                      <span className="text-[11px] font-mono text-[#636966]">Mainnet AA</span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#151619]">
+                      Zero-Gas Onboarding &amp; Treasury Split
+                    </p>
+                    <ul className="space-y-1 text-xs text-[#5C6260] leading-relaxed">
+                      <li>· Adopt <code className="font-mono">@qday-io/sdk</code> ERC-4337 Smart Accounts &amp; <code className="font-mono">USD8</code> Paymasters for 0-gas onboarding.</li>
+                      <li>· Activate sustainable treasury split from the 5% flat fee (4% LPs / 1% relayer &amp; ops).</li>
+                      <li>· Subgraph indexing to replace 1,000-block RPC log polling.</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-[#F5F7F5] border border-[#E2E7E4] space-y-2">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-[#15803D]">Phase 4 · Ecosystem</span>
+                      <span className="text-[11px] font-mono text-[#636966]">Scale</span>
+                    </div>
+                    <p className="text-sm font-semibold text-[#151619]">
+                      Distributor Network &amp; Credit Passport API
+                    </p>
+                    <ul className="space-y-1 text-xs text-[#5C6260] leading-relaxed">
+                      <li>· Regional FMCG distributors co-anchor trusted warung identities on-chain.</li>
+                      <li>· Portable Credit Passport APIs for cooperatives and neo-bank partners.</li>
+                    </ul>
+                  </div>
                 </div>
               </section>
             </div>
