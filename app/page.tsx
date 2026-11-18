@@ -536,7 +536,7 @@ export default function LandingPage() {
           className={`${CONTAINER} grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.4fr)_1fr_1fr_1fr]`}
         >
           <div className="min-w-0 sm:col-span-2 lg:col-span-1">
-            <HanumPayBrand href="/" variant="light" size={30} alwaysShowText />
+            <HanumPayBrand href="/" variant="light" size={30} alwaysShowText label="hanumpay" />
             <p className="mt-3 max-w-[30ch] text-[14px] leading-[1.6] text-[#5C6260]">
               Contract-bounded working capital and ERC-8004 supplier rails for MSMEs on QDay Aevum Testnet.
             </p>
